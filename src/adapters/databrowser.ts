@@ -12,6 +12,9 @@ import type {
   SchemaDetailResponse,
   SchemaListItem,
   SchemaPropertyDefinition,
+  VariantFilterOptionsResponse,
+  VariantReferenceGenomeApiItem,
+  VariantSummaryResponse,
 } from "@/types/api";
 import type {
   ChartDatum,
@@ -25,8 +28,6 @@ import type {
   SchemaCardData,
   SchemaClassificationCard,
   SchemaPropertyCard,
-  VariantReferenceOption,
-  VariantSearchRow,
 } from "@/types/databrowser";
 
 interface BuildDatabrowserSnapshotInput {
@@ -37,6 +38,9 @@ interface BuildDatabrowserSnapshotInput {
   samples: SampleListItem[];
   schemaDetails: SchemaDetailResponse[];
   schemas: SchemaListItem[];
+  variantFilterOptions: VariantFilterOptionsResponse | null;
+  variantReferenceGenomes: VariantReferenceGenomeApiItem[];
+  variantSummary: VariantSummaryResponse | null;
 }
 
 interface FlattenedSchemaProperty {
@@ -178,10 +182,6 @@ function numericValue(rawValue: string) {
   return Number.isFinite(normalized) ? normalized : null;
 }
 
-function firstMetadataValue(record: SampleRecord, propertyName: string) {
-  return record.metadataByProperty.get(propertyName)?.[0]?.trim() || "";
-}
-
 function numericLineDistribution(values: string[]) {
   const counts = new Map<number, number>();
 
@@ -198,6 +198,22 @@ function numericLineDistribution(values: string[]) {
   return Array.from(counts.entries())
     .sort((left, right) => left[0] - right[0])
     .map(([label, value]) => ({ label: formatInteger(label), value }));
+}
+
+function normalizeDateInput(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsed = new Date(trimmed);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString().slice(0, 10);
 }
 
 function dateDistribution(values: string[]) {
@@ -568,92 +584,103 @@ function buildMetadataSections(
   return [sampleMetadataSection, bioinfoSection, hostSection];
 }
 
-function buildVariantSearchRows(records: SampleRecord[]): VariantSearchRow[] {
-  return records
-    .map<VariantSearchRow | null>((record) => {
-      const referenceGenome = firstMetadataValue(record, "reference_genome_accession");
-      const variantCount = numericValue(
-        firstMetadataValue(record, "number_of_variants_in_consensus"),
-      );
-      const variantsWithEffect = numericValue(
-        firstMetadataValue(record, "number_of_variants_with_effect"),
-      );
+function buildVariantFilterOptions(records: SampleRecord[]) {
+  const collectionDates = records
+    .flatMap((record) => record.metadataByProperty.get("sample_collection_date") ?? [])
+    .map(normalizeDateInput)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => left.localeCompare(right));
+  const sequencingPlatforms = Array.from(
+    new Set(
+      records
+        .flatMap(
+          (record) => record.metadataByProperty.get("sequencing_instrument_platform") ?? [],
+        )
+        .map(stripOntology)
+        .filter(Boolean),
+    ),
+  ).sort((left, right) => left.localeCompare(right, "es"));
 
-      if (!referenceGenome && variantCount === null && variantsWithEffect === null) {
-        return null;
-      }
-
-      return {
-        consensusSequenceName:
-          firstMetadataValue(record, "consensus_sequence_name") || "Not exposed",
-        effectSummary:
-          variantsWithEffect === null
-            ? "Pending per-variant annotation"
-            : `${formatInteger(variantsWithEffect)} sample-level variants with effect`,
-        gene: "Pending API",
-        hasEffect:
-          variantsWithEffect === null
-            ? "Unknown"
-            : variantsWithEffect > 0
-              ? "Yes"
-              : "No",
-        populationFrequency: "Pending API",
-        projectName: record.projectName,
-        referenceGenome: referenceGenome || "Unknown reference",
-        sampleUniqueId: record.sample.sample_unique_id,
-        sequencingSampleId: record.sample.sequencing_sample_id ?? "Not available",
-        variantCallingSoftware:
-          firstMetadataValue(record, "variant_calling_software_name") || "Not exposed",
-        variantCount,
-        variantDesignation:
-          firstMetadataValue(record, "variant_designation") || "Not exposed",
-        variantName: firstMetadataValue(record, "variant_name") || "Not exposed",
-        variantsWithEffect,
-        vcfFilename: firstMetadataValue(record, "vcf_filename") || "Not exposed",
-      };
-    })
-    .filter((row): row is VariantSearchRow => Boolean(row));
+  return {
+    collectionDateMax: collectionDates[collectionDates.length - 1] ?? null,
+    collectionDateMin: collectionDates[0] ?? null,
+    sequencingPlatforms,
+  };
 }
 
-function buildVariantReferenceOptions(rows: VariantSearchRow[]): VariantReferenceOption[] {
-  const options = new Map<string, { sampleCount: number; variantCount: number }>();
+function buildVariantFilterOptionsFromApi(
+  apiOptions: VariantFilterOptionsResponse | null,
+  records: SampleRecord[],
+) {
+  const fallbackOptions = buildVariantFilterOptions(records);
 
-  rows.forEach((row) => {
-    const current = options.get(row.referenceGenome) ?? {
-      sampleCount: 0,
-      variantCount: 0,
-    };
+  if (!apiOptions) {
+    return fallbackOptions;
+  }
 
-    current.sampleCount += 1;
-    current.variantCount += row.variantCount ?? 0;
-    options.set(row.referenceGenome, current);
-  });
+  const sequencingPlatforms = apiOptions.sequencing_platforms
+    .map((option) => option.value || option.label)
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "es"));
 
-  return Array.from(options.entries())
-    .sort(
-      (left, right) =>
-        right[1].sampleCount - left[1].sampleCount ||
-        left[0].localeCompare(right[0], "es"),
-    )
-    .map(([referenceGenome, values]) => ({
-      label: `${referenceGenome} (${formatInteger(values.sampleCount)} samples)`,
-      referenceGenome,
-      sampleCount: values.sampleCount,
-      variantCount: values.variantCount,
+  return {
+    collectionDateMax:
+      apiOptions.collection_date.max ?? fallbackOptions.collectionDateMax,
+    collectionDateMin:
+      apiOptions.collection_date.min ?? fallbackOptions.collectionDateMin,
+    sequencingPlatforms:
+      sequencingPlatforms.length > 0
+        ? Array.from(new Set(sequencingPlatforms))
+        : fallbackOptions.sequencingPlatforms,
+  };
+}
+
+function apiCountsToChartData(items?: { label: string; value: number }[]) {
+  return (items ?? [])
+    .filter((item) => Number.isFinite(item.value))
+    .map((item) => ({
+      label: truncateLabel(item.label),
+      value: item.value,
     }));
+}
+
+function sortByNumericLabel(values: ChartDatum[]) {
+  return [...values].sort((left, right) => {
+    const leftNumeric = numericValue(left.label);
+    const rightNumeric = numericValue(right.label);
+
+    if (leftNumeric !== null && rightNumeric !== null) {
+      return leftNumeric - rightNumeric;
+    }
+
+    return left.label.localeCompare(right.label, "es");
+  });
+}
+
+function buildVariantReferenceGenomeOptions(items: VariantReferenceGenomeApiItem[]) {
+  return items
+    .map((item) => ({
+      distinctVariantCount: item.distinct_variant_count,
+      referenceGenome: item.reference_genome,
+      sampleCount: item.sample_count,
+      variantObservationCount: item.variant_observation_count,
+    }))
+    .sort((left, right) =>
+      left.referenceGenome.localeCompare(right.referenceGenome, "es"),
+    );
 }
 
 function buildHomeCards(
   totalSamples: number,
   totalSchemas: number,
   populatedPriorityProperties: number,
-  totalConsensusVariants: number,
+  totalVariantObservations: number,
 ) {
   const statByEntry: Record<EntryCardContent["id"], string> = {
     metadata: `${formatInteger(populatedPriorityProperties)} priority properties`,
     overview: `${formatInteger(totalSamples)} samples`,
     schema: `${formatInteger(totalSchemas)} active schemas`,
-    variant: `${formatInteger(totalConsensusVariants)} consensus variants`,
+    variant: `${formatInteger(totalVariantObservations)} variant observations`,
   };
 
   return ENTRY_CARD_CONTENT.map((entry) => ({
@@ -673,6 +700,9 @@ export function buildDatabrowserSnapshot({
   samples,
   schemaDetails,
   schemas,
+  variantFilterOptions,
+  variantReferenceGenomes,
+  variantSummary,
 }: BuildDatabrowserSnapshotInput): DatabrowserSnapshot {
   const schemasByKey = new Map(
     schemas.map((schema) => [schemaKey(schema.schema_name, schema.schema_version), schema]),
@@ -835,12 +865,12 @@ export function buildDatabrowserSnapshot({
     };
   });
 
-  const referenceGenomeChart = categoricalDistribution(
+  const metadataReferenceGenomeChart = categoricalDistribution(
     sampleRecords.flatMap(
       (record) => record.metadataByProperty.get("reference_genome_accession") ?? [],
     ),
   );
-  const variantCountsChart = numericLineDistribution(
+  const metadataVariantCountsChart = numericLineDistribution(
     sampleRecords.flatMap(
       (record) => record.metadataByProperty.get("number_of_variants_in_consensus") ?? [],
     ),
@@ -866,21 +896,41 @@ export function buildDatabrowserSnapshot({
     );
   }, 0);
 
-  const totalEffectVariants = sampleRecords.reduce((accumulator, record) => {
-    const values = record.metadataByProperty.get("number_of_variants_with_effect") ?? [];
-    return (
-      accumulator +
-      values.reduce((partial, value) => partial + (numericValue(value) ?? 0), 0)
-    );
-  }, 0);
-
   const impactClassAliases = ["impact_class", "variant_impact", "annotation_impact"];
   const impactValues = sampleRecords.flatMap((record) =>
     impactClassAliases.flatMap((alias) => record.metadataByProperty.get(alias) ?? []),
   );
-  const impactClassChart = categoricalDistribution(impactValues);
-  const variantSearchRows = buildVariantSearchRows(sampleRecords);
-  const variantReferenceOptions = buildVariantReferenceOptions(variantSearchRows);
+  const metadataImpactClassChart = categoricalDistribution(impactValues);
+  const variantFilterOptionsForUi = buildVariantFilterOptionsFromApi(
+    variantFilterOptions,
+    sampleRecords,
+  );
+  const variantReferenceGenomeOptions =
+    buildVariantReferenceGenomeOptions(variantReferenceGenomes);
+  const summaryReferenceGenomeChart = apiCountsToChartData(
+    variantSummary?.reference_genomes,
+  );
+  const referenceGenomeChart =
+    summaryReferenceGenomeChart.length > 0
+      ? summaryReferenceGenomeChart
+      : metadataReferenceGenomeChart;
+  const summaryVariantCountsChart = sortByNumericLabel(
+    apiCountsToChartData(variantSummary?.variant_counts),
+  );
+  const variantCountsChart =
+    summaryVariantCountsChart.length > 0
+      ? summaryVariantCountsChart
+      : metadataVariantCountsChart;
+  const summaryImpactClassChart = apiCountsToChartData(variantSummary?.impact_classes);
+  const impactClassChart =
+    summaryImpactClassChart.length > 0
+      ? summaryImpactClassChart
+      : metadataImpactClassChart;
+  const summaryProjectCoverage = apiCountsToChartData(variantSummary?.projects);
+  const projectCoverage =
+    summaryProjectCoverage.length > 0 ? summaryProjectCoverage : variantProjectCoverage;
+  const totalVariantObservations =
+    variantSummary?.totals.variant_observations ?? totalConsensusVariants;
   const populatedPriorityProperties = metadataSections
     .flatMap((section) => section.properties)
     .filter((item) => item.participantCount > 0).length;
@@ -891,7 +941,7 @@ export function buildDatabrowserSnapshot({
       sampleRecords.length,
       schemas.filter((schema) => schema.schema_in_use).length,
       populatedPriorityProperties,
-      totalConsensusVariants,
+      totalVariantObservations,
     ),
     metadata: {
       notes: [
@@ -1007,36 +1057,43 @@ export function buildDatabrowserSnapshot({
       ],
     },
     variant: {
+      filterOptions: variantFilterOptionsForUi,
       impactClasses: impactClassChart,
       impactClassesAvailable: impactClassChart.length > 0,
       notes: [
-        "La API actual ofrece referencias, recuentos, VCF filepaths y software a nivel muestra, pero no filas per-variant con gen, posicion, frecuencia poblacional o impacto por variante.",
-        "La busqueda de variantes usa metadata sample-level como proxy; la frecuencia poblacional queda marcada como pendiente de un endpoint agregado backend.",
+        "La vista Variant consume /variants/summary, /variants/reference-genomes, /variants/filter-options y /variants/search.",
+        "El backend aplica el scope del usuario autenticado; un usuario de MEPRAM no ve variantes de relecov y viceversa.",
+        "Las busquedas sin resultados devuelven 404 y se muestran como estado vacio, no como fallo critico de UI.",
       ],
-      projectCoverage: variantProjectCoverage,
+      projectCoverage,
+      referenceGenomeOptions: variantReferenceGenomeOptions,
       referenceGenomes: referenceGenomeChart,
-      referenceOptions: variantReferenceOptions,
-      searchRows: variantSearchRows,
       stats: [
         {
           label: "Reference genomes",
-          note: "Genomas de referencia distintos observados",
-          value: formatInteger(referenceGenomeChart.length),
+          note: "Genomas de referencia devueltos por /variants/reference-genomes",
+          value: formatInteger(
+            variantReferenceGenomeOptions.length || referenceGenomeChart.length,
+          ),
         },
         {
-          label: "Consensus variants",
-          note: "Suma agregada de number_of_variants_in_consensus",
-          value: formatCompactNumber(totalConsensusVariants),
+          label: "Variant observations",
+          note: "Filas per-variant visibles para el usuario autenticado",
+          value: formatCompactNumber(totalVariantObservations),
         },
         {
-          label: "Variants with effect",
-          note: "Suma agregada de number_of_variants_with_effect",
-          value: formatCompactNumber(totalEffectVariants),
+          label: "Distinct variants",
+          note: "Variantes genomicas distintas en el scope actual",
+          value: formatInteger(
+            variantSummary?.totals.distinct_variants ?? variantCountsChart.length,
+          ),
         },
         {
-          label: "Projects with variants",
-          note: "Projects con al menos una muestra con recuento de variantes",
-          value: formatInteger(variantProjectCoverage.length),
+          label: "Samples with variants",
+          note: "Muestras visibles con al menos una variante observada",
+          value: formatInteger(
+            variantSummary?.totals.samples_with_variants ?? samplesWithVariantData.length,
+          ),
         },
       ],
       variantCounts: variantCountsChart,

@@ -14,7 +14,7 @@ import { useDatabrowser } from "@/hooks/use-databrowser";
 const statIcons = [GitBranch, Dna, Cpu, FolderTree];
 
 export function VariantPage() {
-  const { error, refresh, snapshot, status } = useDatabrowser();
+  const { credentials, error, refresh, snapshot, status } = useDatabrowser();
 
   if (!snapshot) {
     return <DataStatusPanel error={error} onRetry={() => void refresh()} status={status} />;
@@ -25,9 +25,9 @@ export function VariantPage() {
       <Card className="surface-shell border-white/70 bg-white/84">
         <CardContent className="px-6 py-8 lg:px-8 lg:py-10">
           <SectionHeader
-            description="Primera version funcional de Variant conectada a la API real. Se muestran genomas de referencia, recuentos agregados y cobertura por proyecto. Las clases de impacto quedan preparadas, no inventadas."
+            description="Vista generica para buscar variantes genomicas en patogenos mediante notacion HGVS. La UI parsea posicion/ref/alt y consulta el endpoint real de variantes sin asumir virus, bacterias ni humanos."
             eyebrow="Variant"
-            title="Reference genomes and variant landscape"
+            title="Generic genomic variant search"
           />
         </CardContent>
       </Card>
@@ -58,8 +58,9 @@ export function VariantPage() {
       </section>
 
       <VariantSearchPanel
-        referenceOptions={snapshot.variant.referenceOptions}
-        rows={snapshot.variant.searchRows}
+        credentials={credentials}
+        filterOptions={snapshot.variant.filterOptions}
+        referenceGenomeOptions={snapshot.variant.referenceGenomeOptions}
       />
 
       <section className="grid gap-5 xl:grid-cols-2">
@@ -78,9 +79,9 @@ export function VariantPage() {
       <Card className="border-white/70 bg-white/88">
         <CardContent className="p-6">
           <SectionHeader
-            description="La tarjeta queda lista para incorporar clases de impacto cuando el backend publique una agregacion especifica o metadata per-variant usable."
+            description="Distribucion de clases de impacto agregadas por el backend para el scope visible del usuario."
             eyebrow="Impact Classes"
-            title="Prepared for the next backend step"
+            title="Impact classes"
           />
           {snapshot.variant.impactClassesAvailable ? (
             <div className="mt-6">
@@ -92,10 +93,7 @@ export function VariantPage() {
             </div>
           ) : (
             <div className="mt-6 rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-sm leading-7 text-slate-600">
-              The current API does not expose variant annotations grouped by impact class
-              such as `LOW`, `MODERATE` or `HIGH`. This panel is intentionally left in a
-              ready state pending a dedicated aggregated endpoint or a per-variant data
-              source.
+              No impact classes were returned for the current authenticated scope.
             </div>
           )}
           <div className="mt-6 grid gap-3">
