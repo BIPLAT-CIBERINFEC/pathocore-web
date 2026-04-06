@@ -1,6 +1,6 @@
 # PathoCore Web Backlog
 
-Actualizado: `2026-04-01`
+Actualizado: `2026-04-06`
 
 Backlog consolidado tras la revision funcional de la web con negocio.
 
@@ -54,43 +54,68 @@ Datos minimos del hover:
 
 ### Frontend
 
-- Recuperar la tabla real de variantes.
-- Añadir buscador de variantes con:
-  - desplegable de `reference genome`
-  - caja de texto para escribir la variante concreta
+- Tabla real de variantes per-variant integrada contra backend.
+- Buscador de variantes genomicas HGVS con:
+  - caja de texto libre
+  - parser para entradas como `g.112534G>C`
+  - extraccion de `position`, `ref` y `alt`
   - tabla de resultados
 
 Columnas minimas de la tabla:
 
-- `gene`
-- `population frequency`
-- `has effect` o `effect`
+- `sample_id`
+- `variant`
+- `allele_frequency`
+- `effect`
+- `depth`
+- `Type`
+- `Ref.`
+- `Alt.`
+- `gene region`
+- `functional class`
+- `locus name`
+- `locus id`
+- `aminoacid change`
 
-- Cambiar `variant counts` a grafico de linea.
+- `Variant counts` en grafico de linea.
 
 ### Modelo funcional esperado
 
 - Una muestra puede tener muchas variantes.
-- Cuando el usuario busque una variante, el sistema debe calcular la frecuencia alelica o frecuencia poblacional en el conjunto de muestras visible.
-- La frecuencia debe reflejar presencia de la variante en todas las muestras del scope actual.
+- Cuando el usuario busque una variante, el sistema debe calcular el numero de muestras con esa variante y la frecuencia global en el conjunto de muestras visible.
+- La frecuencia global debe reflejar presencia de la variante en todas las muestras del scope actual.
+- `allele_frequency` en la tabla es per sample.
+- No asumir humano, cromosomas humanos ni patogeno concreto: debe funcionar para virus y bacterias.
+- Añadir filtros de apoyo como `collection date` y `sequencing platform`.
+- Si el filtro sale de enum o vocabulario controlado, mostrar opciones cerradas en la UI.
 
-### Decision tecnica pendiente
+### Decision tecnica resuelta en API v1
 
-- Resolver si la frecuencia alelica:
-  - se calcula on demand
-  - o se precomputa y se indexa
+- La frecuencia global de presencia de variante se devuelve desde backend en `summary.global_allele_frequency`.
+- El frontend no recalcula frecuencia global; solo la presenta.
 
-### Dependencia fuerte de backend/API
+### Endpoints backend disponibles
 
-La iteracion de `Variant search` probablemente necesita un endpoint nuevo o la recuperacion de una tabla/backend de variantes ya existente.
+- `GET /v1/variants/search`
+- `GET /v1/variants/summary`
+- `GET /v1/variants/reference-genomes`
+- `GET /v1/variants/filter-options`
 
-Capacidad esperada de API:
+Capacidad integrada:
 
-- buscar por referencia
-- buscar por variante exacta o patron
-- devolver gen asociado
-- devolver frecuencia poblacional
-- devolver si tiene efecto o no
+- buscar por `variant=g.112534G>C`
+- devolver filas per-variant por muestra
+- devolver `sample_count`
+- devolver `global_allele_frequency`
+- devolver campos de anotacion generica: efecto, clase funcional, region, locus y cambio aminoacidico
+- permitir filtros por `collection_date_from`, `collection_date_to` y `sequencing_platform`
+- permitir filtro opcional por `reference_genome`
+- permitir filtros avanzados por `sample_id`, `locus_name`, `locus_id`, `effect`, `aminoacid_change`, `project_name`, `schema_name` y `schema_version`
+- tratar `404 {"error":"No variants found"}` como estado vacio de UI
+
+Especificacion detallada:
+
+- [`docs/variants-api-implementation.md`](./docs/variants-api-implementation.md)
 
 ## Prioridad 4. Validacion e integridad
 
@@ -125,18 +150,14 @@ Opciones a evaluar:
 ## Preguntas abiertas
 
 - Que schema debe gobernar `Metadata` cuando una property existe en mas de uno.
-- Donde esta la fuente definitiva de la tabla de variantes y en que estado esta.
-- Si la frecuencia alelica se precomputa o se calcula en tiempo real.
-- Si la busqueda de variantes debe respetar exactamente el scope del usuario autenticado.
+- Si conviene exponer opciones/enums backend para filtros avanzados de `Variant`.
 - Si la autenticacion por token convivira con Basic Auth o la sustituira.
 
 ## Orden recomendado de implementacion
 
 1. Ajustes de `Schema` en frontend.
 2. Regla funcional de `Metadata` sobre schema fuente.
-3. Recuperacion de tabla/source de variantes.
-4. Diseno de endpoint o servicio para `variant search`.
-5. Implementacion de `Variant search` y frecuencia.
-6. Autenticacion por token.
-7. Provisioning programatico de usuarios.
-8. Testing completo.
+3. Ampliacion opcional de filtros de `Variant`.
+4. Autenticacion por token.
+5. Provisioning programatico de usuarios.
+6. Testing completo.

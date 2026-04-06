@@ -32,9 +32,18 @@ export async function loadDatabrowserSnapshot(
   credentials: ApiCredentials | null,
 ): Promise<DatabrowserSnapshot> {
   const client = new PathocoreApiClient(credentials);
-  const [schemas, samples] = await Promise.all([
+  const [
+    schemas,
+    samples,
+    variantSummary,
+    variantFilterOptions,
+    variantReferenceGenomes,
+  ] = await Promise.all([
     client.listSchemas(),
     client.listAllSamples(),
+    client.getVariantSummary(),
+    client.getVariantFilterOptions(),
+    client.listVariantReferenceGenomes(),
   ]);
 
   const [schemaDetails, sampleMetadata] = await Promise.all([
@@ -54,5 +63,8 @@ export async function loadDatabrowserSnapshot(
     samples,
     schemaDetails,
     schemas,
+    variantFilterOptions,
+    variantReferenceGenomes,
+    variantSummary,
   });
 }

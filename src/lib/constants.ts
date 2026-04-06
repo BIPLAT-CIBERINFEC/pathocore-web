@@ -38,7 +38,7 @@ export const ENTRY_CARD_CONTENT: Omit<EntryCardContent, "stat">[] = [
     title: "Variant",
     subtitle: "Referencias y paisaje de variantes",
     description:
-      "Primera versión conectada a la API con genomas de referencia, recuentos agregados y huecos documentados donde faltan anotaciones.",
+      "Busqueda HGVS contra la API real con genomas de referencia, filtros de metadata, recuentos agregados y tabla per-variant.",
     tags: ["Reference genomes", "Variants", "Projects"],
   },
 ];

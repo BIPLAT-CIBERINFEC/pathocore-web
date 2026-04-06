@@ -6,6 +6,11 @@ import type {
   SampleMetadataApiItem,
   SchemaDetailResponse,
   SchemaListItem,
+  VariantFilterOptionsResponse,
+  VariantReferenceGenomeApiItem,
+  VariantSearchQuery,
+  VariantSearchResponse,
+  VariantSummaryResponse,
 } from "@/types/api";
 
 interface RequestOptions {
@@ -139,5 +144,38 @@ export class PathocoreApiClient {
 
       throw error;
     }
+  }
+
+  getVariantFilterOptions() {
+    return this.getJson<VariantFilterOptionsResponse>({
+      path: "/variants/filter-options",
+    });
+  }
+
+  listVariantReferenceGenomes() {
+    return this.getJson<VariantReferenceGenomeApiItem[]>({
+      path: "/variants/reference-genomes",
+    });
+  }
+
+  async searchVariants(query: VariantSearchQuery) {
+    try {
+      return await this.getJson<VariantSearchResponse>({
+        path: "/variants/search",
+        query: { ...query },
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  getVariantSummary() {
+    return this.getJson<VariantSummaryResponse>({
+      path: "/variants/summary",
+    });
   }
 }

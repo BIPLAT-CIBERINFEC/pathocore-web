@@ -113,41 +113,48 @@ export interface SchemaSectionData {
 }
 
 export interface VariantSectionData {
+  filterOptions: VariantFilterOptions;
   impactClasses: ChartDatum[];
   impactClassesAvailable: boolean;
   notes: string[];
   projectCoverage: ChartDatum[];
+  referenceGenomeOptions: VariantReferenceGenomeOption[];
   referenceGenomes: ChartDatum[];
-  referenceOptions: VariantReferenceOption[];
-  searchRows: VariantSearchRow[];
   stats: KpiStat[];
   variantCounts: ChartDatum[];
   variantSoftware: ChartDatum[];
 }
 
-export interface VariantReferenceOption {
-  label: string;
+export interface VariantFilterOptions {
+  collectionDateMax: string | null;
+  collectionDateMin: string | null;
+  sequencingPlatforms: string[];
+}
+
+export interface VariantReferenceGenomeOption {
+  distinctVariantCount: number;
   referenceGenome: string;
   sampleCount: number;
-  variantCount: number;
+  variantObservationCount: number;
 }
 
 export interface VariantSearchRow {
-  consensusSequenceName: string;
-  effectSummary: string;
-  gene: string;
-  hasEffect: "No" | "Unknown" | "Yes";
-  populationFrequency: string;
-  projectName: string;
-  referenceGenome: string;
-  sampleUniqueId: string;
-  sequencingSampleId: string;
-  variantCallingSoftware: string;
-  variantCount: number | null;
-  variantDesignation: string;
-  variantName: string;
-  variantsWithEffect: number | null;
-  vcfFilename: string;
+  alleleFrequency: number | null;
+  alternateAllele: string;
+  aminoacidChange: string;
+  collectionDate: string | null;
+  depth: number | null;
+  effect: string;
+  functionalClass: string;
+  geneRegion: string;
+  locusId: string;
+  locusName: string;
+  position: number;
+  referenceAllele: string;
+  sampleId: string;
+  sequencingPlatform: string;
+  type: string;
+  variant: string;
 }
 
 export interface DatabrowserSnapshot {
