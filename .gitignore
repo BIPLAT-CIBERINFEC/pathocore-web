@@ -1,3 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Vite / frontend caches
+.vite/
+.vite-inspect/
+.eslintcache
+.stylelintcache
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
 # Logs
 logs
 *.log
@@ -7,16 +26,23 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Environment files
+.env
+.env.*
+!.env.example
 *.local
+
+# Local-only project material
+mockup/
+
+# OS files
+.DS_Store
+Thumbs.db
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
