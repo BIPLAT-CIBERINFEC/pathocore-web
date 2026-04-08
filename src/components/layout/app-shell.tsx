@@ -1,28 +1,14 @@
 import {
-  ChartBar,
   Database,
-  Dna,
-  FileCode2,
-  Layers3,
-  Microscope,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ConnectionPanel } from "@/components/layout/connection-panel";
-import { cn } from "@/lib/utils";
 import { DatabrowserHomePage } from "@/pages/home-page";
 import { MetadataPage } from "@/pages/metadata-page";
 import { OverviewPage } from "@/pages/overview-page";
 import { SchemaPage } from "@/pages/schema-page";
 import { VariantPage } from "@/pages/variant-page";
-
-const navigationItems = [
-  { icon: Microscope, label: "Home", to: "/" },
-  { icon: ChartBar, label: "Overview", to: "/overview" },
-  { icon: FileCode2, label: "Schema", to: "/schema" },
-  { icon: Layers3, label: "Metadata", to: "/metadata" },
-  { icon: Dna, label: "Variant", to: "/variant" },
-];
 
 export function AppShell() {
   return (
@@ -39,36 +25,17 @@ export function AppShell() {
                 <div>
                   <p className="section-kicker">PathoCore</p>
                   <h1 className="text-4xl font-semibold tracking-tight text-slate-950">
-                    Generic Genomic Databrowser
+                    Databrowser
                   </h1>
                 </div>
               </div>
               <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-600">
-                Frontend React para la exploracion agregada de muestras genomicas,
-                schemas y metadata cientifica usando la API real de PathoCore.
+                Portal web para consultar datos agregados y datos genómicos de
+                PathoCore desde la API.
               </p>
             </div>
             <ConnectionPanel />
           </div>
-          <nav className="mt-6 flex flex-wrap gap-2">
-            {navigationItems.map((item) => (
-              <NavLink
-                key={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                    isActive
-                      ? "bg-slate-900 text-white shadow-glow"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200",
-                  )
-                }
-                to={item.to}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
         </header>
         <main className="flex-1">
           <motion.div

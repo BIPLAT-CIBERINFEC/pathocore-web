@@ -5,6 +5,7 @@ import {
   PieChartPanel,
 } from "@/components/databrowser/chart-card";
 import { DataStatusPanel } from "@/components/databrowser/data-status-panel";
+import { GenomicPageHeader } from "@/components/databrowser/genomic-page-header";
 import { SectionHeader } from "@/components/databrowser/section-header";
 import { StatCard } from "@/components/databrowser/stat-card";
 import { VariantSearchPanel } from "@/components/databrowser/variant-search-panel";
@@ -22,15 +23,10 @@ export function VariantPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="surface-shell border-white/70 bg-white/84">
-        <CardContent className="px-6 py-8 lg:px-8 lg:py-10">
-          <SectionHeader
-            description="Vista generica para buscar variantes genomicas en patogenos mediante notacion HGVS. La UI parsea posicion/ref/alt y consulta el endpoint real de variantes sin asumir virus, bacterias ni humanos."
-            eyebrow="Variant"
-            title="Generic genomic variant search"
-          />
-        </CardContent>
-      </Card>
+      <GenomicPageHeader
+        currentSection="Variant"
+        sectionDescription="Búsqueda de variantes genómicas en formato HGVS, con resumen agregado, filtros y resultados conectados a los endpoints reales de variantes."
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {snapshot.variant.stats.map((kpi, index) => (

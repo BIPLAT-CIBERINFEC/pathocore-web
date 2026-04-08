@@ -1,6 +1,7 @@
 import { FileCode2, FlaskConical, FolderTree, Layers3 } from "lucide-react";
 import { AreaChartPanel, BarChartPanel, PieChartPanel } from "@/components/databrowser/chart-card";
 import { DataStatusPanel } from "@/components/databrowser/data-status-panel";
+import { GenomicPageHeader } from "@/components/databrowser/genomic-page-header";
 import { SectionHeader } from "@/components/databrowser/section-header";
 import { StatCard } from "@/components/databrowser/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,15 +18,10 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="surface-shell border-white/70 bg-white/84">
-        <CardContent className="px-6 py-8 lg:px-8 lg:py-10">
-          <SectionHeader
-            description="Vista agregada del contenido de muestras visible hoy en PathoCore. El panel prioriza crecimiento temporal, mezcla de schemas, distribucion de patogenos expuestos por la API y cobertura territorial."
-            eyebrow="Overview of Samples"
-            title="High-level sample content across the database"
-          />
-        </CardContent>
-      </Card>
+      <GenomicPageHeader
+        currentSection="Overview"
+        sectionDescription="Resumen agregado del contenido de muestras visible en PathoCore, con crecimiento temporal, distribución de patógenos, cobertura geográfica y mezcla de schemas."
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {snapshot.overview.kpis.map((kpi, index) => (
