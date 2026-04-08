@@ -31,6 +31,16 @@ lerna-debug.log*
 .env.*
 !.env.example
 *.local
+.envrc
+.direnv/
+
+# Secrets and local certificates
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
 
 # Local-only project material
 mockup/
