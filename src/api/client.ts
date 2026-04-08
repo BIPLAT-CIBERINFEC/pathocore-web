@@ -1,6 +1,9 @@
 import { DEFAULT_API_BASE_URL } from "@/lib/constants";
 import type {
   ApiCredentials,
+  DatabrowserMetadataSummaryResponse,
+  DatabrowserOverviewSummaryResponse,
+  DatabrowserSchemaSummaryResponse,
   PaginatedResponse,
   SampleListItem,
   SampleMetadataApiItem,
@@ -176,6 +179,24 @@ export class PathocoreApiClient {
   getVariantSummary() {
     return this.getJson<VariantSummaryResponse>({
       path: "/variants/summary",
+    });
+  }
+
+  getDatabrowserOverviewSummary() {
+    return this.getJson<DatabrowserOverviewSummaryResponse>({
+      path: "/databrowser/overview-summary",
+    });
+  }
+
+  getDatabrowserMetadataSummary() {
+    return this.getJson<DatabrowserMetadataSummaryResponse>({
+      path: "/databrowser/metadata-summary",
+    });
+  }
+
+  getDatabrowserSchemaSummary() {
+    return this.getJson<DatabrowserSchemaSummaryResponse>({
+      path: "/databrowser/schema-summary",
     });
   }
 }
