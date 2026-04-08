@@ -156,3 +156,115 @@ export interface VariantSummaryResponse {
   };
   variant_counts: ApiCountItem[];
 }
+
+export interface ApiKpiItem {
+  label: string;
+  note: string;
+  value: string;
+}
+
+export interface DatabrowserOverviewSummaryResponse {
+  coverage_notes: string[];
+  geography: ApiCountItem[];
+  kpis: ApiKpiItem[];
+  metrics: {
+    active_schema_count: number;
+    project_count: number;
+    sample_count: number;
+    visible_metadata_properties: number;
+  };
+  notes: string[];
+  pathogens: ApiCountItem[];
+  projects: ApiCountItem[];
+  sample_growth: ApiCountItem[];
+  schema_mix: ApiCountItem[];
+}
+
+export interface DatabrowserPropertyCardResponse {
+  actual_property_name?: string;
+  chart_kind: "bar" | "line";
+  chart_title: string;
+  description: string;
+  display_name: string;
+  is_fallback: boolean;
+  participant_count: number;
+  participant_share: number;
+  property_name: string;
+  values: ApiCountItem[];
+}
+
+export interface DatabrowserMetadataChartResponse {
+  description: string;
+  kind: "bar" | "line" | "pie";
+  title: string;
+  values: ApiCountItem[];
+}
+
+export interface DatabrowserMetadataSectionResponse {
+  description: string;
+  id: "host-information" | "sample-bioinfo" | "sample-metadata";
+  notes: string[];
+  properties: DatabrowserPropertyCardResponse[];
+  summary_charts: DatabrowserMetadataChartResponse[];
+  title: string;
+}
+
+export interface DatabrowserSchemaOptionResponse {
+  key: string;
+  label: string;
+  project_name: string;
+  sample_count: number;
+  schema_name: string;
+  schema_version: string;
+}
+
+export interface DatabrowserSchemaScopeResponse {
+  key: string;
+  sample_count: number;
+  sections: DatabrowserMetadataSectionResponse[];
+}
+
+export interface DatabrowserMetadataSummaryResponse {
+  notes: string[];
+  schema_options: DatabrowserSchemaOptionResponse[];
+  schema_scopes: DatabrowserSchemaScopeResponse[];
+  sections: DatabrowserMetadataSectionResponse[];
+  stats: ApiKpiItem[];
+}
+
+export interface DatabrowserSchemaPropertyCardResponse {
+  classification: string;
+  description: string;
+  enum_values: string[];
+  examples: string[];
+  label: string;
+  path: string;
+  property_name: string;
+  type: string;
+}
+
+export interface DatabrowserSchemaClassificationCardResponse {
+  name: string;
+  property_count: number;
+  properties: DatabrowserSchemaPropertyCardResponse[];
+}
+
+export interface DatabrowserSchemaCardResponse {
+  classification_count: number;
+  classifications: DatabrowserSchemaClassificationCardResponse[];
+  generated_at: string | null;
+  name: string;
+  project_name: string;
+  property_count: number;
+  sample_count: number;
+  version: string;
+}
+
+export interface DatabrowserSchemaSummaryResponse {
+  classification_distribution: ApiCountItem[];
+  notes: string[];
+  schema_cards: DatabrowserSchemaCardResponse[];
+  schema_distribution: ApiCountItem[];
+  schema_options: DatabrowserSchemaOptionResponse[];
+  stats: ApiKpiItem[];
+}
