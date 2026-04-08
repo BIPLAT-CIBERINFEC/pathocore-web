@@ -12,33 +12,33 @@ export const ENTRY_CARD_CONTENT: Omit<EntryCardContent, "stat">[] = [
   {
     id: "overview",
     title: "Overview of Samples",
-    subtitle: "Snapshot estructural del contenido disponible",
+    subtitle: "Muestras, crecimiento y cobertura",
     description:
-      "Resumen agregado de muestras, crecimiento temporal, patógenos visibles y cobertura geográfica con datos reales devueltos por la API.",
+      "Vista general de muestras, evolución temporal, patógenos, regiones y distribución por schema.",
     tags: ["Samples", "Growth", "Coverage"],
   },
   {
     id: "schema",
     title: "Schema",
-    subtitle: "Cómo está modelada la base de datos",
+    subtitle: "Schemas y properties disponibles",
     description:
-      "Vista enriquecida de schemas activos, proyectos, clasificaciones y distribución de propiedades por modelo.",
+      "Explorador de schemas activos, clasificaciones y properties definidas en el modelo de datos.",
     tags: ["Schemas", "Projects", "Classification"],
   },
   {
     id: "metadata",
     title: "Metadata",
-    subtitle: "Sample, bioinfo y host information",
+    subtitle: "Muestra, bioinformática y host",
     description:
-      "Tarjetas desplegables con propiedades prioritarias, paneles agregados y cobertura real de la metadata accesible hoy.",
+      "Propiedades agregadas de muestra, bioinformática y host con filtros por schema y distribuciones.",
     tags: ["Sample metadata", "Bioinfo", "Host"],
   },
   {
     id: "variant",
     title: "Variant",
-    subtitle: "Referencias y paisaje de variantes",
+    subtitle: "Búsqueda y resumen de variantes",
     description:
-      "Busqueda HGVS contra la API real con genomas de referencia, filtros de metadata, recuentos agregados y tabla per-variant.",
+      "Genomas de referencia, conteos de variantes y búsqueda HGVS conectada a la API real.",
     tags: ["Reference genomes", "Variants", "Projects"],
   },
 ];

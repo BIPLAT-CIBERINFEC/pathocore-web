@@ -6,6 +6,7 @@ import {
   PieChartPanel,
 } from "@/components/databrowser/chart-card";
 import { DataStatusPanel } from "@/components/databrowser/data-status-panel";
+import { GenomicPageHeader } from "@/components/databrowser/genomic-page-header";
 import { PropertyAccordionCard } from "@/components/databrowser/property-accordion-card";
 import { SectionHeader } from "@/components/databrowser/section-header";
 import { StatCard } from "@/components/databrowser/stat-card";
@@ -262,15 +263,10 @@ export function MetadataPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="surface-shell border-white/70 bg-white/84">
-        <CardContent className="px-6 py-8 lg:px-8 lg:py-10">
-          <SectionHeader
-            description="La entrega prioriza Metadata con tres subsecciones navegables, paneles agregados y propiedades desplegables conectadas a la API actual. No se degrada a tabla tecnica plana."
-            eyebrow="Metadata"
-            title="Sample metadata, bioinformatics and host information"
-          />
-        </CardContent>
-      </Card>
+      <GenomicPageHeader
+        currentSection="Metadata"
+        sectionDescription="Vista centrada en sample metadata, sample bioinfo y host information, con filtros por schema y propiedades desplegables sobre datos agregados reales."
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {snapshot.metadata.stats.map((kpi, index) => (
