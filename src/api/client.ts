@@ -1,12 +1,16 @@
 import { DEFAULT_API_BASE_URL } from "@/lib/constants";
 import type {
   ApiCredentials,
+  DatabrowserPropertyDistributionResponse,
+  DatabrowserSummaryQuery,
   DatabrowserMetadataSummaryResponse,
   DatabrowserOverviewSummaryResponse,
   DatabrowserSchemaSummaryResponse,
   PaginatedResponse,
   SampleListItem,
+  SampleListQuery,
   SampleMetadataApiItem,
+  SampleMetadataSearchResult,
   SchemaDetailResponse,
   SchemaListItem,
   VariantFilterOptionsResponse,
@@ -18,7 +22,7 @@ import type {
 
 interface RequestOptions {
   path: string;
-  query?: Record<string, number | string | undefined>;
+  query?: Record<string, number | string | undefined> | undefined;
 }
 
 interface ApiErrorPayload {
@@ -103,6 +107,13 @@ export class PathocoreApiClient {
     return this.getJson<SchemaListItem[]>({ path: "/schema" });
   }
 
+  listSamplesPage(query?: SampleListQuery) {
+    return this.getJson<PaginatedResponse<SampleListItem>>({
+      path: "/samples",
+      query: query ? { ...query } : undefined,
+    });
+  }
+
   getSchemaDetail(schemaName: string, schemaVersion: string) {
     return this.getJson<SchemaDetailResponse>({
       path: `/schema/${encodeURIComponent(schemaName)}/${encodeURIComponent(schemaVersion)}`,
@@ -149,6 +160,57 @@ export class PathocoreApiClient {
     }
   }
 
+  async searchSampleMetadata(filters: string[], match: "all" | "any" = "all") {
+    try {
+      const url = new URL(`${this.baseUrl}/samples/metadata/search`, window.location.origin);
+      filters.forEach((filter) => {
+        url.searchParams.append("filter", filter);
+      });
+      url.searchParams.set("match", match);
+
+      const authorization = buildBasicAuthHeader(this.credentials);
+      const headers: Record<string, string> = {
+        Accept: "application/json",
+      };
+
+      if (authorization) {
+        headers.Authorization = authorization;
+      }
+
+      const response = await fetch(url.toString(), {
+        credentials: "include",
+        headers,
+        method: "GET",
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { detail?: string; error?: string }
+        | SampleMetadataSearchResult[]
+        | null;
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return [];
+        }
+
+        const message =
+          (payload as { detail?: string; error?: string } | null)?.error ||
+          (payload as { detail?: string; error?: string } | null)?.detail ||
+          `API request failed with status ${response.status}`;
+
+        throw new ApiError(message, response.status);
+      }
+
+      return payload as SampleMetadataSearchResult[];
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return [];
+      }
+
+      throw error;
+    }
+  }
+
   getVariantFilterOptions() {
     return this.getJson<VariantFilterOptionsResponse>({
       path: "/variants/filter-options",
@@ -182,21 +244,37 @@ export class PathocoreApiClient {
     });
   }
 
-  getDatabrowserOverviewSummary() {
+  getDatabrowserOverviewSummary(query?: DatabrowserSummaryQuery) {
     return this.getJson<DatabrowserOverviewSummaryResponse>({
       path: "/databrowser/overview-summary",
+      query: query ? { ...query } : undefined,
     });
   }
 
-  getDatabrowserMetadataSummary() {
+  getDatabrowserMetadataSummary(query?: DatabrowserSummaryQuery) {
     return this.getJson<DatabrowserMetadataSummaryResponse>({
       path: "/databrowser/metadata-summary",
+      query: query ? { ...query } : undefined,
     });
   }
 
-  getDatabrowserSchemaSummary() {
+  getDatabrowserSchemaSummary(query?: DatabrowserSummaryQuery) {
     return this.getJson<DatabrowserSchemaSummaryResponse>({
       path: "/databrowser/schema-summary",
+      query: query ? { ...query } : undefined,
+    });
+  }
+
+  getDatabrowserPropertyDistribution(
+    property: string,
+    query?: DatabrowserSummaryQuery,
+  ) {
+    return this.getJson<DatabrowserPropertyDistributionResponse>({
+      path: "/databrowser/metadata/property-distribution",
+      query: {
+        ...query,
+        property,
+      },
     });
   }
 }

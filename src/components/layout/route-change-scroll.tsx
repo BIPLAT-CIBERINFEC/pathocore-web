@@ -18,9 +18,7 @@ export function RouteChangeScroll() {
     }
 
     const frameId = window.requestAnimationFrame(() => {
-      const anchor = document.querySelector<HTMLElement>(
-        "[data-route-scroll-anchor='genomic']",
-      );
+      const anchor = document.querySelector<HTMLElement>("[data-route-scroll-anchor]");
 
       if (!anchor) {
         scrollTo(0);
