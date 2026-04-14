@@ -4,8 +4,13 @@ import {
 import { motion } from "framer-motion";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ConnectionPanel } from "@/components/layout/connection-panel";
+import { GlobalNav } from "@/components/layout/global-nav";
+import { AboutPage } from "@/pages/about-page";
 import { DatabrowserHomePage } from "@/pages/home-page";
+import { MepramAlertsPage } from "@/pages/mepram-alerts-page";
+import { MepramExplorerPage } from "@/pages/mepram-explorer-page";
 import { MetadataPage } from "@/pages/metadata-page";
+import { MepramDataPage } from "@/pages/mepram-page";
 import { OverviewPage } from "@/pages/overview-page";
 import { SchemaPage } from "@/pages/schema-page";
 import { VariantPage } from "@/pages/variant-page";
@@ -33,6 +38,7 @@ export function AppShell() {
                 Portal web para consultar datos agregados y datos genómicos de
                 PathoCore desde la API.
               </p>
+              <GlobalNav />
             </div>
             <ConnectionPanel />
           </div>
@@ -44,11 +50,25 @@ export function AppShell() {
             transition={{ duration: 0.28 }}
           >
             <Routes>
+              <Route element={<AboutPage />} path="/about-us" />
               <Route element={<DatabrowserHomePage />} path="/" />
               <Route element={<OverviewPage />} path="/overview" />
               <Route element={<SchemaPage />} path="/schema" />
               <Route element={<MetadataPage />} path="/metadata" />
               <Route element={<VariantPage />} path="/variant" />
+              <Route
+                element={<Navigate replace to="/use-cases/mepram/data" />}
+                path="/use-cases/mepram"
+              />
+              <Route element={<MepramDataPage />} path="/use-cases/mepram/data" />
+              <Route
+                element={<MepramExplorerPage />}
+                path="/use-cases/mepram/operational-isolate-explorer"
+              />
+              <Route
+                element={<MepramAlertsPage />}
+                path="/use-cases/mepram/alerts-genomic-surveillance"
+              />
               <Route element={<Navigate replace to="/" />} path="*" />
             </Routes>
           </motion.div>
