@@ -65,7 +65,38 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
+export interface SampleListQuery {
+  collecting_institution?: string;
+  collecting_lab_sample_id?: string;
+  created_at_from?: string;
+  created_at_to?: string;
+  microbiology_lab_sample_id?: string;
+  page?: number;
+  page_size?: number;
+  sample_unique_id?: string;
+  schema_name?: string;
+  schema_version?: string;
+  sequencing_date_from?: string;
+  sequencing_date_to?: string;
+  sequencing_sample_id?: string;
+  submitting_lab_sample_id?: string;
+}
+
 export type SampleMetadataApiItem = Record<string, string | null>;
+
+export interface SampleMetadataSearchResult {
+  sample_unique_id: string;
+  values: Record<string, string | string[] | null>;
+}
+
+export interface DatabrowserSummaryQuery {
+  date_from?: string;
+  date_to?: string;
+  project_name?: string;
+  schema_name?: string;
+  schema_version?: string;
+  sequencing_platform?: string;
+}
 
 export interface VariantFilterOptionsResponse {
   collection_date: {
@@ -267,4 +298,11 @@ export interface DatabrowserSchemaSummaryResponse {
   schema_distribution: ApiCountItem[];
   schema_options: DatabrowserSchemaOptionResponse[];
   stats: ApiKpiItem[];
+}
+
+export interface DatabrowserPropertyDistributionResponse {
+  matched_samples: number;
+  property: string;
+  total_samples: number;
+  values: ApiCountItem[];
 }

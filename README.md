@@ -9,6 +9,8 @@ La app incluye:
 - Schema
 - Metadata
 - Variant
+- Caso de uso especifico `Mepram`
+- Placeholder `About Us`
 
 Tambien existe un bloque placeholder para `Datos agregados / Records`, reservado para trabajo futuro del equipo frontend.
 
@@ -106,7 +108,19 @@ Segun la vista, la app consume endpoints reales del backend, incluyendo:
 - GET /v1/databrowser/overview-summary
 - GET /v1/databrowser/metadata-summary
 - GET /v1/databrowser/schema-summary
+- GET /v1/databrowser/metadata/property-distribution
+- GET /v1/samples
+- GET /v1/samples/{sample_unique_id}/metadata
+- GET /v1/samples/metadata/search
 - GET /v1/variants/summary
 - GET /v1/variants/reference-genomes
 - GET /v1/variants/filter-options
 - GET /v1/variants/search
+
+## Rutas principales
+
+- `/` -> Generic Databrowser
+- `/overview`, `/schema`, `/metadata`, `/variant` -> vistas del databrowser genérico
+- `/use-cases/mepram` -> dashboard específico de vigilancia para MEPRAM
+- `/about-us` -> placeholder institucional
+
