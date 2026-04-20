@@ -34,7 +34,6 @@ export function DatabrowserProvider({ children }: PropsWithChildren) {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setStatus((currentStatus) => (snapshot ? "success" : currentStatus));
     setError(null);
     setStatus("loading");
 
@@ -51,7 +50,7 @@ export function DatabrowserProvider({ children }: PropsWithChildren) {
       setError(nextError);
       setStatus("error");
     }
-  }, [credentials, snapshot]);
+  }, [credentials]);
 
   useEffect(() => {
     void refresh();

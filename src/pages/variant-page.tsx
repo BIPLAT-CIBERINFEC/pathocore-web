@@ -59,23 +59,18 @@ export function VariantPage() {
         referenceGenomeOptions={snapshot.variant.referenceGenomeOptions}
       />
 
-      <section className="grid gap-5 xl:grid-cols-2">
+      <section>
         <BarChartPanel
           data={snapshot.variant.variantSoftware}
           description="Variant calling software visible in the current dataset"
           title="Variant software"
-        />
-        <BarChartPanel
-          data={snapshot.variant.projectCoverage}
-          description="Projects with at least one sample carrying variant metrics"
-          title="Projects with variants"
         />
       </section>
 
       <Card className="border-white/70 bg-white/88">
         <CardContent className="p-6">
           <SectionHeader
-            description="Distribucion de clases de impacto agregadas por el backend para el scope visible del usuario."
+            description="Distribucion de clases de impacto agregadas por el backend para el scope público global."
             eyebrow="Impact Classes"
             title="Impact classes"
           />
@@ -89,7 +84,7 @@ export function VariantPage() {
             </div>
           ) : (
             <div className="mt-6 rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-sm leading-7 text-slate-600">
-              No impact classes were returned for the current authenticated scope.
+              No impact classes were returned for the public global scope.
             </div>
           )}
           <div className="mt-6 grid gap-3">

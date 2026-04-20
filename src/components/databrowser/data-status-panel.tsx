@@ -36,7 +36,7 @@ export function DataStatusPanel({
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-7 text-slate-500">
               {error ??
-                "The databrowser could not be loaded. Check credentials or an existing backend session."}
+                "The public databrowser could not be loaded. Check that the backend API is reachable."}
             </p>
             {onRetry ? (
               <Button className="mt-6" onClick={onRetry} variant="outline">
