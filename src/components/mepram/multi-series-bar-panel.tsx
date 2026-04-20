@@ -36,13 +36,18 @@ export function MultiSeriesBarPanel({
       ) : null}
       <div className="h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chart.data} margin={{ bottom: 8, left: 0, right: 12, top: 8 }}>
+          <BarChart data={chart.data} margin={{ bottom: 26, left: 0, right: 12, top: 8 }}>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
             <XAxis
+              angle={-35}
               axisLine={false}
               dataKey="label"
+              height={76}
+              interval={0}
+              textAnchor="end"
               tick={{ fill: "#64748b", fontSize: 12 }}
               tickLine={false}
+              tickMargin={14}
             />
             <YAxis
               axisLine={false}

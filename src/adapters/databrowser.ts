@@ -1062,7 +1062,7 @@ export function buildDatabrowserSnapshot({
       impactClassesAvailable: impactClassChart.length > 0,
       notes: [
         "La vista Variant consume /variants/summary, /variants/reference-genomes, /variants/filter-options y /variants/search.",
-        "El backend aplica el scope del usuario autenticado; un usuario de MEPRAM no ve variantes de relecov y viceversa.",
+        "El backend aplica el scope del usuario autenticado; un usuario de un caso de uso no ve variantes de otros casos si no tiene permisos.",
         "Las busquedas sin resultados devuelven 404 y se muestran como estado vacio, no como fallo critico de UI.",
       ],
       projectCoverage,

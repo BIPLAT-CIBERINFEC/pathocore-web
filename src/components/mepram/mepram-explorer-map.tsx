@@ -214,6 +214,14 @@ function buildRegions(rows: MepramExplorerRow[]): ExplorerRegionSummary[] {
     .sort((left, right) => right.samples - left.samples);
 }
 
+function markerDiameter(samples: number, maxSamples: number) {
+  if (maxSamples <= 0) {
+    return 26;
+  }
+
+  return 24 + Math.round((samples / maxSamples) * 24);
+}
+
 export function MepramExplorerMap({
   rows,
   simulated,
@@ -222,6 +230,10 @@ export function MepramExplorerMap({
   simulated: boolean;
 }) {
   const regions = useMemo(() => buildRegions(rows), [rows]);
+  const maxSamples = useMemo(
+    () => Math.max(...regions.map((region) => region.samples), 1),
+    [regions],
+  );
   const [activeCode, setActiveCode] = useState<string | null>(regions[0]?.regionCode ?? null);
   const activeRegion = useMemo(
     () => regions.find((region) => region.regionCode === activeCode) ?? regions[0] ?? null,
@@ -281,26 +293,32 @@ export function MepramExplorerMap({
             />
           </svg>
 
-          {regions.map((region, index) => (
-            <button
-              className="absolute -translate-x-1/2 -translate-y-1/2 transition hover:scale-110"
-              key={region.regionCode}
-              onClick={() => setActiveCode(region.regionCode)}
-              onFocus={() => setActiveCode(region.regionCode)}
-              onMouseEnter={() => setActiveCode(region.regionCode)}
-              style={{ left: `${region.x}%`, top: `${region.y}%` }}
-              type="button"
-            >
-              <div
-                className="flex h-7 w-7 items-center justify-center rounded-full border-4 border-white text-[10px] font-semibold text-white shadow-lg"
-                style={{
-                  backgroundColor: REGION_PALETTE[index % REGION_PALETTE.length],
-                }}
+          {regions.map((region, index) => {
+            const diameter = markerDiameter(region.samples, maxSamples);
+
+            return (
+              <button
+                className="absolute -translate-x-1/2 -translate-y-1/2 transition hover:scale-110"
+                key={region.regionCode}
+                onClick={() => setActiveCode(region.regionCode)}
+                onFocus={() => setActiveCode(region.regionCode)}
+                onMouseEnter={() => setActiveCode(region.regionCode)}
+                style={{ left: `${region.x}%`, top: `${region.y}%` }}
+                type="button"
               >
-                {region.samples}
-              </div>
-            </button>
-          ))}
+                <div
+                  className="flex items-center justify-center rounded-full border-4 border-white text-[10px] font-semibold text-white shadow-lg"
+                  style={{
+                    backgroundColor: REGION_PALETTE[index % REGION_PALETTE.length],
+                    height: `${diameter}px`,
+                    width: `${diameter}px`,
+                  }}
+                >
+                  {region.samples}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         <div className="space-y-4">

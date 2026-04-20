@@ -22,7 +22,7 @@ export function useMepram() {
       const nextError =
         loadError instanceof ApiError
           ? loadError.message
-          : "No se ha podido cargar la vista MEPRAM.";
+          : "No se ha podido cargar la vista del caso de uso.";
       setError(nextError);
       setStatus("error");
     }

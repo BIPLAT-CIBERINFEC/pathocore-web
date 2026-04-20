@@ -1,15 +1,14 @@
 import { NavLink } from "react-router-dom";
 import { Activity, Radar, Siren } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const mepramNavItems = [
   {
-    description: "KPIs y lectura agregada del proyecto.",
+    description: "KPIs y lectura agregada del caso de uso.",
     icon: Radar,
-    label: "Datos del proyecto",
+    label: "Datos del caso de uso",
     to: "/use-cases/mepram/data",
   },
   {
@@ -43,19 +42,18 @@ export function MepramPageHeader({
       <CardContent className="px-6 py-8 lg:px-8 lg:py-10">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-4xl">
-            <p className="section-kicker">Casos de uso · MEPRAM</p>
+            <p className="section-kicker">Casos de uso · Nombre pendiente</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">
-              MEPRAM - vigilancia genómica
+              Caso de uso - vigilancia genómica
             </h1>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Plataforma específica para interpretar el proyecto MEPRAM desde una
-              lógica de vigilancia: estado del proyecto, explorer operativo y futura
-              capa de alertas genómicas.
+              Área específica para explorar un caso de uso de vigilancia genómica:
+              estado operativo, explorer de aislamientos y futura capa de alertas.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Badge variant="strong">Proyecto específico</Badge>
+              <Badge variant="strong">Caso de uso específico</Badge>
               <Badge variant="secondary">Vigilancia genómica</Badge>
-              <Badge variant="secondary">MEPRAM</Badge>
+              <Badge variant="secondary">Nombre pendiente</Badge>
             </div>
           </div>
           <div className="max-w-sm rounded-[1.7rem] bg-slate-950 p-5 text-white shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
@@ -107,51 +105,6 @@ export function MepramPageHeader({
               </NavLink>
             );
           })}
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                buttonVariants({
-                  size: "sm",
-                  variant: isActive ? "default" : "outline",
-                }),
-                "rounded-full",
-              )
-            }
-            to="/use-cases/mepram/data"
-          >
-            Datos del proyecto
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                buttonVariants({
-                  size: "sm",
-                  variant: isActive ? "default" : "outline",
-                }),
-                "rounded-full",
-              )
-            }
-            to="/use-cases/mepram/operational-isolate-explorer"
-          >
-            Operational isolate explorer
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                buttonVariants({
-                  size: "sm",
-                  variant: isActive ? "default" : "outline",
-                }),
-                "rounded-full",
-              )
-            }
-            to="/use-cases/mepram/alerts-genomic-surveillance"
-          >
-            Alertas vigilancia genómica
-          </NavLink>
         </div>
       </CardContent>
     </Card>

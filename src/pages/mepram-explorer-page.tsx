@@ -16,13 +16,13 @@ export function MepramExplorerPage() {
     <div className="space-y-6">
       <MepramPageHeader
         currentSection="Operational isolate explorer"
-        sectionDescription="Capa de trabajo operativo para buscar, filtrar y revisar aislamientos del proyecto en una tabla accionable."
+        sectionDescription="Capa de trabajo operativo para buscar, filtrar y revisar aislamientos del caso de uso en una tabla accionable."
       />
 
       <Card className="border-white/70 bg-white/88">
         <CardContent className="p-6">
           <SectionHeader
-            description="Explorer específico para analistas del proyecto con cuatro filtros operativos visibles, capa geográfica enlazada con la tabla y un bloque avanzado para fechas, plataforma y perfil de resistencia."
+            description="Explorer específico para analistas del caso de uso con filtros operativos visibles, capa geográfica enlazada con la tabla y un bloque avanzado para plataforma, centro y perfil de resistencia."
             eyebrow="Explorer"
             title="Operational isolate explorer"
           />
