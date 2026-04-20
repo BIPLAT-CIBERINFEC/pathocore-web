@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const ALERTS_CONTACT_EMAIL = import.meta.env.VITE_MEPRAM_ALERTS_CONTACT_EMAIL?.trim() || "";
+const ALERTS_CONTACT_EMAIL =
+  import.meta.env.VITE_USE_CASE_ALERTS_CONTACT_EMAIL?.trim() ||
+  import.meta.env.VITE_MEPRAM_ALERTS_CONTACT_EMAIL?.trim() ||
+  "";
 
 const moderationSteps = [
   {
@@ -55,7 +58,7 @@ export function MepramAlertsPage() {
     <div className="space-y-6">
       <MepramPageHeader
         currentSection="Alertas vigilancia genómica"
-        sectionDescription="Tablón validado de alertas, workflow de revisión y puntos de contacto para señales de vigilancia en MEPRAM."
+        sectionDescription="Tablón validado de alertas, workflow de revisión y puntos de contacto para señales de vigilancia del caso de uso."
       />
 
       <Card className="border-white/70 bg-white/88">
@@ -145,7 +148,7 @@ export function MepramAlertsPage() {
                     </Button>
                   ) : (
                     <Badge variant="outline">
-                      Configurar `VITE_MEPRAM_ALERTS_CONTACT_EMAIL`
+                      Configurar `VITE_USE_CASE_ALERTS_CONTACT_EMAIL`
                     </Badge>
                   )}
                   <Badge variant="secondary">
@@ -160,7 +163,7 @@ export function MepramAlertsPage() {
           <Card className="border-white/70 bg-white/88">
             <CardContent className="p-6">
               <SectionHeader
-                description="Sitios de interés y espacio reservado para documentación descargable de MEPRAM."
+                description="Sitios de interés y espacio reservado para documentación descargable del caso de uso."
                 eyebrow="Recursos"
                 title="Documentación y enlaces"
               />

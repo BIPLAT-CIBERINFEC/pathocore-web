@@ -30,16 +30,16 @@ export function MepramDataPage() {
   return (
     <div className="space-y-6">
       <MepramPageHeader
-        currentSection="Datos del proyecto"
-        sectionDescription="Lectura rápida del estado de MEPRAM con métricas básicas, resultados agregados y paneles de interés para vigilancia."
+        currentSection="Datos del caso de uso"
+        sectionDescription="Lectura rápida del estado del caso de uso con métricas básicas, resultados agregados y paneles de interés para vigilancia."
       />
 
       <Card className="border-white/70 bg-white/88">
         <CardContent className="p-6">
           <SectionHeader
-            description="Indicadores básicos para saber cuántas muestras y centros están ya dentro de la capa visible del proyecto."
+            description="Indicadores básicos para saber cuántas muestras y centros están ya dentro de la capa visible del caso de uso."
             eyebrow="Indicadores"
-            title="Estado operativo del proyecto"
+            title="Estado operativo del caso de uso"
           />
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {snapshot.overview.kpis.map((kpi, index) => (
@@ -58,9 +58,9 @@ export function MepramDataPage() {
       <Card className="border-white/70 bg-white/88">
         <CardContent className="p-6">
           <SectionHeader
-            description="Snapshot específico de MEPRAM orientado a investigadores de vigilancia. Cuando la API no expone todavía patógenos o genes de resistencia agregados, la UI lo marca como simulación."
+            description="Snapshot específico del caso de uso orientado a investigadores de vigilancia. Cuando la API no expone todavía patógenos o genes de resistencia agregados, la UI lo marca como simulación."
             eyebrow="Datos y resultados"
-            title="Panorama de vigilancia del proyecto"
+            title="Panorama de vigilancia del caso de uso"
           />
           <div className="mt-6 flex flex-wrap gap-2">
             {snapshot.overview.pathogenDistributionSimulated ||
@@ -68,7 +68,7 @@ export function MepramDataPage() {
             snapshot.overview.territorialCoverageSimulated ? (
               <Badge variant="outline">Incluye paneles simulados</Badge>
             ) : null}
-            <Badge variant="secondary">Snapshot MEPRAM</Badge>
+            <Badge variant="secondary">Snapshot del caso de uso</Badge>
           </div>
         </CardContent>
       </Card>
@@ -76,12 +76,12 @@ export function MepramDataPage() {
       <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <PieChartPanel
           data={snapshot.overview.projectPathogenDistribution}
-          description="Distribución de patógenos de interés en MEPRAM. Si backend no expone organism/species, se muestra una simulación controlada."
+          description="Distribución de patógenos de interés en el caso de uso. Si backend no expone organism/species, se muestra una simulación controlada."
           title="Distribución de patógenos"
         />
         <MultiSeriesBarPanel
           chart={snapshot.overview.annualPathogenSeries}
-          description="Volumen anual de muestras agrupadas por patógeno para lectura de tendencias del proyecto."
+          description="Volumen anual de muestras agrupadas por patógeno para lectura de tendencias del caso de uso."
           title="Muestras anuales agrupadas por patógeno"
         />
       </section>
