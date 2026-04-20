@@ -67,10 +67,16 @@ function buildUrl(baseUrl: string, { path, query }: RequestOptions) {
 export class PathocoreApiClient {
   baseUrl: string;
   credentials: ApiCredentials | null;
+  requestCredentials: RequestCredentials;
 
-  constructor(credentials: ApiCredentials | null, baseUrl = DEFAULT_API_BASE_URL) {
+  constructor(
+    credentials: ApiCredentials | null,
+    baseUrl = DEFAULT_API_BASE_URL,
+    requestCredentials: RequestCredentials = credentials ? "include" : "omit",
+  ) {
     this.baseUrl = baseUrl;
     this.credentials = credentials;
+    this.requestCredentials = requestCredentials;
   }
 
   async getJson<T>(options: RequestOptions): Promise<T> {
@@ -84,7 +90,7 @@ export class PathocoreApiClient {
     }
 
     const response = await fetch(buildUrl(this.baseUrl, options), {
-      credentials: "include",
+      credentials: this.requestCredentials,
       headers,
       method: "GET",
     });
@@ -178,7 +184,7 @@ export class PathocoreApiClient {
       }
 
       const response = await fetch(url.toString(), {
-        credentials: "include",
+        credentials: this.requestCredentials,
         headers,
         method: "GET",
       });

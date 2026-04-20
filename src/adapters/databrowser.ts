@@ -677,7 +677,7 @@ function buildHomeCards(
   totalVariantObservations: number,
 ) {
   const statByEntry: Record<EntryCardContent["id"], string> = {
-    metadata: `${formatInteger(populatedPriorityProperties)} priority properties`,
+    metadata: `${formatInteger(populatedPriorityProperties)} metadata properties`,
     overview: `${formatInteger(totalSamples)} samples`,
     schema: `${formatInteger(totalSchemas)} active schemas`,
     variant: `${formatInteger(totalVariantObservations)} variant observations`,
@@ -958,8 +958,8 @@ export function buildDatabrowserSnapshot({
           value: "3",
         },
         {
-          label: "Priority properties with data",
-          note: "Propiedades priorizadas con al menos una muestra",
+          label: "Properties with data",
+          note: "Properties con al menos una muestra",
           value: formatInteger(populatedPriorityProperties),
         },
         {

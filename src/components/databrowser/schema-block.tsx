@@ -240,7 +240,7 @@ export function SchemaBlock({ defaultOpen = false, schemaCard }: SchemaBlockProp
           <p className="section-kicker">Schema Block</p>
           <CardTitle className="mt-2 text-3xl">{schemaCard.name}</CardTitle>
           <p className="mt-3 text-sm leading-7 text-slate-500">
-            Project: {schemaCard.projectName} | Version {schemaCard.version} | Generated{" "}
+            Public global schema | Version {schemaCard.version} | Generated{" "}
             {formatDateTime(schemaCard.generatedAt)}
           </p>
         </div>
