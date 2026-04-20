@@ -31,6 +31,51 @@ const sectionOrder: MetadataSubsectionData["id"][] = [
   "host-information",
 ];
 
+interface MetadataScopeOption {
+  key: string;
+  label: string;
+  sampleCount: number;
+  schemaCount: number;
+  schemaKeys: string[];
+}
+
+function buildMetadataScopeOptions(options: MetadataSchemaOption[]) {
+  const scopesByProject = new Map<string, MetadataScopeOption>();
+
+  options.forEach((option) => {
+    const label = option.projectName?.trim() || "Caso de uso sin nombre";
+    const key = label.toLowerCase();
+    const current = scopesByProject.get(key) ?? {
+      key,
+      label,
+      sampleCount: 0,
+      schemaCount: 0,
+      schemaKeys: [],
+    };
+
+    scopesByProject.set(key, {
+      ...current,
+      sampleCount: current.sampleCount + option.sampleCount,
+      schemaCount: current.schemaCount + 1,
+      schemaKeys: [...current.schemaKeys, option.key],
+    });
+  });
+
+  return Array.from(scopesByProject.values()).sort((left, right) =>
+    left.label.localeCompare(right.label),
+  );
+}
+
+function sameSchemaScope(left: string[], right: string[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const rightSet = new Set(right);
+
+  return left.every((schemaKey) => rightSet.has(schemaKey));
+}
+
 function mergeChartValues(
   groupedValues: ChartDatum[][],
   referenceValues: ChartDatum[] = [],
@@ -165,15 +210,20 @@ function mergeSectionsForSelectedSchemas(
 }
 
 function MetadataSchemaFilter({
+  isAuthenticated,
   options,
   selectedSchemaKeys,
   setSelectedSchemaKeys,
 }: {
+  isAuthenticated: boolean;
   options: MetadataSchemaOption[];
   selectedSchemaKeys: string[];
   setSelectedSchemaKeys: Dispatch<SetStateAction<string[]>>;
 }) {
-  const selectedSchemaSet = new Set(selectedSchemaKeys);
+  const scopeOptions = buildMetadataScopeOptions(options);
+  const selectedScope = scopeOptions.find((scope) =>
+    sameSchemaScope(scope.schemaKeys, selectedSchemaKeys),
+  );
 
   return (
     <Card className="border-white/70 bg-white/88">
@@ -188,15 +238,15 @@ function MetadataSchemaFilter({
               Filter metadata properties by schema
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
-              Default scope keeps the current aggregate view. Selecting schemas updates
-              summary charts and property accordions using only samples and schema
-              definitions from that scope.
+              `All schemas` mantiene la vista agregada pública. Si el usuario
+              inicia sesión, la API puede devolver scopes adicionales para ver
+              únicamente los datos de su caso de uso.
             </p>
           </div>
           <Badge variant={selectedSchemaKeys.length === 0 ? "strong" : "secondary"}>
             {selectedSchemaKeys.length === 0
               ? "All schemas"
-              : `${selectedSchemaKeys.length} selected`}
+              : selectedScope?.label ?? "Custom scope"}
           </Badge>
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -207,38 +257,40 @@ function MetadataSchemaFilter({
           >
             All schemas
           </Button>
-          {options.map((option) => {
-            const selected = selectedSchemaSet.has(option.key);
+          {isAuthenticated
+            ? scopeOptions.map((scope) => {
+                const selected = sameSchemaScope(scope.schemaKeys, selectedSchemaKeys);
 
-            return (
-              <Button
-                key={option.key}
-                onClick={() =>
-                  setSelectedSchemaKeys((current) =>
-                    current.includes(option.key)
-                      ? current.filter((schemaKey) => schemaKey !== option.key)
-                      : [...current, option.key],
-                  )
-                }
-                size="sm"
-                title={`${option.projectName} | ${option.sampleCount} samples`}
-                variant={selected ? "default" : "outline"}
-              >
-                {option.label}
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[0.65rem]">
-                  {option.sampleCount}
-                </span>
-              </Button>
-            );
-          })}
+                return (
+                  <Button
+                    key={scope.key}
+                    onClick={() => setSelectedSchemaKeys(scope.schemaKeys)}
+                    size="sm"
+                    title={`${scope.schemaCount} schemas | ${scope.sampleCount} samples`}
+                    variant={selected ? "default" : "outline"}
+                  >
+                    {scope.label}
+                    <span className="rounded-full bg-white/20 px-2 py-0.5 text-[0.65rem]">
+                      {scope.sampleCount}
+                    </span>
+                  </Button>
+                );
+              })
+            : null}
         </div>
+        {!isAuthenticated ? (
+          <p className="mt-3 text-xs leading-5 text-slate-400">
+            Para ver un scope específico de caso de uso, inicia sesión desde `API access`.
+            El backend debe validar qué casos de uso puede consultar cada usuario.
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );
 }
 
 export function MetadataPage() {
-  const { error, refresh, snapshot, status } = useDatabrowser();
+  const { credentials, error, refresh, snapshot, status } = useDatabrowser();
   const [selectedSchemaKeys, setSelectedSchemaKeys] = useState<string[]>([]);
 
   if (!snapshot) {
@@ -281,6 +333,7 @@ export function MetadataPage() {
       </section>
 
       <MetadataSchemaFilter
+        isAuthenticated={Boolean(credentials)}
         options={snapshot.metadata.schemaOptions}
         selectedSchemaKeys={selectedSchemaKeys}
         setSelectedSchemaKeys={setSelectedSchemaKeys}

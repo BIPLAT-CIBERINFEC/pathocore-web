@@ -9,7 +9,7 @@ La app incluye:
 - Schema
 - Metadata
 - Variant
-- Caso de uso especifico `Mepram`
+- Caso de uso especifico de vigilancia genomica, con nombre pendiente
 - Placeholder `About Us`
 
 Tambien existe un bloque placeholder para `Datos agregados / Records`, reservado para trabajo futuro del equipo frontend.
@@ -71,6 +71,10 @@ Variables soportadas:
   Opcional. Usuario para Basic Auth.
 - `VITE_API_BASIC_PASSWORD`
   Opcional. Password para Basic Auth.
+- `VITE_USE_CASE_DATA_MODE`
+  Opcional. Para el caso de uso actual, usar `simulated` mientras no existan endpoints ad hoc.
+- `VITE_USE_CASE_ALERTS_CONTACT_EMAIL`
+  Opcional. Correo visible en la seccion de alertas del caso de uso.
 
 Ejemplo contra otra instancia local:
 
@@ -121,6 +125,5 @@ Segun la vista, la app consume endpoints reales del backend, incluyendo:
 
 - `/` -> Generic Databrowser
 - `/overview`, `/schema`, `/metadata`, `/variant` -> vistas del databrowser genérico
-- `/use-cases/mepram` -> dashboard específico de vigilancia para MEPRAM
+- `/use-cases/mepram` -> dashboard específico de vigilancia para el caso de uso
 - `/about-us` -> placeholder institucional
-

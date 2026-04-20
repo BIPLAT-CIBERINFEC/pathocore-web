@@ -140,7 +140,7 @@ export function MepramAlertsBoard() {
       <CardHeader>
         <SectionHeader
           action={<Badge variant="secondary">{VALIDATED_ALERTS.length} alertas visibles</Badge>}
-          description="Tablón de alertas validadas para la capa pública de MEPRAM. La publicación final debe ocurrir solo después de la revisión administrativa por correo y la validación manual del equipo responsable."
+          description="Tablón de alertas validadas para la capa pública del caso de uso. La publicación final debe ocurrir solo después de la revisión administrativa por correo y la validación manual del equipo responsable."
           eyebrow="Alertas"
           title="Tablón de alertas validadas"
         />

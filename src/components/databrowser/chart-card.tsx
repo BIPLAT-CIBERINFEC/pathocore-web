@@ -61,7 +61,7 @@ export function BarChartPanel({
   data,
   description,
   title,
-  xAxisLabelMode = "default",
+  xAxisLabelMode = "diagonal",
 }: BarChartPanelProps) {
   const hasDiagonalLabels = xAxisLabelMode === "diagonal";
   const xAxisProps = hasDiagonalLabels

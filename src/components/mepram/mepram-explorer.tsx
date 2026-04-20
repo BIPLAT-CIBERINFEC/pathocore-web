@@ -1,14 +1,15 @@
-import { useMemo, useState } from "react";
-import { Download, ExternalLink, Search, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { MepramExplorerMap } from "@/components/mepram/mepram-explorer-map";
 import { SectionHeader } from "@/components/databrowser/section-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { MepramExplorerData, MepramExplorerRow } from "@/types/mepram";
+import type { MepramExplorerData } from "@/types/mepram";
 
 const CARBA_OPTIONS = ["OXA", "NDM", "VIM", "KPC", "IMP"];
+const PAGE_SIZE = 20;
 
 function SelectField({
   label,
@@ -31,7 +32,7 @@ function SelectField({
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
-        <option value="">All</option>
+        <option value="">Todos</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -42,66 +43,42 @@ function SelectField({
   );
 }
 
+function DateField({
+  label,
+  max,
+  min,
+  onChange,
+  value,
+}: {
+  label: string;
+  max?: string | undefined;
+  min?: string | undefined;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </span>
+      <input
+        className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-slate-400"
+        max={max}
+        min={min}
+        onChange={(event) => onChange(event.target.value)}
+        type="date"
+        value={value}
+      />
+    </label>
+  );
+}
+
 function normalizeSequenceType(value: string | null | undefined) {
   if (!value) {
     return "";
   }
 
   return value.toUpperCase().replace(/[\s-]/g, "").replace(/^ST/, "");
-}
-
-function csvEscape(value: string | null | undefined) {
-  if (!value) {
-    return "";
-  }
-
-  return `"${value.replace(/"/g, '""')}"`;
-}
-
-function exportRows(rows: MepramExplorerRow[], simulated: boolean) {
-  const header = [
-    "sample_id",
-    "collection_date",
-    "autonomous_community",
-    "center",
-    "pathogen",
-    "sequence_type",
-    "carbapenemase",
-    "resistance_profile",
-    "sequencing_platform",
-    "infection_type",
-    "operational_mode",
-  ];
-  const body = rows.map((row) =>
-    [
-      row.sampleId,
-      row.collectionDate,
-      row.region ?? row.collectingRegion ?? row.submittingRegion,
-      row.submittingInstitution,
-      row.pathogen,
-      row.sequenceType,
-      row.carbapenemase,
-      row.resistanceProfile,
-      row.sequencingPlatform,
-      row.infectionType,
-      simulated ? "simulated" : "api",
-    ]
-      .map((value) => csvEscape(value))
-      .join(","),
-  );
-
-  const blob = new Blob([[header.join(","), ...body].join("\n")], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = `mepram-operational-isolate-explorer-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 }
 
 export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
@@ -117,6 +94,7 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredRows = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -195,9 +173,20 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
     infectionType,
     sequencingPlatform,
     resistanceProfile,
-    dateFrom,
-    dateTo,
   ].filter(Boolean).length;
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const activePage = Math.min(currentPage, totalPages);
+  const paginatedRows = useMemo(() => {
+    const start = (activePage - 1) * PAGE_SIZE;
+
+    return filteredRows.slice(start, start + PAGE_SIZE);
+  }, [activePage, filteredRows]);
+  const pageStart = filteredRows.length > 0 ? (activePage - 1) * PAGE_SIZE + 1 : 0;
+  const pageEnd = Math.min(activePage * PAGE_SIZE, filteredRows.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredRows]);
 
   const resetFilters = () => {
     setSearch("");
@@ -222,7 +211,7 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
               {filteredRows.length} / {explorer.totalLoaded} rows
             </Badge>
           }
-          description="Buscador operativo de aislamientos MEPRAM con filtros principales por patógeno, comunidad autónoma, ST y carbapenemasa. La búsqueda libre es opcional y el mapa territorial se mantiene alineado con el mismo subconjunto que la tabla."
+          description="Buscador operativo de aislamientos del caso de uso. La fecha de recogida queda como filtro prioritario, y el mapa territorial se mantiene alineado con el mismo subconjunto que la tabla."
           eyebrow="Explorer"
           title="Operational isolate explorer"
         />
@@ -232,7 +221,7 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_auto] lg:items-end">
             <label className="grid gap-2">
               <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                Free search · optional
+                Búsqueda libre · opcional
               </span>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
@@ -253,29 +242,25 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
               <Button onClick={resetFilters} size="sm" variant="outline">
                 Limpiar filtros
               </Button>
-              <Button
-                onClick={() => exportRows(filteredRows, explorer.operationalFieldsSimulated)}
-                size="sm"
-                variant="outline"
-                disabled={filteredRows.length === 0}
-              >
-                <Download className="h-4 w-4" />
-                Descargar CSV
-              </Button>
-              <Button
-                onClick={() => window.open("https://microreact.org/", "_blank", "noopener,noreferrer")}
-                size="sm"
-                variant="outline"
-                disabled={filteredRows.length === 0}
-              >
-                <ExternalLink className="h-4 w-4" />
-                Ver en Microreact
-              </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <DateField
+            label="Fecha recogida desde"
+            max={dateTo || explorer.filterOptions.collectionDateMax || undefined}
+            min={explorer.filterOptions.collectionDateMin || undefined}
+            onChange={setDateFrom}
+            value={dateFrom}
+          />
+          <DateField
+            label="Fecha recogida hasta"
+            max={explorer.filterOptions.collectionDateMax || undefined}
+            min={dateFrom || explorer.filterOptions.collectionDateMin || undefined}
+            onChange={setDateTo}
+            value={dateTo}
+          />
           <SelectField
             label="Patógeno"
             onChange={setPathogen}
@@ -308,11 +293,10 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">Preview cargado desde la API real</Badge>
+          <Badge variant="outline">Dataset de trabajo del caso de uso</Badge>
           {explorer.operationalFieldsSimulated ? (
             <Badge variant="outline">Patógeno, ST y resistencias en simulación controlada</Badge>
           ) : null}
-          <Badge variant="outline">La exportación directa a Microreact sigue pendiente</Badge>
         </div>
 
         <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5">
@@ -322,8 +306,7 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
                 Advanced filters
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Fechas, plataforma, perfil de resistencia, tipo de infección y centro
-                remitente.
+                Plataforma, perfil de resistencia, tipo de infección y centro remitente.
               </p>
             </div>
             <Button
@@ -340,55 +323,29 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
           {showAdvanced ? (
             <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <SelectField
-                label="Resistance profile"
+                label="Perfil de resistencia"
                 onChange={setResistanceProfile}
                 options={explorer.filterOptions.resistanceProfiles}
                 value={resistanceProfile}
               />
               <SelectField
-                label="Platform"
+                label="Plataforma"
                 onChange={setSequencingPlatform}
                 options={explorer.filterOptions.sequencingPlatforms}
                 value={sequencingPlatform}
               />
               <SelectField
-                label="Center"
+                label="Centro remitente"
                 onChange={setCenter}
                 options={explorer.filterOptions.centers}
                 value={center}
               />
               <SelectField
-                label="Infection type"
+                label="Tipo de infección"
                 onChange={setInfectionType}
                 options={explorer.filterOptions.infectionTypes}
                 value={infectionType}
               />
-              <label className="grid gap-2">
-                <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                  Collection date from
-                </span>
-                <input
-                  className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-slate-400"
-                  max={dateTo || explorer.filterOptions.collectionDateMax || undefined}
-                  min={explorer.filterOptions.collectionDateMin || undefined}
-                  onChange={(event) => setDateFrom(event.target.value)}
-                  type="date"
-                  value={dateFrom}
-                />
-              </label>
-              <label className="grid gap-2">
-                <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                  Collection date to
-                </span>
-                <input
-                  className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-slate-400"
-                  max={explorer.filterOptions.collectionDateMax || undefined}
-                  min={dateFrom || explorer.filterOptions.collectionDateMin || undefined}
-                  onChange={(event) => setDateTo(event.target.value)}
-                  type="date"
-                  value={dateTo}
-                />
-              </label>
             </div>
           ) : null}
         </div>
@@ -401,7 +358,6 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
                   <th className="px-4 py-3 font-medium">Sample ID</th>
                   <th className="px-4 py-3 font-medium">Collection date</th>
                   <th className="px-4 py-3 font-medium">CCAA</th>
-                  <th className="px-4 py-3 font-medium">Center</th>
                   <th className="px-4 py-3 font-medium">Pathogen</th>
                   <th className="px-4 py-3 font-medium">ST</th>
                   <th className="px-4 py-3 font-medium">Carba</th>
@@ -410,8 +366,8 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.length > 0 ? (
-                  filteredRows.map((row) => (
+                {paginatedRows.length > 0 ? (
+                  paginatedRows.map((row) => (
                     <tr
                       key={row.sampleId}
                       className="border-t border-slate-200 text-slate-600 transition hover:bg-slate-50/80"
@@ -421,7 +377,6 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
                       <td className="px-4 py-3">
                         {row.region ?? row.collectingRegion ?? row.submittingRegion ?? "No data"}
                       </td>
-                      <td className="px-4 py-3">{row.submittingInstitution ?? "No data"}</td>
                       <td className="px-4 py-3">{row.pathogen ?? "No data"}</td>
                       <td className="px-4 py-3">{row.sequenceType ?? "No data"}</td>
                       <td className="px-4 py-3">{row.carbapenemase ?? "No data"}</td>
@@ -431,13 +386,36 @@ export function MepramExplorer({ explorer }: { explorer: MepramExplorerData }) {
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={9}>
+                    <td className="px-4 py-8 text-center text-slate-500" colSpan={8}>
                       No hay aislamientos que encajen con el filtro actual.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <span>
+              Mostrando {pageStart}-{pageEnd} de {filteredRows.length} aislamientos
+            </span>
+            <div className="flex gap-2">
+              <Button
+                disabled={activePage <= 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                size="sm"
+                variant="outline"
+              >
+                Anterior
+              </Button>
+              <Button
+                disabled={activePage >= totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                size="sm"
+                variant="outline"
+              >
+                Siguiente
+              </Button>
+            </div>
           </div>
         </div>
 

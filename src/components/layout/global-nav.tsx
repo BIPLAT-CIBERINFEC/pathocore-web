@@ -64,7 +64,7 @@ export function GlobalNav() {
             }
             to="/use-cases/mepram/data"
           >
-            Mepram · Datos
+            Caso de uso · Datos
           </NavLink>
           <NavLink
             className={({ isActive }) =>
@@ -77,7 +77,7 @@ export function GlobalNav() {
             }
             to="/use-cases/mepram/operational-isolate-explorer"
           >
-            Mepram · Explorer
+            Caso de uso · Explorer
           </NavLink>
           <NavLink
             className={({ isActive }) =>
@@ -90,7 +90,7 @@ export function GlobalNav() {
             }
             to="/use-cases/mepram/alerts-genomic-surveillance"
           >
-            Mepram · Alertas
+            Caso de uso · Alertas
           </NavLink>
         </div>
       </details>

@@ -19,7 +19,9 @@ import type {
 const PROJECT_NAME = "mepram";
 const SAMPLE_PAGE_SIZE = 50;
 const MEPRAM_DATA_MODE =
-  import.meta.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() || "simulated";
+  import.meta.env.VITE_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
+  import.meta.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() ||
+  "simulated";
 const SIMULATED_PATHOGEN_DISTRIBUTION: ChartDatum[] = [
   { label: "K. pneumoniae", value: 184 },
   { label: "E. coli", value: 96 },
@@ -539,8 +541,8 @@ function buildSimulatedMepramSnapshot(): MepramSnapshot {
     explorer: {
       filterOptions: explorerFilterOptions(rows),
       notes: [
-        "La vista MEPRAM está funcionando en modo simulado para no bloquear el desarrollo mientras se construyen endpoints ad hoc de vigilancia.",
-        "Los filtros, la tabla, la exportación y el mapa usan el mismo dataset sintético coherente para revisión funcional y visual.",
+        "La vista del caso de uso está funcionando en modo simulado para no bloquear el desarrollo mientras se construyen endpoints ad hoc de vigilancia.",
+        "Los filtros, la tabla y el mapa usan el mismo dataset sintético coherente para revisión funcional y visual.",
         "Cuando backend exponga project-status, surveillance-snapshot e isolates/search, este modo podrá sustituirse por datos reales.",
       ],
       operationalFieldsSimulated: true,
@@ -549,7 +551,7 @@ function buildSimulatedMepramSnapshot(): MepramSnapshot {
     },
     generatedAt: new Date().toISOString(),
     integrationGaps: [
-      "Falta un endpoint específico de estado del proyecto para KPIs y snapshot de vigilancia de MEPRAM.",
+      "Falta un endpoint específico de estado del caso de uso para KPIs y snapshot de vigilancia.",
       "Falta un explorer backend paginado por ST, patógeno, carbapenemasa y perfil de resistencia sin N+1 por muestra.",
       "Falta una salida backend para exportar subconjuntos filtrados y abrirlos en Microreact.",
     ],
@@ -567,7 +569,7 @@ function buildSimulatedMepramSnapshot(): MepramSnapshot {
         regionCount,
       }),
       notes: [
-        "MEPRAM se muestra en simulación controlada para seguir iterando frontend sin depender todavía de endpoints específicos de vigilancia.",
+        "Este caso de uso se muestra en simulación controlada para seguir iterando frontend sin depender todavía de endpoints específicos de vigilancia.",
         "Los paneles mantienen coherencia interna con la tabla y el mapa del explorer, pero no deben interpretarse como datos reales.",
       ],
       participatingCenters: centerCount,
@@ -583,7 +585,7 @@ function buildSimulatedMepramSnapshot(): MepramSnapshot {
       territorialCoverageSimulated: true,
       totalSamples: rows.length,
     },
-    projectLabel: "MEPRAM",
+    projectLabel: "Caso de uso pendiente",
   };
 }
 
@@ -601,7 +603,7 @@ function kpis({
   return [
     {
       label: "Muestras disponibles",
-      note: "Muestras visibles del proyecto MEPRAM",
+      note: "Muestras visibles del caso de uso",
       value: formatInteger(overviewSampleCount),
     },
     {
@@ -709,7 +711,7 @@ async function loadLiveMepramSnapshot(
     explorer: {
       filterOptions: explorerFilterOptions(rows),
       notes: [
-        `La tabla operativa carga las primeras ${SAMPLE_PAGE_SIZE} muestras del schema de MEPRAM y las enriquece con /samples/{id}/metadata.`,
+        `La tabla operativa carga las primeras ${SAMPLE_PAGE_SIZE} muestras del schema del caso de uso y las enriquece con /samples/{id}/metadata.`,
         "Para escalar este explorer hace falta un endpoint backend paginado y agregado específico de vigilancia, sin N+1 por muestra.",
         operationalFieldsSimulated
           ? "Patógeno, ST, carbapenemasa y perfil de resistencia se completan aquí con una simulación controlada para poder revisar la experiencia de vigilancia mientras backend expone esa capa operativa."
@@ -721,7 +723,7 @@ async function loadLiveMepramSnapshot(
     },
     generatedAt: new Date().toISOString(),
     integrationGaps: [
-      "No hay todavía un endpoint específico de búsqueda de aislamientos MEPRAM por ST, clon, perfil de resistencia o carbapenemasa, ni una exportación preparada para abrir subconjuntos filtrados en Microreact.",
+      "No hay todavía un endpoint específico de búsqueda de aislamientos del caso de uso por ST, clon, perfil de resistencia o carbapenemasa, ni una exportación preparada para abrir subconjuntos filtrados en Microreact.",
       "Los campos de tipado y resistencia no están poblados ni expuestos de forma operativa en /samples/{sample_id}/metadata para el dataset actual.",
       "La capa de alertas de vigilancia todavía requiere lógica backend dedicada y un endpoint agregado propio.",
     ],
@@ -755,7 +757,7 @@ async function loadLiveMepramSnapshot(
       territorialCoverageSimulated: true,
       totalSamples: overviewSummary.metrics.sample_count,
     },
-    projectLabel: "MEPRAM",
+    projectLabel: "Caso de uso pendiente",
   };
 }
 
