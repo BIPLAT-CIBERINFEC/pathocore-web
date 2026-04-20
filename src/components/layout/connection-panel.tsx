@@ -51,10 +51,10 @@ export function ConnectionPanel() {
             <ShieldX className="mr-1 h-3.5 w-3.5" />
           )}
           {status === "success"
-            ? "API snapshot loaded"
+            ? "Public API snapshot loaded"
             : status === "loading"
-              ? "Loading API data"
-              : "Authentication required"}
+              ? "Loading public API data"
+              : "API unavailable"}
         </Badge>
         <Button onClick={() => setOpen((value) => !value)} size="sm" variant="outline">
           <KeyRound className="h-4 w-4" />
@@ -73,8 +73,9 @@ export function ConnectionPanel() {
               Backend target: {DEFAULT_API_BASE_URL}
             </div>
             <p className="text-sm leading-6 text-slate-500">
-              Leave the fields empty to rely on an existing backend session cookie
-              through the Vite proxy. Fill both to use HTTP Basic Auth from the browser.
+              En testing, usa estas credenciales para autenticar contra una API que
+              todavía protege los endpoints del databrowser. La vista genérica no usa
+              esas credenciales para filtrar por proyecto ni envía `project_name`.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <Input

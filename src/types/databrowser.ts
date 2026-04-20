@@ -26,13 +26,24 @@ export interface PropertyDistributionCard {
   actualPropertyName?: string;
   chartKind: "bar" | "line";
   chartTitle: string;
+  classification?: string;
   description: string;
   displayName: string;
+  distributionQueries?: MetadataPropertyDistributionQuery[];
+  enumValues?: string[];
   isFallback: boolean;
   participantCount: number;
   participantShare: number;
   propertyName: string;
+  schemaPath?: string;
+  schemaType?: string;
   values: ChartDatum[];
+}
+
+export interface MetadataPropertyDistributionQuery {
+  project_name?: string;
+  schema_name?: string;
+  schema_version?: string;
 }
 
 export interface MetadataPanelChart {

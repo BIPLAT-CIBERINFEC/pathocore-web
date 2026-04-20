@@ -27,8 +27,9 @@ interface ParsedHgvsVariant {
 }
 
 interface VariantSearchPanelProps {
-  credentials: ApiCredentials | null;
+  credentials?: ApiCredentials | null;
   filterOptions: VariantFilterOptions;
+  includeProjectFilter?: boolean;
   referenceGenomeOptions: VariantReferenceGenomeOption[];
 }
 
@@ -120,8 +121,9 @@ function mapVariantSearchRow(row: VariantSearchApiRow): VariantSearchRow {
 }
 
 export function VariantSearchPanel({
-  credentials,
+  credentials = null,
   filterOptions,
+  includeProjectFilter = false,
   referenceGenomeOptions,
 }: VariantSearchPanelProps) {
   const [query, setQuery] = useState("");
@@ -175,7 +177,7 @@ export function VariantSearchPanel({
       const trimmedEffect = optionalTextFilter(effect);
       const trimmedLocusId = optionalTextFilter(locusId);
       const trimmedLocusName = optionalTextFilter(locusName);
-      const trimmedProjectName = optionalTextFilter(projectName);
+      const trimmedProjectName = includeProjectFilter ? optionalTextFilter(projectName) : null;
       const trimmedSampleId = optionalTextFilter(sampleId);
       const trimmedSchemaName = optionalTextFilter(schemaName);
       const trimmedSchemaVersion = optionalTextFilter(schemaVersion);
@@ -448,17 +450,19 @@ export function VariantSearchPanel({
                     value={aminoacidChange}
                   />
                 </label>
-                <label className="grid gap-2 text-sm font-medium text-slate-700">
-                  project_name
-                  <Input
-                    onChange={(event) => {
-                      setProjectName(event.target.value);
-                      resetSearchState();
-                    }}
-                    placeholder="relecov"
-                    value={projectName}
-                  />
-                </label>
+                {includeProjectFilter ? (
+                  <label className="grid gap-2 text-sm font-medium text-slate-700">
+                    project_name
+                    <Input
+                      onChange={(event) => {
+                        setProjectName(event.target.value);
+                        resetSearchState();
+                      }}
+                      placeholder="project-code"
+                      value={projectName}
+                    />
+                  </label>
+                ) : null}
                 <label className="grid gap-2 text-sm font-medium text-slate-700">
                   schema_name
                   <Input
@@ -466,7 +470,7 @@ export function VariantSearchPanel({
                       setSchemaName(event.target.value);
                       resetSearchState();
                     }}
-                    placeholder="relecov-tools-schema"
+                    placeholder="schema-name"
                     value={schemaName}
                   />
                 </label>
@@ -537,7 +541,7 @@ export function VariantSearchPanel({
 
         {searchStatus === "loading" ? (
           <div className="mt-5 rounded-[1.35rem] border border-slate-200 bg-slate-50 p-6 text-sm leading-7 text-slate-600">
-            Searching variant observations in the authenticated backend scope.
+            Searching variant observations in the public global scope.
           </div>
         ) : null}
 
@@ -557,7 +561,7 @@ export function VariantSearchPanel({
                 in <span className="font-mono font-semibold">{referenceGenome}</span>
               </>
             ) : null}
-            . The backend returned an empty search result for the current user scope and
+            . The backend returned an empty search result for the public global scope and
             filters.
           </div>
         ) : null}
