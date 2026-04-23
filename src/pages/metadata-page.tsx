@@ -1,4 +1,13 @@
-import { Cpu, FlaskConical, ScanLine, SlidersHorizontal, UserRound } from "lucide-react";
+import { useState } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  FlaskConical,
+  ScanLine,
+  SlidersHorizontal,
+  UserRound,
+} from "lucide-react";
 import {
   BarChartPanel,
   LineChartPanel,
@@ -10,11 +19,91 @@ import { PropertyAccordionCard } from "@/components/databrowser/property-accordi
 import { SectionHeader } from "@/components/databrowser/section-header";
 import { StatCard } from "@/components/databrowser/stat-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDatabrowser } from "@/hooks/use-databrowser";
+import type { PropertyDistributionCard } from "@/types/databrowser";
 
 const statIcons = [FlaskConical, ScanLine, Cpu, UserRound];
+
+function propertyHasSamples(property: PropertyDistributionCard) {
+  return property.participantCount > 0 || property.values.some((item) => item.value > 0);
+}
+
+function ZeroSamplePropertiesGroup({
+  properties,
+}: {
+  properties: PropertyDistributionCard[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (properties.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className="border-dashed border-slate-200 bg-slate-50/85 shadow-none">
+      <CardContent className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-semibold text-slate-950">
+                More properties with 0 samples
+              </h3>
+              <Badge variant="secondary">{properties.length} properties</Badge>
+              <Badge variant="outline">schema only</Badge>
+            </div>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+              Estas properties están registradas en los schemas visibles, pero no tienen
+              muestras con valores en el resumen actual. Se listan para trazabilidad del
+              modelo y no cargan gráficos ni distribuciones.
+            </p>
+          </div>
+          <Button onClick={() => setOpen((value) => !value)} variant="outline">
+            {open ? "Hide properties" : "Show properties"}
+            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        {open ? (
+          <div className="mt-5 grid gap-3">
+            {properties.map((property) => (
+              <div
+                className="rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3"
+                key={`${property.schemaPath ?? property.propertyName}-${property.propertyName}`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-slate-950">{property.displayName}</p>
+                  <Badge variant="outline">0 samples</Badge>
+                  {property.classification ? (
+                    <Badge variant="outline">{property.classification}</Badge>
+                  ) : null}
+                  {property.schemaType ? (
+                    <Badge variant="outline">{property.schemaType}</Badge>
+                  ) : null}
+                  {(property.enumValues ?? []).length > 0 ? (
+                    <Badge variant="outline">
+                      {property.enumValues?.length} enum values
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {property.description}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                  <span>Property: {property.propertyName}</span>
+                  {property.schemaPath ? <span>Schema path: {property.schemaPath}</span> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 function MetadataSchemaFilter() {
   return (
     <Card className="border-white/70 bg-white/88">
@@ -141,13 +230,22 @@ export function MetadataPage() {
                   </div>
                   <div className="space-y-4">
                     {section.properties.length > 0 ? (
-                      section.properties.map((property) => (
-                        <PropertyAccordionCard
-                          credentials={credentials}
-                          item={property}
-                          key={`${section.id}-${property.propertyName}`}
+                      <>
+                        {section.properties
+                          .filter(propertyHasSamples)
+                          .map((property) => (
+                            <PropertyAccordionCard
+                              credentials={credentials}
+                              item={property}
+                              key={`${section.id}-${property.propertyName}`}
+                            />
+                          ))}
+                        <ZeroSamplePropertiesGroup
+                          properties={section.properties.filter(
+                            (property) => !propertyHasSamples(property),
+                          )}
                         />
-                      ))
+                      </>
                     ) : (
                       <Card className="border-dashed border-slate-200 bg-slate-50 shadow-none">
                         <CardContent className="p-6 text-sm leading-6 text-slate-500">
