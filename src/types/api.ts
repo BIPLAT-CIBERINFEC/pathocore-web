@@ -8,6 +8,19 @@ export interface ApiCountItem {
   value: number;
 }
 
+export interface ApiGeoPoint {
+  admin_level?: string | null;
+  code?: string | null;
+  country?: string | null;
+  label?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+}
+
+export interface ApiChartItem extends ApiCountItem {
+  geo?: ApiGeoPoint | null;
+}
+
 export interface SchemaListItem {
   generated_at: string | null;
   project_name: string;
@@ -300,9 +313,78 @@ export interface DatabrowserSchemaSummaryResponse {
   stats: ApiKpiItem[];
 }
 
+export interface DatabrowserDistributionCardResponse {
+  data_path: string;
+  default_renderer: string;
+  description?: string | null;
+  has_data?: boolean;
+  id: string;
+  metric?: string | null;
+  supported_renderers?: string[];
+  title: string;
+}
+
+export interface DatabrowserGroupedBreakdownSeries {
+  label: string;
+  sample_count: number;
+  values: ApiChartItem[];
+}
+
+export interface DatabrowserGroupedBreakdownResponse {
+  chart_kind: string;
+  group_by: string;
+  groups_returned: number;
+  groups_total: number;
+  id: string;
+  label: string;
+  metric: string;
+  series: DatabrowserGroupedBreakdownSeries[];
+  truncated: boolean;
+}
+
+export interface DatabrowserLocationBreakdownItem {
+  geo?: ApiGeoPoint | null;
+  label: string;
+  matched_samples: number;
+  matched_share: number;
+  tooltip: {
+    matched_samples: number;
+    matched_share: number;
+    title: string;
+    total_samples: number;
+  };
+  top_values?: ApiChartItem[];
+  total_samples: number;
+  value: number;
+}
+
+export interface DatabrowserLocationBreakdownResponse {
+  chart_kind: string;
+  group_by: string;
+  id: string;
+  label: string;
+  metric: string;
+  values: DatabrowserLocationBreakdownItem[];
+}
+
 export interface DatabrowserPropertyDistributionResponse {
+  aliases?: string[];
+  breakdowns?: {
+    location?: DatabrowserLocationBreakdownResponse;
+    pathogen?: DatabrowserGroupedBreakdownResponse;
+    year?: DatabrowserGroupedBreakdownResponse;
+  };
+  cards?: DatabrowserDistributionCardResponse[];
+  coverage?: {
+    matched_samples: number;
+    matched_share: number;
+    total_samples: number;
+  };
+  data_contract_version?: string;
   matched_samples: number;
   property: string;
+  strategy?: string;
   total_samples: number;
-  values: ApiCountItem[];
+  ui_hints?: Record<string, unknown>;
+  values: ApiChartItem[];
 }
