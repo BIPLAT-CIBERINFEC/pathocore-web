@@ -88,6 +88,87 @@ npm run dev
 
 Si no defines credenciales por entorno, la UI permite introducirlas desde el panel `API access`.
 
+## Docker orchestrator
+
+Este repositorio actua como orquestador local para levantar la web, la API,
+Keycloak y sus bases de datos.
+
+Preparar variables:
+
+```bash
+cp .env.example .env
+```
+
+Levantar entorno de pruebas, con puertos publicados directamente:
+
+```bash
+docker compose -f docker-compose.test.yml up -d --build
+```
+
+Servicios principales en test:
+
+- Web: `http://127.0.0.1:3000`
+- API: `http://127.0.0.1:8000`
+- Keycloak: `http://127.0.0.1:8080`
+- API DB MySQL: `127.0.0.1:6606`
+- Keycloak DB MySQL: `127.0.0.1:6607`
+
+Levantar entorno de produccion local:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+En produccion solo Apache publica puerto (`HTTP_PORT`, por defecto `8080`).
+Los servicios internos usan `expose`. Apache enruta:
+
+- `/` -> `pathocore_web`
+- `/api/` -> `pathocore_api`
+- `/realms/`, `/admin/`, `/resources/` -> `keycloak`
+- `/static/` y `/documents/` -> volumenes de la API
+
+Antes de usar `docker-compose.prod.yml`, cambia en `.env` al menos:
+
+- `DB_PASSWORD`
+- `KEYCLOAK_DB_PASSWORD`
+- `KC_BOOTSTRAP_ADMIN_PASSWORD`
+- `KEYCLOAK_PUBLIC_URL`
+- `KEYCLOAK_ISSUER`
+- `DNS_URL`
+- `PATHOCORE_ENABLE_LEGACY_BASIC_AUTH=false`
+
+## Keycloak
+
+La configuracion reproducible de Keycloak vive en:
+
+```text
+keycloak/config/realm-config.json
+keycloak/scripts/render_realm.py
+keycloak/tmp-import/ciberisciii_datahub-realm.json
+```
+
+Si cambias la configuracion del realm, regenera el import antes de arrancar:
+
+```bash
+python keycloak/scripts/render_realm.py
+```
+
+Keycloak importa `keycloak/tmp-import/ciberisciii_datahub-realm.json` al crear
+una base de datos nueva. Si necesitas forzar un reimport limpio:
+
+```bash
+docker compose -f docker-compose.test.yml down -v
+python keycloak/scripts/render_realm.py
+docker compose -f docker-compose.test.yml up -d --build
+```
+
+Valores clave para la API:
+
+- `KEYCLOAK_ISSUER`: issuer exacto esperado en el token.
+- `KEYCLOAK_JWKS_URL`: URL interna usada por la API para descargar JWKS.
+- `KEYCLOAK_AUDIENCE`: `pathocore-api`.
+- `KEYCLOAK_CLIENT_ID`: `pathocore-web`.
+
 ## Estructura
 
 ```text
