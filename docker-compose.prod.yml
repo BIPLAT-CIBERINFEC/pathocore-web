@@ -1,0 +1,174 @@
+services:
+  pathocore_db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-pathocore_api}
+      MYSQL_USER: ${DB_USER:-pathocore}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-pathocore_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change_me_root}
+    expose:
+      - "3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - pathocore_db_data:/var/lib/mysql
+
+  keycloak_db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${KEYCLOAK_DB_NAME:-keycloak}
+      MYSQL_USER: ${KEYCLOAK_DB_USER:-keycloak}
+      MYSQL_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
+      MYSQL_ROOT_PASSWORD: ${KEYCLOAK_DB_ROOT_PASSWORD:-change_me_root}
+    expose:
+      - "3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - keycloak_db_data:/var/lib/mysql
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.1
+    command:
+      - start
+      - --import-realm
+    restart: unless-stopped
+    depends_on:
+      keycloak_db:
+        condition: service_healthy
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?KC_BOOTSTRAP_ADMIN_PASSWORD is required}
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://keycloak_db:3306/${KEYCLOAK_DB_NAME:-keycloak}?useSSL=false&allowPublicKeyRetrieval=true
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:?KEYCLOAK_PUBLIC_URL is required}
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+    volumes:
+      - ./keycloak/tmp-import:/opt/keycloak/data/import:ro,z
+
+  pathocore_api:
+    build:
+      context: ../pathocore-api
+      args:
+        GIT_REVISION: ${PATHOCORE_API_GIT_REVISION:-main}
+        INSTALL_CONF: ${PATHOCORE_API_INSTALL_CONF:-conf/docker_production_settings.txt}
+    command: ["bash", "/usr/local/bin/pathocore-api-start.sh"]
+    restart: unless-stopped
+    depends_on:
+      pathocore_db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      APP_INSTALL_PATH: /opt/pathocore-api
+      APP_REPO_PATH: /srv/pathocore-api
+      APP_PORT: 8000
+      APP_UID: ${APP_UID:-1001}
+      APP_GID: ${APP_GID:-1001}
+      DB_USER: ${DB_USER:-pathocore}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_NAME: ${DB_NAME:-pathocore_api}
+      DB_HOST: pathocore_db
+      DB_PORT: 3306
+      LOCAL_SERVER_IP: ${LOCAL_SERVER_IP:-127.0.0.1}
+      DNS_URL: ${DNS_URL:?DNS_URL is required}
+      PATHOCORE_ENABLE_LEGACY_BASIC_AUTH: ${PATHOCORE_ENABLE_LEGACY_BASIC_AUTH:-false}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:?KEYCLOAK_ISSUER is required}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL:-http://keycloak:8080/realms/ciberisciii_datahub/protocol/openid-connect/certs}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-pathocore-api}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-pathocore-web}
+      KEYCLOAK_JWKS_CACHE_TTL_SECONDS: ${KEYCLOAK_JWKS_CACHE_TTL_SECONDS:-300}
+      KEYCLOAK_JWKS_TIMEOUT_SECONDS: ${KEYCLOAK_JWKS_TIMEOUT_SECONDS:-5}
+      DATABROWSER_CACHE_SCHEDULER_ENABLED: ${DATABROWSER_CACHE_SCHEDULER_ENABLED:-true}
+      DATABROWSER_CACHE_REFRESH_WEEKDAY: ${DATABROWSER_CACHE_REFRESH_WEEKDAY:-4}
+      DATABROWSER_CACHE_REFRESH_TIME: ${DATABROWSER_CACHE_REFRESH_TIME:-12:00}
+      DATABROWSER_CACHE_REFRESH_ON_START: ${DATABROWSER_CACHE_REFRESH_ON_START:-false}
+      LOAD_INITIAL_TABLES: ${LOAD_INITIAL_TABLES:-false}
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8000'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+    volumes:
+      - ./docker/pathocore-api-start.sh:/usr/local/bin/pathocore-api-start.sh:ro,z
+      - pathocore_api_documents:/opt/pathocore-api/documents:z
+      - pathocore_api_logs:/opt/pathocore-api/logs:z
+      - pathocore_api_static:/opt/pathocore-api/static:z
+
+  pathocore_web:
+    build:
+      context: .
+      target: prod
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-ciberisciii_datahub}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-pathocore-web}
+        VITE_USE_CASE_DATA_MODE: ${VITE_USE_CASE_DATA_MODE:-simulated}
+        VITE_USE_CASE_ALERTS_CONTACT_EMAIL: ${VITE_USE_CASE_ALERTS_CONTACT_EMAIL:-}
+    restart: unless-stopped
+    user: "${APP_UID:-1001}:${APP_GID:-1001}"
+    depends_on:
+      pathocore_api:
+        condition: service_healthy
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  apache:
+    image: registry.access.redhat.com/ubi9/httpd-24:latest
+    restart: unless-stopped
+    user: "${APP_UID:-1001}:${APP_GID:-1001}"
+    depends_on:
+      pathocore_web:
+        condition: service_healthy
+      pathocore_api:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    volumes:
+      - ./docker/httpd/pathocore.conf:/etc/httpd/conf.d/pathocore.conf:ro,z
+      - pathocore_api_documents:/var/www/pathocore-api/documents:ro,z
+      - pathocore_api_static:/var/www/pathocore-api/static:ro,z
+
+volumes:
+  keycloak_db_data:
+  pathocore_api_documents:
+  pathocore_api_logs:
+  pathocore_api_static:
+  pathocore_db_data:
