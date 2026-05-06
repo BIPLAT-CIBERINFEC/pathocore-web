@@ -1,0 +1,136 @@
+{
+  "realm": "ciberisciii_datahub",
+  "group_root": "use-cases",
+  "global_groups": [
+    "superusers"
+  ],
+  "roles": [
+    "view",
+    "admin"
+  ],
+  "shared_client_scope": {
+    "name": "pathocore-common",
+    "audiences": [
+      "pathocore-api"
+    ],
+    "include_identity_claims": true,
+    "include_groups": true
+  },
+  "use_cases": [
+    {
+      "name": "mepram",
+      "labs": [
+        "lab1",
+        "lab2"
+      ]
+    },
+    {
+      "name": "relecov",
+      "labs": [
+        "lab2",
+        "lab3"
+      ]
+    },
+    {
+      "name": "redlabra",
+      "labs": []
+    },
+    {
+      "name": "ai-models",
+      "labs": []
+    }
+  ],
+  "clients": [
+    {
+      "client_id": "pathocore-web",
+      "name": "PathoCore Web",
+      "kind": "web",
+      "public_client": true,
+      "standard_flow_enabled": true,
+      "direct_access_grants_enabled": true,
+      "redirect_uris": [
+        "http://127.0.0.1:*/*",
+        "http://localhost:*/*"
+      ],
+      "web_origins": [
+        "http://127.0.0.1:*",
+        "http://localhost:*"
+      ],
+      "default_client_scopes": [
+        "pathocore-common"
+      ]
+    },
+    {
+      "client_id": "pathocore-api",
+      "name": "PathoCore API",
+      "kind": "api",
+      "public_client": false,
+      "bearer_only": true,
+      "standard_flow_enabled": false,
+      "direct_access_grants_enabled": false
+    },
+    {
+      "client_id": "ai-model-api",
+      "name": "AI Model API",
+      "kind": "api",
+      "public_client": false,
+      "bearer_only": true,
+      "standard_flow_enabled": false,
+      "direct_access_grants_enabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "daniel",
+      "password": "dareleplat",
+      "first_name": "Daniel",
+      "last_name": "VM",
+      "email": "daniel@example.org",
+      "groups": [
+        "/use-cases/mepram/labs/lab1/admin",
+        "/use-cases/relecov/labs/lab2/view"
+      ]
+    },
+    {
+      "username": "maria",
+      "password": "mariapass",
+      "first_name": "Maria",
+      "last_name": "Tester",
+      "email": "maria@example.org",
+      "groups": [
+        "/use-cases/relecov/admin"
+      ]
+    },
+    {
+      "username": "alba",
+      "password": "albapass",
+      "first_name": "Alba",
+      "last_name": "view",
+      "email": "alba@example.org",
+      "groups": [
+        "/use-cases/redlabra/view"
+      ]
+    },
+    {
+      "username": "ines",
+      "password": "inespass",
+      "first_name": "Ines",
+      "last_name": "Hybrid",
+      "email": "ines@example.org",
+      "groups": [
+        "/use-cases/mepram/labs/lab2/view",
+        "/use-cases/redlabra/admin"
+      ]
+    },
+    {
+      "username": "nora",
+      "password": "norapass",
+      "first_name": "Nora",
+      "last_name": "Models",
+      "email": "nora@example.org",
+      "groups": [
+        "/use-cases/ai-models/admin"
+      ]
+    }
+  ]
+}
