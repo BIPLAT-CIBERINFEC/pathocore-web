@@ -120,7 +120,7 @@ function MetadataSchemaFilter() {
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
               El databrowser genérico muestra una lectura pública y global. El scope
               visible es siempre `All schemas`, independientemente de que existan
-              credenciales configuradas para otras zonas privadas.
+              sesiones activas para zonas privadas.
             </p>
           </div>
           <Badge variant="strong">All schemas</Badge>
@@ -135,7 +135,7 @@ function MetadataSchemaFilter() {
 }
 
 export function MetadataPage() {
-  const { credentials, error, refresh, snapshot, status } = useDatabrowser();
+  const { error, refresh, snapshot, status } = useDatabrowser();
 
   if (!snapshot) {
     return <DataStatusPanel error={error} onRetry={() => void refresh()} status={status} />;
@@ -235,7 +235,6 @@ export function MetadataPage() {
                           .filter(propertyHasSamples)
                           .map((property) => (
                             <PropertyAccordionCard
-                              credentials={credentials}
                               item={property}
                               key={`${section.id}-${property.propertyName}`}
                             />

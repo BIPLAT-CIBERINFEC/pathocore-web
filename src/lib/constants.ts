@@ -3,10 +3,14 @@ import type { EntryCardContent } from "@/types/databrowser";
 export const DEFAULT_API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.trim() || "/api/v1";
 
+export const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL?.trim() || "";
+export const KEYCLOAK_REALM =
+  import.meta.env.VITE_KEYCLOAK_REALM?.trim() || "ciberisciii_datahub";
+export const KEYCLOAK_CLIENT_ID =
+  import.meta.env.VITE_KEYCLOAK_CLIENT_ID?.trim() || "pathocore-web";
+
 export const PRIVACY_TEXT =
   "Recuento de muestras con al menos un valor registrado. Cada muestra se cuenta una sola vez dentro del dataset visible devuelto por la API.";
-
-export const STORAGE_KEY = "pathocore-web.api-credentials";
 
 export const ENTRY_CARD_CONTENT: Omit<EntryCardContent, "stat">[] = [
   {

@@ -1,6 +1,5 @@
 import { DEFAULT_API_BASE_URL } from "@/lib/constants";
 import type {
-  ApiCredentials,
   DatabrowserPropertyDistributionResponse,
   DatabrowserSummaryQuery,
   DatabrowserMetadataSummaryResponse,
@@ -30,6 +29,12 @@ interface ApiErrorPayload {
   error?: string;
 }
 
+interface ApiClientOptions {
+  accessToken?: string | null;
+  baseUrl?: string;
+  requestCredentials?: RequestCredentials;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -38,14 +43,6 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
-}
-
-function buildBasicAuthHeader(credentials: ApiCredentials | null) {
-  if (!credentials?.username || !credentials.password) {
-    return undefined;
-  }
-
-  return `Basic ${btoa(`${credentials.username}:${credentials.password}`)}`;
 }
 
 function buildUrl(baseUrl: string, { path, query }: RequestOptions) {
@@ -65,28 +62,25 @@ function buildUrl(baseUrl: string, { path, query }: RequestOptions) {
 }
 
 export class PathocoreApiClient {
+  accessToken: string | null;
   baseUrl: string;
-  credentials: ApiCredentials | null;
   requestCredentials: RequestCredentials;
 
-  constructor(
-    credentials: ApiCredentials | null,
-    baseUrl = DEFAULT_API_BASE_URL,
-    requestCredentials: RequestCredentials = credentials ? "include" : "omit",
-  ) {
-    this.baseUrl = baseUrl;
-    this.credentials = credentials;
-    this.requestCredentials = requestCredentials;
+  constructor(options: ApiClientOptions = {}) {
+    this.accessToken = options.accessToken ?? null;
+    this.baseUrl = options.baseUrl ?? DEFAULT_API_BASE_URL;
+    this.requestCredentials =
+      options.requestCredentials ??
+      (this.accessToken ? "include" : "omit");
   }
 
   async getJson<T>(options: RequestOptions): Promise<T> {
-    const authorization = buildBasicAuthHeader(this.credentials);
     const headers: Record<string, string> = {
       Accept: "application/json",
     };
 
-    if (authorization) {
-      headers.Authorization = authorization;
+    if (this.accessToken) {
+      headers.Authorization = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(buildUrl(this.baseUrl, options), {
@@ -174,13 +168,12 @@ export class PathocoreApiClient {
       });
       url.searchParams.set("match", match);
 
-      const authorization = buildBasicAuthHeader(this.credentials);
       const headers: Record<string, string> = {
         Accept: "application/json",
       };
 
-      if (authorization) {
-        headers.Authorization = authorization;
+      if (this.accessToken) {
+        headers.Authorization = `Bearer ${this.accessToken}`;
       }
 
       const response = await fetch(url.toString(), {

@@ -2,7 +2,6 @@ import { PathocoreApiClient } from "@/api/client";
 import { formatInteger, stripOntology, truncateLabel } from "@/lib/format";
 import type {
   ApiCountItem,
-  ApiCredentials,
   DatabrowserPropertyDistributionResponse,
   SampleListItem,
   SampleMetadataApiItem,
@@ -634,9 +633,9 @@ async function propertyDistribution(
 }
 
 async function loadLiveMepramSnapshot(
-  credentials: ApiCredentials | null,
+  accessToken: string | null,
 ): Promise<MepramSnapshot> {
-  const client = new PathocoreApiClient(credentials);
+  const client = new PathocoreApiClient({ accessToken });
   const [
     overviewSummary,
     schemaSummary,
@@ -762,11 +761,11 @@ async function loadLiveMepramSnapshot(
 }
 
 export async function loadMepramSnapshot(
-  credentials: ApiCredentials | null,
+  accessToken: string | null,
 ): Promise<MepramSnapshot> {
   if (MEPRAM_DATA_MODE !== "live") {
     return buildSimulatedMepramSnapshot();
   }
 
-  return loadLiveMepramSnapshot(credentials);
+  return loadLiveMepramSnapshot(accessToken);
 }

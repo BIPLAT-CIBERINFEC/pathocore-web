@@ -67,10 +67,12 @@ Variables soportadas:
   Recomendado en local: `/api/v1`
 - `PATHOCORE_API_PROXY_TARGET`
   Target real del backend para el proxy de Vite. Por defecto: `http://127.0.0.1:8000`
-- `VITE_API_BASIC_USERNAME`
-  Opcional. Usuario para Basic Auth.
-- `VITE_API_BASIC_PASSWORD`
-  Opcional. Password para Basic Auth.
+- `VITE_KEYCLOAK_URL`
+  URL pública de Keycloak para login de casos de uso.
+- `VITE_KEYCLOAK_REALM`
+  Realm de Keycloak. Por defecto: `ciberisciii_datahub`.
+- `VITE_KEYCLOAK_CLIENT_ID`
+  Cliente frontend público. Por defecto: `pathocore-web`.
 - `VITE_USE_CASE_DATA_MODE`
   Opcional. Para el caso de uso actual, usar `simulated` mientras no existan endpoints ad hoc.
 - `VITE_USE_CASE_ALERTS_CONTACT_EMAIL`
@@ -81,12 +83,12 @@ Ejemplo contra otra instancia local:
 ```bash
 PATHOCORE_API_PROXY_TARGET=http://127.0.0.1:8001 \
 VITE_API_BASE_URL=/api/v1 \
-VITE_API_BASIC_USERNAME=<user> \
-VITE_API_BASIC_PASSWORD=<password> \
+VITE_KEYCLOAK_URL=http://127.0.0.1:8080 \
 npm run dev
 ```
 
-Si no defines credenciales por entorno, la UI permite introducirlas desde el panel `API access`.
+El databrowser genérico no pide login. Las rutas de casos de uso redirigen a
+Keycloak cuando no hay sesión activa.
 
 ## Docker orchestrator
 
