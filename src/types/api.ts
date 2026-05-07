@@ -1,8 +1,3 @@
-export interface ApiCredentials {
-  password: string;
-  username: string;
-}
-
 export interface ApiCountItem {
   label: string;
   value: number;

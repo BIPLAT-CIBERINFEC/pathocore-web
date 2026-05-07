@@ -40,6 +40,11 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: apiProxyTarget,
           changeOrigin: true,
+          // Docker service names with underscores are valid DNS aliases but invalid
+          // Django Host headers, so keep the proxied request host RFC-safe.
+          headers: {
+            Host: "localhost",
+          },
           rewrite: (pathToRewrite) => pathToRewrite.replace(/^\/api/, ""),
         },
       },

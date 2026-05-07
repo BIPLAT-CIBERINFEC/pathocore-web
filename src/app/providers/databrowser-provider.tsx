@@ -1,5 +1,4 @@
 import {
-  createContext,
   type PropsWithChildren,
   useCallback,
   useEffect,
@@ -8,26 +7,12 @@ import {
 } from "react";
 import { ApiError } from "@/api/client";
 import { loadDatabrowserSnapshot } from "@/api/databrowser";
-import { STORAGE_KEY } from "@/lib/constants";
-import { useLocalStorageState } from "@/hooks/use-local-storage-state";
-import type { ApiCredentials } from "@/types/api";
+import { DatabrowserContext } from "@/app/providers/databrowser-context";
 import type { DatabrowserContextValue } from "@/types/databrowser";
 
-const envCredentials =
-  import.meta.env.VITE_API_BASIC_USERNAME && import.meta.env.VITE_API_BASIC_PASSWORD
-    ? {
-        password: import.meta.env.VITE_API_BASIC_PASSWORD,
-        username: import.meta.env.VITE_API_BASIC_USERNAME,
-      }
-    : null;
-
-export const DatabrowserContext = createContext<DatabrowserContextValue | null>(null);
+const LEGACY_CREDENTIALS_STORAGE_KEY = "pathocore-web.api-credentials";
 
 export function DatabrowserProvider({ children }: PropsWithChildren) {
-  const [credentials, setCredentials] = useLocalStorageState<ApiCredentials | null>(
-    STORAGE_KEY,
-    envCredentials,
-  );
   const [snapshot, setSnapshot] = useState<DatabrowserContextValue["snapshot"]>(null);
   const [status, setStatus] = useState<DatabrowserContextValue["status"]>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +23,7 @@ export function DatabrowserProvider({ children }: PropsWithChildren) {
     setStatus("loading");
 
     try {
-      const nextSnapshot = await loadDatabrowserSnapshot(credentials);
+      const nextSnapshot = await loadDatabrowserSnapshot();
       setSnapshot(nextSnapshot);
       setLastUpdated(new Date().toISOString());
       setStatus("success");
@@ -50,24 +35,22 @@ export function DatabrowserProvider({ children }: PropsWithChildren) {
       setError(nextError);
       setStatus("error");
     }
-  }, [credentials]);
+  }, []);
 
   useEffect(() => {
+    localStorage.removeItem(LEGACY_CREDENTIALS_STORAGE_KEY);
     void refresh();
   }, [refresh]);
 
   const value = useMemo<DatabrowserContextValue>(
     () => ({
-      clearCredentials: () => setCredentials(null),
-      credentials,
       error,
       lastUpdated,
       refresh,
-      saveCredentials: setCredentials,
       snapshot,
       status,
     }),
-    [credentials, error, lastUpdated, refresh, setCredentials, snapshot, status],
+    [error, lastUpdated, refresh, snapshot, status],
   );
 
   return (

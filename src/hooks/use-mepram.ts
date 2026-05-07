@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/api/client";
 import { loadMepramSnapshot } from "@/api/mepram";
-import { useDatabrowser } from "@/hooks/use-databrowser";
+import { useAuth } from "@/hooks/use-auth";
 import type { MepramSnapshot } from "@/types/mepram";
 
 export function useMepram() {
-  const { credentials } = useDatabrowser();
+  const { accessToken } = useAuth();
   const [snapshot, setSnapshot] = useState<MepramSnapshot | null>(null);
   const [status, setStatus] = useState<"error" | "idle" | "loading" | "success">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function useMepram() {
     setStatus("loading");
 
     try {
-      const nextSnapshot = await loadMepramSnapshot(credentials);
+      const nextSnapshot = await loadMepramSnapshot(accessToken);
       setSnapshot(nextSnapshot);
       setStatus("success");
     } catch (loadError) {
@@ -26,7 +26,7 @@ export function useMepram() {
       setError(nextError);
       setStatus("error");
     }
-  }, [credentials]);
+  }, [accessToken]);
 
   useEffect(() => {
     void refresh();

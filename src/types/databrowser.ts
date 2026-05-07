@@ -1,5 +1,3 @@
-import type { ApiCredentials } from "@/types/api";
-
 export type EntryViewId = "metadata" | "overview" | "schema" | "variant";
 
 export interface ChartDatum {
@@ -184,12 +182,9 @@ export interface DatabrowserSnapshot {
 }
 
 export interface DatabrowserContextValue {
-  clearCredentials: () => void;
-  credentials: ApiCredentials | null;
   error: string | null;
   lastUpdated: string | null;
   refresh: () => Promise<void>;
-  saveCredentials: (credentials: ApiCredentials | null) => void;
   snapshot: DatabrowserSnapshot | null;
   status: "error" | "idle" | "loading" | "success";
 }

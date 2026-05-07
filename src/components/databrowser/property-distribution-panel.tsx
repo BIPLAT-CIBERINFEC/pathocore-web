@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatInteger } from "@/lib/format";
 import type {
-  ApiCredentials,
   DatabrowserDistributionCardResponse,
   DatabrowserGroupedBreakdownResponse,
   DatabrowserLocationBreakdownResponse,
@@ -38,7 +37,6 @@ const chartPalette = [
 type LoadStatus = "error" | "idle" | "loading" | "success";
 
 interface PropertyDistributionPanelProps {
-  credentials?: ApiCredentials | null;
   propertyName: string;
   query?: DatabrowserSummaryQuery;
 }
@@ -419,7 +417,6 @@ function CardRenderer({
 }
 
 export function PropertyDistributionPanel({
-  credentials = null,
   propertyName,
   query,
 }: PropertyDistributionPanelProps) {
@@ -430,7 +427,7 @@ export function PropertyDistributionPanel({
 
   useEffect(() => {
     let cancelled = false;
-    const client = new PathocoreApiClient(credentials);
+    const client = new PathocoreApiClient();
 
     setDistribution(null);
     setError(null);
@@ -473,7 +470,7 @@ export function PropertyDistributionPanel({
     return () => {
       cancelled = true;
     };
-  }, [credentials, propertyName, query]);
+  }, [propertyName, query]);
 
   if (status === "loading" || status === "idle") {
     return (

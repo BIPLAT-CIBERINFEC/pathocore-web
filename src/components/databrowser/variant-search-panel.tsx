@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatInteger } from "@/lib/format";
 import type {
-  ApiCredentials,
   VariantSearchApiRow,
   VariantSearchQuery,
   VariantSearchResponse,
@@ -27,7 +26,6 @@ interface ParsedHgvsVariant {
 }
 
 interface VariantSearchPanelProps {
-  credentials?: ApiCredentials | null;
   filterOptions: VariantFilterOptions;
   includeProjectFilter?: boolean;
   referenceGenomeOptions: VariantReferenceGenomeOption[];
@@ -121,7 +119,6 @@ function mapVariantSearchRow(row: VariantSearchApiRow): VariantSearchRow {
 }
 
 export function VariantSearchPanel({
-  credentials = null,
   filterOptions,
   includeProjectFilter = false,
   referenceGenomeOptions,
@@ -172,7 +169,7 @@ export function VariantSearchPanel({
     setSearchStatus("loading");
 
     try {
-      const client = new PathocoreApiClient(credentials);
+      const client = new PathocoreApiClient();
       const trimmedAminoacidChange = optionalTextFilter(aminoacidChange);
       const trimmedEffect = optionalTextFilter(effect);
       const trimmedLocusId = optionalTextFilter(locusId);

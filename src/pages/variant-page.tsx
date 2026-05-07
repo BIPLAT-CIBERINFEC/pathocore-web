@@ -15,7 +15,7 @@ import { useDatabrowser } from "@/hooks/use-databrowser";
 const statIcons = [GitBranch, Dna, Cpu, FolderTree];
 
 export function VariantPage() {
-  const { credentials, error, refresh, snapshot, status } = useDatabrowser();
+  const { error, refresh, snapshot, status } = useDatabrowser();
 
   if (!snapshot) {
     return <DataStatusPanel error={error} onRetry={() => void refresh()} status={status} />;
@@ -54,7 +54,6 @@ export function VariantPage() {
       </section>
 
       <VariantSearchPanel
-        credentials={credentials}
         filterOptions={snapshot.variant.filterOptions}
         referenceGenomeOptions={snapshot.variant.referenceGenomeOptions}
       />
