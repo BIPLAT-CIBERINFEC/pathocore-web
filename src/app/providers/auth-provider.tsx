@@ -40,6 +40,8 @@ interface JwtClaims {
   sub?: string;
 }
 
+let activeLoginCompletionKey: string | null = null;
+
 function keycloakRealmUrl() {
   return `${KEYCLOAK_URL.replace(/\/$/, "")}/realms/${encodeURIComponent(KEYCLOAK_REALM)}`;
 }
@@ -144,24 +146,43 @@ export function AuthProvider({ children }: PropsWithChildren) {
     authorizeUrl.searchParams.set("code_challenge_method", "S256");
     authorizeUrl.searchParams.set("redirect_uri", redirectUri);
     authorizeUrl.searchParams.set("response_type", "code");
-    authorizeUrl.searchParams.set("scope", "openid profile");
+    authorizeUrl.searchParams.set("scope", "openid");
     authorizeUrl.searchParams.set("state", state);
 
     window.location.assign(authorizeUrl.toString());
   }, []);
 
   useEffect(() => {
+    if (window.location.pathname !== "/auth/callback") {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
+    const callbackError = params.get("error");
+    const callbackErrorDescription = params.get("error_description");
     const state = params.get("state");
 
-    if (window.location.pathname !== "/auth/callback" || !code || !state) {
+    if (callbackError) {
+      setError(callbackErrorDescription ?? callbackError);
+      setStatus("error");
+      return;
+    }
+
+    if (!code || !state) {
+      setError("Keycloak callback is missing the authorization code. Start login again.");
+      setStatus("error");
       return;
     }
 
     const authCode = code;
     const authState = state;
-    let cancelled = false;
+    const completionKey = `${authState}:${authCode}`;
+
+    if (activeLoginCompletionKey === completionKey) {
+      return;
+    }
+    activeLoginCompletionKey = completionKey;
 
     async function completeLogin() {
       setStatus("loading");
@@ -197,7 +218,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         );
 
         if (!response.ok) {
-          throw new Error("Keycloak token exchange failed.");
+          const payload = (await response.json().catch(() => null)) as
+            | { error?: string; error_description?: string }
+            | null;
+          const message =
+            payload?.error_description ||
+            payload?.error ||
+            `Keycloak token exchange failed with status ${response.status}.`;
+          throw new Error(message);
         }
 
         const tokenResponse = (await response.json()) as TokenResponse;
@@ -215,28 +243,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
         sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(nextSession));
         sessionStorage.removeItem(PKCE_SESSION_KEY);
 
-        if (!cancelled) {
-          setSession(nextSession);
-          setStatus("authenticated");
-          window.location.replace(pkceState.returnTo || "/");
-        }
+        setSession(nextSession);
+        setStatus("authenticated");
+        window.location.replace(pkceState.returnTo || "/");
       } catch (loginError) {
-        if (!cancelled) {
-          setError(
-            loginError instanceof Error
-              ? loginError.message
-              : "Keycloak login failed.",
-          );
-          setStatus("error");
-        }
+        activeLoginCompletionKey = null;
+        setError(
+          loginError instanceof Error
+            ? loginError.message
+            : "Keycloak login failed.",
+        );
+        setStatus("error");
       }
     }
 
     void completeLogin();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
