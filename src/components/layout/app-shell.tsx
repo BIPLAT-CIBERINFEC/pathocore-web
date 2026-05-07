@@ -3,8 +3,10 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AuthCallbackPage } from "@/components/layout/auth-callback-page";
 import { ConnectionPanel } from "@/components/layout/connection-panel";
 import { GlobalNav } from "@/components/layout/global-nav";
+import { RequireAuth } from "@/components/layout/require-auth";
 import { AboutPage } from "@/pages/about-page";
 import { DatabrowserHomePage } from "@/pages/home-page";
 import { MepramAlertsPage } from "@/pages/mepram-alerts-page";
@@ -57,16 +59,35 @@ export function AppShell() {
               <Route element={<MetadataPage />} path="/metadata" />
               <Route element={<VariantPage />} path="/variant" />
               <Route
+                element={<AuthCallbackPage />}
+                path="/auth/callback"
+              />
+              <Route
                 element={<Navigate replace to="/use-cases/mepram/data" />}
                 path="/use-cases/mepram"
               />
-              <Route element={<MepramDataPage />} path="/use-cases/mepram/data" />
               <Route
-                element={<MepramExplorerPage />}
+                element={(
+                  <RequireAuth>
+                    <MepramDataPage />
+                  </RequireAuth>
+                )}
+                path="/use-cases/mepram/data"
+              />
+              <Route
+                element={(
+                  <RequireAuth>
+                    <MepramExplorerPage />
+                  </RequireAuth>
+                )}
                 path="/use-cases/mepram/operational-isolate-explorer"
               />
               <Route
-                element={<MepramAlertsPage />}
+                element={(
+                  <RequireAuth>
+                    <MepramAlertsPage />
+                  </RequireAuth>
+                )}
                 path="/use-cases/mepram/alerts-genomic-surveillance"
               />
               <Route element={<Navigate replace to="/" />} path="*" />

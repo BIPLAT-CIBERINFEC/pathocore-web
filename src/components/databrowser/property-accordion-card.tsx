@@ -4,14 +4,11 @@ import { PropertyDistributionPanel } from "@/components/databrowser/property-dis
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { ApiCredentials } from "@/types/api";
 import type { PropertyDistributionCard } from "@/types/databrowser";
 
 export function PropertyAccordionCard({
-  credentials = null,
   item,
 }: {
-  credentials?: ApiCredentials | null;
   item: PropertyDistributionCard;
 }) {
   const [open, setOpen] = useState(false);
@@ -42,7 +39,6 @@ export function PropertyAccordionCard({
         {open ? (
           <div className="mt-6">
             <PropertyDistributionPanel
-              credentials={credentials}
               propertyName={item.propertyName}
             />
           </div>

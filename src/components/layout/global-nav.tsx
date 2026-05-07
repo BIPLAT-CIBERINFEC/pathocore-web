@@ -57,40 +57,14 @@ export function GlobalNav() {
             className={({ isActive }) =>
               cn(
                 "flex rounded-[1rem] px-3 py-2 text-sm transition",
-                isActive
+                isActive || useCasesActive
                   ? "bg-slate-900 text-white"
                   : "text-slate-700 hover:bg-slate-50",
               )
             }
-            to="/use-cases/mepram/data"
+            to="/use-cases/mepram"
           >
-            Caso de uso · Datos
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                "flex rounded-[1rem] px-3 py-2 text-sm transition",
-                isActive
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-700 hover:bg-slate-50",
-              )
-            }
-            to="/use-cases/mepram/operational-isolate-explorer"
-          >
-            Caso de uso · Explorer
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                "flex rounded-[1rem] px-3 py-2 text-sm transition",
-                isActive
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-700 hover:bg-slate-50",
-              )
-            }
-            to="/use-cases/mepram/alerts-genomic-surveillance"
-          >
-            Caso de uso · Alertas
+            MePRAM temporal
           </NavLink>
         </div>
       </details>

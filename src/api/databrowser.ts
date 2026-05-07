@@ -3,7 +3,6 @@ import { ENTRY_CARD_CONTENT } from "@/lib/constants";
 import { formatCompactNumber, formatInteger } from "@/lib/format";
 import type {
   ApiCountItem,
-  ApiCredentials,
   ApiKpiItem,
   DatabrowserMetadataChartResponse,
   DatabrowserMetadataSectionResponse,
@@ -612,7 +611,7 @@ function buildSnapshot({
       impactClassesAvailable: variantSummary.impact_classes.length > 0,
       notes: [
         "La vista Variant consume /variants/summary, /variants/reference-genomes, /variants/filter-options y /variants/search.",
-        "El databrowser genérico no envía project_name. En entornos de testing puede usar credenciales solo para autenticar contra una API que aún no expone endpoints públicos.",
+        "El databrowser genérico no envía project_name y consume el scope público global.",
         "Las busquedas sin resultados devuelven 404 y se muestran como estado vacio, no como fallo critico de UI.",
       ],
       projectCoverage: chartItems(variantSummary.projects),
@@ -646,10 +645,8 @@ function buildSnapshot({
   };
 }
 
-export async function loadDatabrowserSnapshot(
-  credentials: ApiCredentials | null,
-): Promise<DatabrowserSnapshot> {
-  const client = new PathocoreApiClient(credentials);
+export async function loadDatabrowserSnapshot(): Promise<DatabrowserSnapshot> {
+  const client = new PathocoreApiClient();
   const [
     overview,
     metadata,
