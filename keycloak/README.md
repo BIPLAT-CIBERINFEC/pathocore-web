@@ -1,27 +1,39 @@
-# Keycloak dev stack for PathoCore
+# Keycloak realm config for PathoCore
 
-This repository contains the reproducible local Keycloak realm used by
-PathoCore during development.
+This directory contains the reproducible Keycloak realm config used by
+PathoCore. The current default profile is local/test.
 
 ## Source of truth
 
 The realm import file is generated from:
 
-- [config/realm-config.json](./config/realm-config.json)
+- [config/realm-config.test.json](./config/realm-config.test.json)
+- [config/realm-config.prod.example.json](./config/realm-config.prod.example.json)
 - [scripts/render_realm.py](./scripts/render_realm.py)
 
 Do not configure this realm manually in the Keycloak UI. Do not edit files
-under `tmp-import/` manually. Regenerate the import JSON with:
+under `tmp-import/` manually. Regenerate the local/test import JSON with:
 
 ```bash
 python scripts/render_realm.py
 ```
 
-For another profile, keep a separate config file and render it explicitly:
+This is equivalent to:
 
 ```bash
-python scripts/render_realm.py --config config/realm-config.test.json
+python scripts/render_realm.py --profile test
 ```
+
+For production, copy and edit the example. Keep the real production file out of
+git because it may contain deployment-specific URLs or future secrets:
+
+```bash
+cp config/realm-config.prod.example.json config/realm-config.prod.json
+python scripts/render_realm.py --config config/realm-config.prod.json
+```
+
+Production redirect URIs and web origins must be exact HTTPS URLs. Do not use
+localhost or wildcards in production.
 
 ## Auth strategy
 
@@ -110,7 +122,7 @@ Keycloak is started by the top-level compose files in the `pathocore-web`
 repository. From the repository root:
 
 ```bash
-python keycloak/scripts/render_realm.py
+python keycloak/scripts/render_realm.py --profile test
 docker compose --env-file .env -f docker-compose.test.yml up -d
 docker compose --env-file .env -f docker-compose.test.yml logs -f keycloak
 ```
@@ -123,7 +135,7 @@ If you changed the config and need a clean re-import, remove the Keycloak data
 volume:
 
 ```bash
-python keycloak/scripts/render_realm.py
+python keycloak/scripts/render_realm.py --profile test
 docker compose --env-file .env -f docker-compose.test.yml down -v
 docker compose --env-file .env -f docker-compose.test.yml up -d
 ```

@@ -5,7 +5,8 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CONFIG_PATH = BASE_DIR / "config" / "realm-config.json"
+CONFIG_DIR = BASE_DIR / "config"
+DEFAULT_PROFILE = "test"
 IMPORT_DIR = BASE_DIR / "tmp-import"
 
 BUILTIN_DEFAULT_CLIENT_SCOPES = ["profile", "email", "roles"]
@@ -18,8 +19,16 @@ def parse_args():
     )
     parser.add_argument(
         "--config",
-        default=str(CONFIG_PATH),
+        default=None,
         help="Realm profile config JSON to render.",
+    )
+    parser.add_argument(
+        "--profile",
+        default=DEFAULT_PROFILE,
+        help=(
+            "Realm profile under config/realm-config.<profile>.json. "
+            "Ignored when --config is provided."
+        ),
     )
     parser.add_argument(
         "--output-dir",
@@ -27,6 +36,12 @@ def parse_args():
         help="Directory used by Keycloak --import-realm.",
     )
     return parser.parse_args()
+
+
+def resolve_config_path(args):
+    if args.config:
+        return Path(args.config)
+    return CONFIG_DIR / f"realm-config.{args.profile}.json"
 
 
 def load_config(config_path):
@@ -244,7 +259,7 @@ def render_realm(config):
         "registrationAllowed": False,
         "groups": build_group_tree(config),
         "clientScopes": client_scopes,
-        "users": [build_user(user_config) for user_config in config["users"]],
+        "users": [build_user(user_config) for user_config in config.get("users", [])],
         "clients": [
             build_client(client_config, shared_scope_name)
             for client_config in config["clients"]
@@ -254,10 +269,10 @@ def render_realm(config):
 
 def main():
     args = parse_args()
-    config_path = Path(args.config)
+    config_path = resolve_config_path(args)
     output_dir = Path(args.output_dir)
     config = load_config(config_path)
-    output_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{config['realm']}-realm.json"
     output_path.write_text(json.dumps(render_realm(config), indent=2) + "\n")
     print(output_path)
