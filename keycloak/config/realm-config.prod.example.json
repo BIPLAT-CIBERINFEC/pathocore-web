@@ -1,0 +1,75 @@
+{
+  "realm": "ciberisciii_datahub",
+  "group_root": "use-cases",
+  "global_groups": [
+    "superusers"
+  ],
+  "roles": [
+    "view",
+    "admin"
+  ],
+  "shared_client_scope": {
+    "name": "pathocore-common",
+    "audiences": [
+      "pathocore-api"
+    ],
+    "include_identity_claims": true,
+    "include_groups": true
+  },
+  "use_cases": [
+    {
+      "name": "mepram",
+      "labs": []
+    },
+    {
+      "name": "relecov",
+      "labs": []
+    },
+    {
+      "name": "redlabra",
+      "labs": []
+    },
+    {
+      "name": "ai-models",
+      "labs": []
+    }
+  ],
+  "clients": [
+    {
+      "client_id": "pathocore-web",
+      "name": "PathoCore Web",
+      "kind": "web",
+      "public_client": true,
+      "standard_flow_enabled": true,
+      "direct_access_grants_enabled": false,
+      "redirect_uris": [
+        "https://pathocore.example.org/auth/callback"
+      ],
+      "web_origins": [
+        "https://pathocore.example.org"
+      ],
+      "default_client_scopes": [
+        "pathocore-common"
+      ]
+    },
+    {
+      "client_id": "pathocore-api",
+      "name": "PathoCore API",
+      "kind": "api",
+      "public_client": false,
+      "bearer_only": true,
+      "standard_flow_enabled": false,
+      "direct_access_grants_enabled": false
+    },
+    {
+      "client_id": "ai-model-api",
+      "name": "AI Model API",
+      "kind": "api",
+      "public_client": false,
+      "bearer_only": true,
+      "standard_flow_enabled": false,
+      "direct_access_grants_enabled": false
+    }
+  ],
+  "users": []
+}

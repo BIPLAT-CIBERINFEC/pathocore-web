@@ -144,15 +144,17 @@ Antes de usar `docker-compose.prod.yml`, cambia en `.env` al menos:
 La configuracion reproducible de Keycloak vive en:
 
 ```text
-keycloak/config/realm-config.json
+keycloak/config/realm-config.test.json
+keycloak/config/realm-config.prod.example.json
 keycloak/scripts/render_realm.py
 keycloak/tmp-import/ciberisciii_datahub-realm.json
 ```
 
-Si cambias la configuracion del realm, regenera el import antes de arrancar:
+El perfil `test` es el default y contiene URLs locales. Si cambias la
+configuracion del realm de test, regenera el import antes de arrancar:
 
 ```bash
-python keycloak/scripts/render_realm.py
+python keycloak/scripts/render_realm.py --profile test
 ```
 
 Keycloak importa `keycloak/tmp-import/ciberisciii_datahub-realm.json` al crear
@@ -160,9 +162,13 @@ una base de datos nueva. Si necesitas forzar un reimport limpio:
 
 ```bash
 docker compose -f docker-compose.test.yml down -v
-python keycloak/scripts/render_realm.py
+python keycloak/scripts/render_realm.py --profile test
 docker compose -f docker-compose.test.yml up -d --build
 ```
+
+Para produccion, copia `keycloak/config/realm-config.prod.example.json` a
+`keycloak/config/realm-config.prod.json`, cambia los dominios `https://...` y
+renderiza con `--config`. No uses URLs `localhost` ni wildcards en produccion.
 
 Valores clave para la API:
 
