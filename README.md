@@ -95,16 +95,34 @@ Keycloak cuando no hay sesión activa.
 Este repositorio actua como orquestador local para levantar la web, la API,
 Keycloak y sus bases de datos.
 
+Requisito: clonar `pathocore-api` como repositorio hermano de `pathocore-web`,
+porque el compose construye la API desde `../pathocore-api`.
+
+```bash
+cd ~/path_to/devel
+git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-api.git pathocore-api
+git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
+```
+
+Expected:
+
+```text
+devel/
+  pathocore-web/
+  pathocore-api/
+```
+
 Preparar variables:
 
 ```bash
+cd pathocore-web
 cp .env.example .env
 ```
 
 Levantar entorno de pruebas, con puertos publicados directamente:
 
 ```bash
-docker compose -f docker-compose.test.yml up -d --build
+docker compose --env-file .env -f docker-compose.test.yml up -d --build
 ```
 
 Servicios principales en test:
@@ -114,30 +132,6 @@ Servicios principales en test:
 - Keycloak: `http://127.0.0.1:8080`
 - API DB MySQL: `127.0.0.1:6606`
 - Keycloak DB MySQL: `127.0.0.1:6607`
-
-Levantar entorno de produccion local:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-En produccion solo Apache publica puerto (`HTTP_PORT`, por defecto `8080`).
-Los servicios internos usan `expose`. Apache enruta:
-
-- `/` -> `pathocore_web`
-- `/api/` -> `pathocore_api`
-- `/realms/`, `/admin/`, `/resources/` -> `keycloak`
-- `/static/` y `/documents/` -> volumenes de la API
-
-Antes de usar `docker-compose.prod.yml`, cambia en `.env` al menos:
-
-- `DB_PASSWORD`
-- `KEYCLOAK_DB_PASSWORD`
-- `KC_BOOTSTRAP_ADMIN_PASSWORD`
-- `KEYCLOAK_PUBLIC_URL`
-- `KEYCLOAK_ISSUER`
-- `DNS_URL`
-- `PATHOCORE_ENABLE_LEGACY_BASIC_AUTH=false`
 
 ## Keycloak
 
