@@ -101,7 +101,7 @@ porque el compose construye la API desde `../pathocore-api`.
 ```bash
 cd ~/path_to/devel
 git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-api.git pathocore-api
-git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
+git clone -b dev https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
 ```
 
 Expected:
