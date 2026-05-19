@@ -74,7 +74,7 @@ Variables soportadas:
 - `VITE_KEYCLOAK_CLIENT_ID`
   Cliente frontend público. Por defecto: `pathocore-web`.
 - `VITE_USE_CASE_DATA_MODE`
-  Opcional. Para el caso de uso actual, usar `simulated` mientras no existan endpoints ad hoc.
+  Opcional. Usar `live` para que `casos-de-uso/mepram` consuma `/v1/use-cases/data-summary`; usar `simulated` solo para desarrollo visual sin API.
 - `VITE_USE_CASE_ALERTS_CONTACT_EMAIL`
   Opcional. Correo visible en la seccion de alertas del caso de uso.
 

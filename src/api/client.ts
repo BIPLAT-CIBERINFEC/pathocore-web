@@ -12,6 +12,7 @@ import type {
   SampleMetadataSearchResult,
   SchemaDetailResponse,
   SchemaListItem,
+  UseCaseDataSummaryResponse,
   VariantFilterOptionsResponse,
   VariantReferenceGenomeApiItem,
   VariantSearchQuery,
@@ -274,6 +275,13 @@ export class PathocoreApiClient {
         ...query,
         property,
       },
+    });
+  }
+
+  getUseCaseDataSummary(projectName: string) {
+    return this.getJson<UseCaseDataSummaryResponse>({
+      path: "/use-cases/data-summary",
+      query: { project_name: projectName },
     });
   }
 }

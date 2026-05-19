@@ -383,3 +383,109 @@ export interface DatabrowserPropertyDistributionResponse {
   ui_hints?: Record<string, unknown>;
   values: ApiChartItem[];
 }
+
+export interface UseCaseProjectResponse {
+  id: string;
+  label: string;
+}
+
+export interface UseCaseCacheResponse {
+  generated_at: string;
+  scope_key: string;
+  summary_name: string;
+}
+
+export interface UseCaseDimensionResponse {
+  coverage: {
+    matched_samples: number;
+    matched_share: number;
+    total_samples: number;
+  };
+  id: string;
+  kind: "categorical" | "geography" | string;
+  label: string;
+  metric: string;
+  source_properties: string[];
+  truncated: boolean;
+  values: ApiChartItem[];
+}
+
+export interface UseCaseSingleTimeSeriesResponse {
+  id: string;
+  kind: "time_series";
+  label: string;
+  metric: string;
+  source_properties: string[];
+  truncated: boolean;
+  values: ApiChartItem[];
+  x_axis: string;
+}
+
+export interface UseCaseSeriesDefinitionResponse {
+  color: string;
+  key: string;
+  label: string;
+}
+
+export interface UseCaseGroupedTimeSeriesResponse {
+  group_by: string;
+  id: string;
+  kind: "grouped_time_series";
+  label: string;
+  metric: string;
+  series: UseCaseSeriesDefinitionResponse[];
+  simulated: boolean;
+  source_properties: string[];
+  truncated: boolean;
+  values: Array<Record<string, number | string>>;
+  x_axis: string;
+}
+
+export interface UseCaseGeographyRegionResponse {
+  centers: number;
+  dominant_pathogen: string;
+  geo?: ApiGeoPoint | null;
+  hospitals: number;
+  label: string;
+  notes: string[];
+  region_code: string;
+  samples: number;
+  simulated: boolean;
+  top_resistance_signal: string;
+  x?: number | null;
+  y?: number | null;
+}
+
+export interface UseCaseDataSummaryResponse {
+  cache: UseCaseCacheResponse;
+  data_contract_version: string;
+  data_quality: Record<string, unknown>;
+  dimensions: Record<string, UseCaseDimensionResponse | undefined>;
+  generated_at: string;
+  geography: {
+    map_join?: Record<string, string>;
+    regions: UseCaseGeographyRegionResponse[];
+  };
+  metrics: {
+    active_schema_count: number;
+    analyzed_samples: number;
+    participating_centers: number;
+    participating_regions: number;
+    sample_count?: number;
+    samples_with_collection_date: number;
+    samples_with_pathogen: number;
+    samples_with_region: number;
+    samples_with_resistance_signals: number;
+    schema_count: number;
+    total_samples: number;
+  };
+  overview?: Record<string, unknown>;
+  project: UseCaseProjectResponse;
+  project_label: string;
+  project_name: string;
+  time_series: Record<
+    string,
+    UseCaseGroupedTimeSeriesResponse | UseCaseSingleTimeSeriesResponse | undefined
+  >;
+  visualization_hints: Record<string, unknown>;
+}

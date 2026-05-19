@@ -2,32 +2,25 @@ import { PathocoreApiClient } from "@/api/client";
 import { formatInteger, stripOntology, truncateLabel } from "@/lib/format";
 import type {
   ApiCountItem,
-  DatabrowserPropertyDistributionResponse,
-  SampleListItem,
-  SampleMetadataApiItem,
+  UseCaseDataSummaryResponse,
+  UseCaseGeographyRegionResponse,
+  UseCaseGroupedTimeSeriesResponse,
 } from "@/types/api";
 import type { ChartDatum, KpiStat } from "@/types/databrowser";
 import type {
   MepramExplorerFilterOptions,
   MepramExplorerRow,
   MepramMultiSeriesChart,
+  MepramOverviewData,
   MepramSnapshot,
   MepramTerritorialCoverageRegion,
 } from "@/types/mepram";
 
 const PROJECT_NAME = "mepram";
-const SAMPLE_PAGE_SIZE = 50;
 const MEPRAM_DATA_MODE =
   import.meta.env.VITE_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
   import.meta.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() ||
   "simulated";
-const SIMULATED_PATHOGEN_DISTRIBUTION: ChartDatum[] = [
-  { label: "K. pneumoniae", value: 184 },
-  { label: "E. coli", value: 96 },
-  { label: "E. cloacae", value: 58 },
-  { label: "A. baumannii", value: 37 },
-  { label: "Other", value: 24 },
-];
 const SIMULATED_ANNUAL_PATHOGEN_SERIES: MepramMultiSeriesChart = {
   data: [
     { label: "2022", klebsiella: 42, ecoli: 21, enterobacter: 12, acinetobacter: 8 },
@@ -138,87 +131,6 @@ const SIMULATED_TERRITORIAL_COVERAGE: MepramTerritorialCoverageRegion[] = [
     y: 18,
   },
 ];
-
-interface SimulatedOperationalProfile {
-  carbapenemases: string[];
-  pathogens: string[];
-  resistanceProfiles: string[];
-  sequenceTypes: string[];
-}
-
-const DEFAULT_OPERATIONAL_PROFILE: SimulatedOperationalProfile = {
-  carbapenemases: ["OXA-48", "KPC-3", "NDM-5", "VIM-1", "IMP-8"],
-  pathogens: ["K. pneumoniae", "E. coli", "E. cloacae", "A. baumannii"],
-  resistanceProfiles: [
-    "Carbapenem-resistant",
-    "XDR",
-    "MDR",
-    "ESBL + carbapenemase",
-  ],
-  sequenceTypes: ["ST307", "ST512", "ST147", "ST11", "ST15", "ST78"],
-};
-
-const REGIONAL_OPERATIONAL_PROFILES: Record<string, SimulatedOperationalProfile> = {
-  andalucia: {
-    carbapenemases: ["OXA-48", "KPC-3", "NDM-5"],
-    pathogens: ["K. pneumoniae", "E. coli", "E. cloacae"],
-    resistanceProfiles: ["Carbapenem-resistant", "XDR", "MDR"],
-    sequenceTypes: ["ST307", "ST512", "ST15", "ST147"],
-  },
-  cataluna: {
-    carbapenemases: ["NDM-5", "OXA-48", "VIM-1"],
-    pathogens: ["E. coli", "K. pneumoniae", "A. baumannii"],
-    resistanceProfiles: ["ESBL + carbapenemase", "Carbapenem-resistant", "MDR"],
-    sequenceTypes: ["ST405", "ST131", "ST15", "ST307"],
-  },
-  galicia: {
-    carbapenemases: ["OXA-48", "VIM-1", "KPC-3"],
-    pathogens: ["K. pneumoniae", "E. cloacae", "E. coli"],
-    resistanceProfiles: ["Carbapenem-resistant", "MDR", "XDR"],
-    sequenceTypes: ["ST307", "ST78", "ST15", "ST147"],
-  },
-  madrid: {
-    carbapenemases: ["KPC-3", "OXA-48", "NDM-5"],
-    pathogens: ["K. pneumoniae", "E. coli", "A. baumannii"],
-    resistanceProfiles: ["XDR", "Carbapenem-resistant", "Colistin co-resistance"],
-    sequenceTypes: ["ST307", "ST512", "ST258", "ST147"],
-  },
-  pais_vasco: {
-    carbapenemases: ["VIM-1", "OXA-48", "KPC-3"],
-    pathogens: ["E. cloacae", "K. pneumoniae", "E. coli"],
-    resistanceProfiles: ["MDR", "Carbapenem-resistant", "XDR"],
-    sequenceTypes: ["ST78", "ST307", "ST11", "ST15"],
-  },
-  valencia: {
-    carbapenemases: ["OXA-23", "OXA-48", "NDM-5"],
-    pathogens: ["A. baumannii", "K. pneumoniae", "E. coli"],
-    resistanceProfiles: ["XDR", "Carbapenem-resistant", "MDR"],
-    sequenceTypes: ["ST2", "ST307", "ST15", "ST405"],
-  },
-};
-
-function normalizeRegionKey(value: string | null | undefined) {
-  if (!value) {
-    return "";
-  }
-
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[()]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace("comunidad de madrid", "madrid")
-    .replace("comunidad valenciana", "valencia")
-    .replace("comunitat valenciana", "valencia")
-    .replace("region de murcia", "murcia")
-    .replace("comunidad foral de navarra", "navarra")
-    .replace("pais vasco", "pais_vasco")
-    .replace("castilla y leon", "castilla_y_leon")
-    .replace("castilla la mancha", "castilla_la_mancha")
-    .replace(/\s+/g, "_");
-}
 
 function numericHash(value: string) {
   return Array.from(value).reduce((hash, character) => {
@@ -340,111 +252,131 @@ function chartItems(
   });
 }
 
-function metadataToRecord(items: SampleMetadataApiItem[]) {
-  const record: Record<string, string | null> = {};
-
-  items.forEach((item) => {
-    Object.entries(item).forEach(([key, value]) => {
-      record[key] = value;
-    });
-  });
-
-  return record;
-}
-
-function firstDefined(
-  record: Record<string, string | null>,
-  propertyNames: string[],
-): string | null {
-  for (const propertyName of propertyNames) {
-    const value = sanitizeValue(record[propertyName]);
-
-    if (value) {
-      return value;
-    }
+function useCaseGroupedSeries(
+  series: UseCaseGroupedTimeSeriesResponse | undefined,
+): MepramMultiSeriesChart {
+  if (!series) {
+    return { data: [], series: [], simulated: false };
   }
 
-  return null;
-}
-
-function explorerRow(
-  sample: SampleListItem,
-  metadata: SampleMetadataApiItem[],
-): MepramExplorerRow {
-  const metadataRecord = metadataToRecord(metadata);
-
   return {
-    carbapenemase: firstDefined(metadataRecord, [
-      "carbapenemase_genes",
-      "carbapenemase_class_a_test",
-      "ESBL_test",
-      "mbl_test",
-    ]),
-    collectionDate:
-      firstDefined(metadataRecord, ["sample_collection_date"]) ??
-      sample.created_at.slice(0, 10),
-    collectingRegion: firstDefined(metadataRecord, [
-      "collecting_institution_geo_loc_state",
-      "geo_loc_state",
-    ]),
-    host: firstDefined(metadataRecord, ["host_common_name", "host_scientific_name"]),
-    infectionType: firstDefined(metadataRecord, ["infection_type"]),
-    isolateDeliveryType: firstDefined(metadataRecord, ["isolate_delivery_type"]),
-    pathogen: firstDefined(metadataRecord, ["organism", "species"]),
-    region:
-      firstDefined(metadataRecord, [
-        "collecting_institution_geo_loc_state",
-        "geo_loc_state",
-      ]) ?? firstDefined(metadataRecord, ["submitting_geo_loc_state"]),
-    resistanceProfile: firstDefined(metadataRecord, [
-      "ECDC Resistance profile",
-      "IDSA Resistance profile",
-      "antimicrobial_resistance_profile",
-    ]),
-    sampleId: sample.sample_unique_id,
-    sequenceType: firstDefined(metadataRecord, [
-      "st1",
-      "st2",
-      "mlst_profile",
-      "clonal_complex",
-      "complex_type",
-    ]),
-    sequencingPlatform: firstDefined(metadataRecord, [
-      "sequencing_instrument_platform",
-    ]),
-    sequencingSampleId: sample.sequencing_sample_id,
-    submittingInstitution: firstDefined(metadataRecord, ["submitting_institution"]),
-    submittingRegion: firstDefined(metadataRecord, ["submitting_geo_loc_state"]),
+    data: series.values.map((item) => ({ ...item, label: String(item.label) })),
+    series: series.series,
+    simulated: series.simulated,
   };
 }
 
-function operationalProfileForRow(row: MepramExplorerRow): SimulatedOperationalProfile {
-  const normalizedRegion = normalizeRegionKey(
-    row.region ?? row.collectingRegion ?? row.submittingRegion,
-  );
-
-  return REGIONAL_OPERATIONAL_PROFILES[normalizedRegion] ?? DEFAULT_OPERATIONAL_PROFILE;
+function coordinateFromLongitude(longitude: number) {
+  return Math.min(88, Math.max(12, ((longitude + 9.5) / 13.5) * 100));
 }
 
-function enrichExplorerRow(row: MepramExplorerRow): MepramExplorerRow {
-  const profile = operationalProfileForRow(row);
-  const seed = [
-    row.sampleId,
-    row.region,
-    row.submittingInstitution,
-    row.collectionDate,
-    row.sequencingPlatform,
-  ]
-    .filter(Boolean)
-    .join("|");
+function coordinateFromLatitude(latitude: number) {
+  return Math.min(88, Math.max(12, ((44.5 - latitude) / 9) * 100));
+}
+
+function regionCoordinate(
+  region: UseCaseGeographyRegionResponse,
+  axis: "x" | "y",
+  fallback: number,
+) {
+  const rawValue = axis === "x" ? region.x : region.y;
+
+  if (typeof rawValue === "number" && rawValue > 0) {
+    return rawValue;
+  }
+
+  if (axis === "x" && typeof region.geo?.lon === "number") {
+    return coordinateFromLongitude(region.geo.lon);
+  }
+
+  if (axis === "y" && typeof region.geo?.lat === "number") {
+    return coordinateFromLatitude(region.geo.lat);
+  }
+
+  return fallback;
+}
+
+function territorialCoverageRegion(
+  region: UseCaseGeographyRegionResponse,
+  index: number,
+): MepramTerritorialCoverageRegion {
+  return {
+    centers: region.centers,
+    dominantPathogen: region.dominant_pathogen,
+    hospitals: region.hospitals,
+    label: region.label,
+    notes: region.notes,
+    regionCode: region.region_code || `region-${index + 1}`,
+    samples: region.samples,
+    simulated: region.simulated,
+    topResistanceSignal: region.top_resistance_signal,
+    x: regionCoordinate(region, "x", 18 + ((index * 17) % 64)),
+    y: regionCoordinate(region, "y", 22 + ((index * 13) % 58)),
+  };
+}
+
+function missingOperationalFields(summary: UseCaseDataSummaryResponse) {
+  const value = summary.data_quality.missing_operational_fields;
+
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function overviewFromUseCaseSummary(
+  summary: UseCaseDataSummaryResponse,
+): MepramOverviewData {
+  const pathogensByYear = summary.time_series.pathogens_by_year;
+  const resistanceSignalsByYear = summary.time_series.resistance_signals_by_year;
+  const samplesByMonth = summary.time_series.samples_by_month;
+  const territorialCoverage = summary.geography.regions.map(territorialCoverageRegion);
 
   return {
-    ...row,
-    carbapenemase: row.carbapenemase ?? pickFromSeed(seed, profile.carbapenemases, 1),
-    pathogen: row.pathogen ?? pickFromSeed(seed, profile.pathogens, 2),
-    resistanceProfile:
-      row.resistanceProfile ?? pickFromSeed(seed, profile.resistanceProfiles, 3),
-    sequenceType: row.sequenceType ?? pickFromSeed(seed, profile.sequenceTypes, 4),
+    analyzedSamples: summary.metrics.analyzed_samples,
+    annualPathogenSeries:
+      pathogensByYear?.kind === "grouped_time_series"
+        ? useCaseGroupedSeries(pathogensByYear)
+        : { data: [], series: [], simulated: false },
+    centers: chartItems(summary.dimensions.center?.values, { truncate: true }),
+    collectionTimeline:
+      samplesByMonth?.kind === "time_series" ? chartItems(samplesByMonth.values) : [],
+    collectingRegions: chartItems(summary.dimensions.collecting_region?.values),
+    infectionTypes: chartItems(summary.dimensions.infection_type?.values, {
+      truncate: true,
+    }),
+    kpis: kpis({
+      analyzedSamples: summary.metrics.analyzed_samples,
+      centerCount: summary.metrics.participating_centers,
+      overviewSampleCount: summary.metrics.total_samples,
+      regionCount: summary.metrics.participating_regions,
+    }),
+    notes: [
+      "Datos agregados desde el endpoint cacheado de casos de uso de PathoCore API.",
+      ...missingOperationalFields(summary).map(
+        (field) => `Campo operativo pendiente o con baja cobertura: ${field}.`,
+      ),
+    ],
+    participatingCenters: summary.metrics.participating_centers,
+    participatingRegions: summary.metrics.participating_regions,
+    pathogenDistributionSimulated: false,
+    projectPathogenDistribution: chartItems(summary.dimensions.pathogen?.values, {
+      truncate: true,
+    }),
+    resistanceSignalsSeries:
+      resistanceSignalsByYear?.kind === "grouped_time_series"
+        ? useCaseGroupedSeries(resistanceSignalsByYear)
+        : { data: [], series: [], simulated: false },
+    resistanceProfiles: chartItems(summary.dimensions.resistance_profile?.values, {
+      truncate: true,
+    }),
+    resistanceProfilesSimulated: false,
+    sequencingPlatforms: chartItems(summary.dimensions.sequencing_platform?.values, {
+      truncate: true,
+    }),
+    submittingRegions: chartItems(summary.dimensions.submitting_region?.values),
+    territorialCoverage,
+    territorialCoverageSimulated: false,
+    totalSamples: summary.metrics.total_samples,
   };
 }
 
@@ -623,140 +555,33 @@ function kpis({
   ];
 }
 
-async function propertyDistribution(
-  client: PathocoreApiClient,
-  property: string,
-): Promise<DatabrowserPropertyDistributionResponse> {
-  return client.getDatabrowserPropertyDistribution(property, {
-    project_name: PROJECT_NAME,
-  });
-}
-
 async function loadLiveMepramSnapshot(
   accessToken: string | null,
 ): Promise<MepramSnapshot> {
   const client = new PathocoreApiClient({ accessToken });
-  const [
-    overviewSummary,
-    schemaSummary,
-    centerDistribution,
-    collectingRegions,
-    submittingRegions,
-    infectionTypes,
-    sequencingPlatforms,
-    speciesDistribution,
-    resistanceProfiles,
-    analyzedSamplesDistribution,
-  ] =
-    await Promise.all([
-      client.getDatabrowserOverviewSummary({ project_name: PROJECT_NAME }),
-      client.getDatabrowserSchemaSummary({ project_name: PROJECT_NAME }),
-      propertyDistribution(client, "submitting_institution"),
-      propertyDistribution(client, "collecting_institution_geo_loc_state"),
-      propertyDistribution(client, "submitting_geo_loc_state"),
-      propertyDistribution(client, "infection_type"),
-      propertyDistribution(client, "sequencing_instrument_platform"),
-      propertyDistribution(client, "organism"),
-      propertyDistribution(client, "ECDC Resistance profile"),
-      propertyDistribution(client, "bioinformatics_protocol_software_name"),
-    ]);
-
-  const mepramSchema = schemaSummary.schema_options[0];
-  const samplesPage = mepramSchema
-    ? await client.listSamplesPage({
-        page: 1,
-        page_size: SAMPLE_PAGE_SIZE,
-        schema_name: mepramSchema.schema_name,
-        schema_version: mepramSchema.schema_version,
-      })
-    : { count: 0, next: null, previous: null, results: [] };
-
-  const metadataBySample = await Promise.all(
-    samplesPage.results.map(async (sample) => ({
-      metadata: await client.getSampleMetadata(sample.sample_unique_id),
-      sample,
-    })),
-  );
-
-  const rawRows = metadataBySample.map(({ metadata, sample }) => explorerRow(sample, metadata));
-  const operationalFieldsSimulated = rawRows.some(
-    (row) =>
-      !row.pathogen || !row.sequenceType || !row.carbapenemase || !row.resistanceProfile,
-  );
-  const rows = rawRows
-    .map((row) => (operationalFieldsSimulated ? enrichExplorerRow(row) : row))
-    .sort((left, right) => (right.collectionDate ?? "").localeCompare(left.collectionDate ?? ""));
-
-  const regionCount = new Set(
-    [...collectingRegions.values, ...submittingRegions.values].map((item) => item.label),
-  ).size;
-  const pathogenDistribution =
-    speciesDistribution.values.length > 0
-      ? chartItems(speciesDistribution.values, { truncate: true })
-      : SIMULATED_PATHOGEN_DISTRIBUTION;
-  const pathogenDistributionSimulated = speciesDistribution.values.length === 0;
-  const resistanceProfilesData =
-    resistanceProfiles.values.length > 0
-      ? chartItems(resistanceProfiles.values, { truncate: true })
-      : [
-          { label: "OXA-48", value: 46 },
-          { label: "KPC-3", value: 24 },
-          { label: "NDM-5", value: 18 },
-          { label: "VIM-1", value: 12 },
-        ];
-  const resistanceProfilesSimulated = resistanceProfiles.values.length === 0;
+  const summary = await client.getUseCaseDataSummary(PROJECT_NAME);
+  const rows = buildSimulatedExplorerRows();
 
   return {
     explorer: {
       filterOptions: explorerFilterOptions(rows),
       notes: [
-        `La tabla operativa carga las primeras ${SAMPLE_PAGE_SIZE} muestras del schema del caso de uso y las enriquece con /samples/{id}/metadata.`,
-        "Para escalar este explorer hace falta un endpoint backend paginado y agregado específico de vigilancia, sin N+1 por muestra.",
-        operationalFieldsSimulated
-          ? "Patógeno, ST, carbapenemasa y perfil de resistencia se completan aquí con una simulación controlada para poder revisar la experiencia de vigilancia mientras backend expone esa capa operativa."
-          : "Los campos de tipado y resistencia ya están llegando desde la API real en esta muestra visible.",
+        "La sección de datos del caso de uso ya usa el endpoint agregado y cacheado de PathoCore API.",
+        "El explorer operativo permanece en simulación hasta que exista un endpoint backend paginado para aislamientos, ST, carbapenemasas y perfiles de resistencia.",
       ],
-      operationalFieldsSimulated,
+      operationalFieldsSimulated: true,
       rows,
       totalLoaded: rows.length,
     },
-    generatedAt: new Date().toISOString(),
+    generatedAt: summary.generated_at,
     integrationGaps: [
-      "No hay todavía un endpoint específico de búsqueda de aislamientos del caso de uso por ST, clon, perfil de resistencia o carbapenemasa, ni una exportación preparada para abrir subconjuntos filtrados en Microreact.",
-      "Los campos de tipado y resistencia no están poblados ni expuestos de forma operativa en /samples/{sample_id}/metadata para el dataset actual.",
+      "El panel de datos del caso de uso ya consume /use-cases/data-summary.",
+      "El explorer operativo todavía necesita un endpoint backend paginado por ST, patógeno, carbapenemasa y perfil de resistencia.",
+      "Falta una salida backend para exportar subconjuntos filtrados y abrirlos en Microreact.",
       "La capa de alertas de vigilancia todavía requiere lógica backend dedicada y un endpoint agregado propio.",
     ],
-    overview: {
-      analyzedSamples: analyzedSamplesDistribution.matched_samples,
-      annualPathogenSeries: SIMULATED_ANNUAL_PATHOGEN_SERIES,
-      centers: chartItems(centerDistribution.values, { truncate: true }),
-      collectionTimeline: chartItems(overviewSummary.sample_growth),
-      collectingRegions: chartItems(collectingRegions.values),
-      infectionTypes: chartItems(infectionTypes.values, { truncate: true }),
-      kpis: kpis({
-        analyzedSamples: analyzedSamplesDistribution.matched_samples,
-        centerCount: centerDistribution.values.length,
-        overviewSampleCount: overviewSummary.metrics.sample_count,
-        regionCount,
-      }),
-      notes: [
-        ...overviewSummary.notes,
-        "Las gráficas de patógenos, genes de resistencia y cobertura territorial avanzada se muestran como simulación controlada mientras la API no exponga esos agregados de vigilancia.",
-      ],
-      participatingCenters: centerDistribution.values.length,
-      participatingRegions: regionCount,
-      pathogenDistributionSimulated,
-      projectPathogenDistribution: pathogenDistribution,
-      resistanceSignalsSeries: SIMULATED_RESISTANCE_SIGNALS,
-      resistanceProfiles: resistanceProfilesData,
-      resistanceProfilesSimulated,
-      sequencingPlatforms: chartItems(sequencingPlatforms.values, { truncate: true }),
-      submittingRegions: chartItems(submittingRegions.values),
-      territorialCoverage: SIMULATED_TERRITORIAL_COVERAGE,
-      territorialCoverageSimulated: true,
-      totalSamples: overviewSummary.metrics.sample_count,
-    },
-    projectLabel: "Caso de uso pendiente",
+    overview: overviewFromUseCaseSummary(summary),
+    projectLabel: summary.project.label,
   };
 }
 
