@@ -171,6 +171,9 @@ En hosts con Podman rootless y SELinux, el volumen de import se monta con
 etiqueta `:z` para que Keycloak pueda leer `/opt/keycloak/data/import`.
 Sin esa etiqueta, Keycloak puede fallar al arrancar con `directory not found`
 aunque `keycloak/tmp-import/ciberisciii_datahub-realm.json` exista en el host.
+El script de arranque de PathoCore API también se monta con `:z`; si falta esa
+etiqueta, la API puede fallar con `Permission denied` al leer
+`/usr/local/bin/pathocore-api-start.sh`.
 
 Para produccion, copia `keycloak/config/realm-config.prod.example.json` a
 `keycloak/config/realm-config.prod.json`, cambia los dominios `https://...` y
