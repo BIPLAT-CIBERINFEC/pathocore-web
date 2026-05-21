@@ -140,7 +140,7 @@ services:
       retries: 30
       start_period: 180s
     volumes:
-      - ./docker/pathocore-api-start.sh:/usr/local/bin/pathocore-api-start.sh:ro
+      - ./docker/pathocore-api-start.sh:/usr/local/bin/pathocore-api-start.sh:ro,z
       - pathocore_api_documents:/opt/pathocore-api/documents
       - pathocore_api_logs:/opt/pathocore-api/logs
       - pathocore_api_static:/opt/pathocore-api/static
