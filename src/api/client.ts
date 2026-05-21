@@ -13,6 +13,7 @@ import type {
   SchemaDetailResponse,
   SchemaListItem,
   UseCaseDataSummaryResponse,
+  UseCaseIsolateExplorerResponse,
   VariantFilterOptionsResponse,
   VariantReferenceGenomeApiItem,
   VariantSearchQuery,
@@ -71,8 +72,7 @@ export class PathocoreApiClient {
     this.accessToken = options.accessToken ?? null;
     this.baseUrl = options.baseUrl ?? DEFAULT_API_BASE_URL;
     this.requestCredentials =
-      options.requestCredentials ??
-      (this.accessToken ? "include" : "omit");
+      options.requestCredentials ?? (this.accessToken ? "include" : "omit");
   }
 
   async getJson<T>(options: RequestOptions): Promise<T> {
@@ -90,7 +90,10 @@ export class PathocoreApiClient {
       method: "GET",
     });
 
-    const payload = (await response.json().catch(() => null)) as ApiErrorPayload | T | null;
+    const payload = (await response.json().catch(() => null)) as
+      | ApiErrorPayload
+      | T
+      | null;
 
     if (!response.ok) {
       const message =
@@ -163,7 +166,10 @@ export class PathocoreApiClient {
 
   async searchSampleMetadata(filters: string[], match: "all" | "any" = "all") {
     try {
-      const url = new URL(`${this.baseUrl}/samples/metadata/search`, window.location.origin);
+      const url = new URL(
+        `${this.baseUrl}/samples/metadata/search`,
+        window.location.origin,
+      );
       filters.forEach((filter) => {
         url.searchParams.append("filter", filter);
       });
@@ -281,6 +287,13 @@ export class PathocoreApiClient {
   getUseCaseDataSummary(projectName: string) {
     return this.getJson<UseCaseDataSummaryResponse>({
       path: "/use-cases/data-summary",
+      query: { project_name: projectName },
+    });
+  }
+
+  getUseCaseIsolateExplorer(projectName: string) {
+    return this.getJson<UseCaseIsolateExplorerResponse>({
+      path: "/use-cases/isolate-explorer",
       query: { project_name: projectName },
     });
   }

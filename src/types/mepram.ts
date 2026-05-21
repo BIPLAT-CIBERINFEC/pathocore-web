@@ -45,9 +45,9 @@ export interface MepramOverviewData {
   pathogenDistributionSimulated: boolean;
   projectPathogenDistribution: ChartDatum[];
   resistanceSignalsSeries: MepramMultiSeriesChart;
-  resistanceProfiles: ChartDatum[];
-  resistanceProfilesSimulated: boolean;
   sequencingPlatforms: ChartDatum[];
+  specimenSources: ChartDatum[];
+  specimenSourcesSimulated: boolean;
   submittingRegions: ChartDatum[];
   territorialCoverage: MepramTerritorialCoverageRegion[];
   territorialCoverageSimulated: boolean;
@@ -55,32 +55,56 @@ export interface MepramOverviewData {
 }
 
 export interface MepramExplorerRow {
-  carbapenemase: string | null;
+  amrAllele: string | null;
+  amrClassification: string | null;
+  amrGene: string | null;
+  amrGeneRecords: MepramAmrGeneRecord[];
+  blaCarb: string | null;
+  blaEsbl: string | null;
   collectionDate: string | null;
+  collectingProvince: string | null;
   collectingRegion: string | null;
+  dataOrigin: string | null;
   host: string | null;
   infectionType: string | null;
+  isSequenced: boolean;
   isolateDeliveryType: string | null;
   pathogen: string | null;
+  pathogenOrigin: string | null;
+  province: string | null;
   region: string | null;
-  resistanceProfile: string | null;
   sampleId: string;
   sequenceType: string | null;
-  sequencingPlatform: string | null;
+  sequenceTypeSchemes: string[];
+  sequencingStatus: string;
   sequencingSampleId: string | null;
+  species: string | null;
+  speciesGroup: string | null;
   submittingInstitution: string | null;
+  submittingProvince: string | null;
   submittingRegion: string | null;
+}
+
+export interface MepramAmrGeneRecord {
+  allele: string | null;
+  classification: string | null;
+  gene: string | null;
+  label: string | null;
+  origin: string | null;
 }
 
 export interface MepramExplorerFilterOptions {
   autonomousCommunities: string[];
+  alleles: string[];
+  blaGroups: string[];
   centers: string[];
+  classifications: string[];
   collectionDateMax: string | null;
   collectionDateMin: string | null;
+  genes: string[];
   infectionTypes: string[];
   pathogens: string[];
-  resistanceProfiles: string[];
-  sequencingPlatforms: string[];
+  provinces: string[];
   sequenceTypes: string[];
 }
 

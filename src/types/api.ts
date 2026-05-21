@@ -485,7 +485,85 @@ export interface UseCaseDataSummaryResponse {
   project_name: string;
   time_series: Record<
     string,
-    UseCaseGroupedTimeSeriesResponse | UseCaseSingleTimeSeriesResponse | undefined
+    | UseCaseGroupedTimeSeriesResponse
+    | UseCaseSingleTimeSeriesResponse
+    | undefined
   >;
   visualization_hints: Record<string, unknown>;
+}
+
+export interface UseCaseIsolateExplorerRowResponse {
+  amr_allele: string | null;
+  amr_classification: string | null;
+  amr_gene: string | null;
+  amr_gene_records: MepramAmrGeneRecordResponse[];
+  bla_carb: string | null;
+  bla_esbl: string | null;
+  collection_date: string | null;
+  collecting_lab_isolate_id?: string | null;
+  collecting_lab_sample_id?: string | null;
+  collecting_province: string | null;
+  collecting_region: string | null;
+  data_origin: string | null;
+  host: string | null;
+  infection_type: string | null;
+  is_sequenced: boolean;
+  isolate_delivery_type: string | null;
+  pathogen: string | null;
+  pathogen_origin: string | null;
+  province: string | null;
+  region: string | null;
+  sample_unique_id: string;
+  sequence_type: string | null;
+  sequence_type_schemes: string[];
+  sequencing_isolate_id?: string | null;
+  sequencing_status: string;
+  sequencing_sample_id: string | null;
+  species: string | null;
+  species_group: string | null;
+  submitting_institution: string | null;
+  submitting_lab_isolate_id?: string | null;
+  submitting_lab_sample_id?: string | null;
+  submitting_province: string | null;
+  submitting_region: string | null;
+}
+
+export interface MepramAmrGeneRecordResponse {
+  allele: string | null;
+  classification: string | null;
+  gene: string | null;
+  label: string | null;
+  origin: string | null;
+}
+
+export interface UseCaseIsolateExplorerFilterOptionsResponse {
+  autonomous_communities: string[];
+  alleles?: string[];
+  bla_groups?: string[];
+  centers: string[];
+  classifications?: string[];
+  collection_date_max: string | null;
+  collection_date_min: string | null;
+  genes?: string[];
+  infection_types: string[];
+  pathogens: string[];
+  provinces: string[];
+  sequence_types: string[];
+}
+
+export interface UseCaseIsolateExplorerResponse {
+  columns: Array<Record<string, unknown>>;
+  data_contract_version: string;
+  data_quality: Record<string, unknown>;
+  filter_options: UseCaseIsolateExplorerFilterOptionsResponse;
+  generated_at: string;
+  matched_samples: number;
+  notes: string[];
+  project: UseCaseProjectResponse;
+  project_label: string;
+  project_name: string;
+  query: Record<string, unknown>;
+  rows: UseCaseIsolateExplorerRowResponse[];
+  total_loaded: number;
+  total_samples: number;
 }
