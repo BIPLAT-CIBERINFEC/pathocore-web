@@ -78,17 +78,17 @@ interface DistributionItem {
 }
 
 interface ExplorerRegionSummary {
-  carbapenemases: DistributionItem[];
+  amrGeneProfiles: DistributionItem[];
+  blaCarbProfiles: DistributionItem[];
   centers: number;
-  dominantCarbapenemase: string;
+  dominantAmrGeneProfile: string;
+  dominantBlaCarb: string;
   dominantPathogen: string;
-  dominantResistanceProfile: string;
   dominantSequenceType: string;
   label: string;
   notes: string[];
   pathogens: DistributionItem[];
   regionCode: string;
-  resistanceProfiles: DistributionItem[];
   samples: number;
   sequenceTypes: DistributionItem[];
   x: number;
@@ -180,9 +180,9 @@ function buildRegions(rows: MepramExplorerRow[]): ExplorerRegionSummary[] {
     .map((group) => {
       const pathogens = distribution(group.rows.map((row) => row.pathogen));
       const sequenceTypes = distribution(group.rows.map((row) => row.sequenceType));
-      const carbapenemases = distribution(group.rows.map((row) => row.carbapenemase));
-      const resistanceProfiles = distribution(
-        group.rows.map((row) => row.resistanceProfile),
+      const blaCarbProfiles = distribution(group.rows.map((row) => row.blaCarb));
+      const amrGeneProfiles = distribution(
+        group.rows.map((row) => row.amrGene),
       );
       const centers = new Set(
         group.rows
@@ -191,11 +191,12 @@ function buildRegions(rows: MepramExplorerRow[]): ExplorerRegionSummary[] {
       ).size;
 
       return {
-        carbapenemases,
+        amrGeneProfiles,
+        blaCarbProfiles,
         centers,
-        dominantCarbapenemase: mode(carbapenemases),
+        dominantAmrGeneProfile: mode(amrGeneProfiles),
+        dominantBlaCarb: mode(blaCarbProfiles),
         dominantPathogen: mode(pathogens),
-        dominantResistanceProfile: mode(resistanceProfiles),
         dominantSequenceType: mode(sequenceTypes),
         label: group.label,
         notes: [
@@ -204,7 +205,6 @@ function buildRegions(rows: MepramExplorerRow[]): ExplorerRegionSummary[] {
         ],
         pathogens,
         regionCode: group.regionCode,
-        resistanceProfiles,
         samples: group.rows.length,
         sequenceTypes,
         x: group.x,
@@ -277,7 +277,7 @@ export function MepramExplorerMap({
             <p className="mt-2 text-sm text-slate-500">
               Cobertura territorial del subconjunto devuelto por los filtros activos. Al
               seleccionar una comunidad autónoma se muestran señales útiles para vigilancia:
-              patógeno dominante, ST, carbapenemasas y perfil de resistencia.
+              patógeno dominante, ST, bla_carb y genes AMR.
             </p>
           </div>
           {simulated ? <Badge variant="outline">Simulación controlada</Badge> : null}
@@ -345,19 +345,23 @@ export function MepramExplorerMap({
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <SignalBox
-                  label="Carbapenemasa prioritaria"
-                  value={activeRegion.dominantCarbapenemase}
+                  label="bla_carb prioritario"
+                  value={activeRegion.dominantBlaCarb}
                 />
                 <SignalBox
-                  label="Perfil de resistencia"
-                  value={activeRegion.dominantResistanceProfile}
+                  label="Gen AMR prioritario"
+                  value={activeRegion.dominantAmrGeneProfile}
                 />
               </div>
 
               <div className="mt-5 grid gap-4">
                 <MiniDistributionChart
-                  items={activeRegion.carbapenemases}
-                  title="Resistencias dominantes"
+                  items={activeRegion.blaCarbProfiles}
+                  title="bla_carb frecuentes"
+                />
+                <MiniDistributionChart
+                  items={activeRegion.amrGeneProfiles}
+                  title="Genes AMR frecuentes"
                 />
                 <MiniDistributionChart items={activeRegion.sequenceTypes} title="Top ST" />
                 <MiniDistributionChart items={activeRegion.pathogens} title="Top patógenos" />

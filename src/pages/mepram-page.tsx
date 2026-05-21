@@ -64,7 +64,7 @@ export function MepramDataPage() {
           />
           <div className="mt-6 flex flex-wrap gap-2">
             {snapshot.overview.pathogenDistributionSimulated ||
-            snapshot.overview.resistanceProfilesSimulated ||
+            snapshot.overview.specimenSourcesSimulated ||
             snapshot.overview.territorialCoverageSimulated ? (
               <Badge variant="outline">Incluye paneles simulados</Badge>
             ) : null}
@@ -89,14 +89,19 @@ export function MepramDataPage() {
       <section className="grid gap-5 xl:grid-cols-1">
         <MultiSeriesBarPanel
           chart={snapshot.overview.resistanceSignalsSeries}
-          description="Distribución anual de carbapenemasas o genes de resistencia predominantes agrupados por patógeno. Preview simulada mientras no exista el agregado backend."
+          description="Distribución anual de carbapenemasas o genes de resistencia predominantes agrupados por muestra."
           stacked
           title="Top genes de resistencia anualmente agrupados por patógeno"
           valueSuffix="%"
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-1">
+      <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <PieChartPanel
+          data={snapshot.overview.specimenSources}
+          description="Distribución de las muestras por specimen_source según los valores almacenados en metadata."
+          title="Distribución por origen de muestra"
+        />
         <LineChartPanel
           data={snapshot.overview.collectionTimeline}
           description="Serie temporal real de aislamientos usando sample_collection_date."
