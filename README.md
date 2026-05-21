@@ -167,6 +167,11 @@ python keycloak/scripts/render_realm.py --profile test
 docker compose -f docker-compose.test.yml up -d --build
 ```
 
+En hosts con Podman rootless y SELinux, el volumen de import se monta con
+etiqueta `:z` para que Keycloak pueda leer `/opt/keycloak/data/import`.
+Sin esa etiqueta, Keycloak puede fallar al arrancar con `directory not found`
+aunque `keycloak/tmp-import/ciberisciii_datahub-realm.json` exista en el host.
+
 Para produccion, copia `keycloak/config/realm-config.prod.example.json` a
 `keycloak/config/realm-config.prod.json`, cambia los dominios `https://...` y
 renderiza con `--config`. No uses URLs `localhost` ni wildcards en produccion.
