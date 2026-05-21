@@ -14,7 +14,7 @@ const mepramNavItems = [
   {
     description: "Búsqueda operativa de aislamientos.",
     icon: Activity,
-    label: "Operational isolate explorer",
+    label: "Isolate explorer",
     to: "/use-cases/mepram/operational-isolate-explorer",
   },
   {
@@ -47,8 +47,9 @@ export function MepramPageHeader({
               Caso de uso - vigilancia genómica
             </h1>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Área específica para explorar un caso de uso de vigilancia genómica:
-              estado operativo, explorer de aislamientos y futura capa de alertas.
+              Área específica para explorar un caso de uso de vigilancia
+              genómica: estado operativo, explorer de aislamientos y futura capa
+              de alertas.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Badge variant="strong">Caso de uso específico</Badge>
