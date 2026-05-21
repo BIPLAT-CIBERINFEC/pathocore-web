@@ -174,6 +174,8 @@ aunque `keycloak/tmp-import/ciberisciii_datahub-realm.json` exista en el host.
 El script de arranque de PathoCore API también se monta con `:z`; si falta esa
 etiqueta, la API puede fallar con `Permission denied` al leer
 `/usr/local/bin/pathocore-api-start.sh`.
+El montaje del frontend sobre `/app` usa la misma etiqueta para permitir que
+Node/NPM lean `package.json` y escriban `node_modules` en hosts SELinux.
 
 Para produccion, copia `keycloak/config/realm-config.prod.example.json` a
 `keycloak/config/realm-config.prod.json`, cambia los dominios `https://...` y
