@@ -379,5 +379,12 @@
       ],
       "optionalClientScopes": []
     }
-  ]
+  ],
+  "ssoSessionIdleTimeout": 28800,
+  "ssoSessionMaxLifespan": 86400,
+  "clientSessionIdleTimeout": 28800,
+  "clientSessionMaxLifespan": 86400,
+  "accessTokenLifespan": 900,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0
 }

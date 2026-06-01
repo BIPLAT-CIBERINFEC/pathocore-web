@@ -11,6 +11,15 @@ IMPORT_DIR = BASE_DIR / "tmp-import"
 
 BUILTIN_DEFAULT_CLIENT_SCOPES = ["profile", "email", "roles"]
 WEB_DEFAULT_CLIENT_SCOPES = BUILTIN_DEFAULT_CLIENT_SCOPES + ["web-origins"]
+REALM_SESSION_FIELDS = [
+    "ssoSessionIdleTimeout",
+    "ssoSessionMaxLifespan",
+    "clientSessionIdleTimeout",
+    "clientSessionMaxLifespan",
+    "accessTokenLifespan",
+    "revokeRefreshToken",
+    "refreshTokenMaxReuse",
+]
 
 
 def parse_args():
@@ -253,7 +262,7 @@ def render_realm(config):
     shared_scope_name = config["shared_client_scope"]["name"]
     client_scopes = [build_shared_client_scope(config)]
 
-    return {
+    realm = {
         "realm": config["realm"],
         "enabled": True,
         "registrationAllowed": False,
@@ -265,6 +274,11 @@ def render_realm(config):
             for client_config in config["clients"]
         ],
     }
+    session_config = config.get("session", {})
+    for field in REALM_SESSION_FIELDS:
+        if field in session_config:
+            realm[field] = session_config[field]
+    return realm
 
 
 def main():
