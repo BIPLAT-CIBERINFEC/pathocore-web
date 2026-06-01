@@ -212,16 +212,16 @@
   ],
   "users": [
     {
-      "username": "daniel",
+      "username": "mepram_admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Daniel",
-      "lastName": "VM",
-      "email": "daniel@example.org",
+      "firstName": "MEPRAM",
+      "lastName": "Admin",
+      "email": "mepram.admin@example.org",
       "credentials": [
         {
           "type": "password",
-          "value": "dareleplat",
+          "value": "mepram_admin_pass",
           "temporary": false
         }
       ],
@@ -231,16 +231,16 @@
       ]
     },
     {
-      "username": "maria",
+      "username": "relecov_admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Maria",
-      "lastName": "Tester",
-      "email": "maria@example.org",
+      "firstName": "RELECOV",
+      "lastName": "Admin",
+      "email": "relecov.admin@example.org",
       "credentials": [
         {
           "type": "password",
-          "value": "mariapass",
+          "value": "relecov_admin_pass",
           "temporary": false
         }
       ],
@@ -249,16 +249,16 @@
       ]
     },
     {
-      "username": "alba",
+      "username": "redlabra_viewer",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Alba",
-      "lastName": "view",
-      "email": "alba@example.org",
+      "firstName": "RedLabRa",
+      "lastName": "Viewer",
+      "email": "redlabra.viewer@example.org",
       "credentials": [
         {
           "type": "password",
-          "value": "albapass",
+          "value": "redlabra_viewer_pass",
           "temporary": false
         }
       ],
@@ -267,16 +267,16 @@
       ]
     },
     {
-      "username": "ines",
+      "username": "hybrid_user",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Ines",
-      "lastName": "Hybrid",
-      "email": "ines@example.org",
+      "firstName": "Hybrid",
+      "lastName": "User",
+      "email": "hybrid.user@example.org",
       "credentials": [
         {
           "type": "password",
-          "value": "inespass",
+          "value": "hybrid_user_pass",
           "temporary": false
         }
       ],
@@ -286,16 +286,16 @@
       ]
     },
     {
-      "username": "nora",
+      "username": "models_admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Nora",
-      "lastName": "Models",
-      "email": "nora@example.org",
+      "firstName": "Models",
+      "lastName": "Admin",
+      "email": "models.admin@example.org",
       "credentials": [
         {
           "type": "password",
-          "value": "norapass",
+          "value": "models_admin_pass",
           "temporary": false
         }
       ],

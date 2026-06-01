@@ -101,17 +101,17 @@ Semantics:
 
 ## Example users
 
-- `daniel` / `dareleplat`
+- `mepram_admin` / `mepram_admin_pass`
   - `/use-cases/mepram/labs/lab1/admin`
   - `/use-cases/relecov/labs/lab2/view`
-- `maria` / `mariapass`
+- `relecov_admin` / `relecov_admin_pass`
   - `/use-cases/relecov/admin`
-- `alba` / `albapass`
+- `redlabra_viewer` / `redlabra_viewer_pass`
   - `/use-cases/redlabra/view`
-- `ines` / `inespass`
+- `hybrid_user` / `hybrid_user_pass`
   - `/use-cases/mepram/labs/lab2/view`
   - `/use-cases/redlabra/admin`
-- `nora` / `norapass`
+- `models_admin` / `models_admin_pass`
   - `/use-cases/ai-models/admin`
 
 To create a superuser in this dev realm, assign the user to `/superusers`.
@@ -168,8 +168,8 @@ curl -sS -X POST \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "client_id=pathocore-web" \
   -d "grant_type=password" \
-  -d "username=daniel" \
-  -d "password=dareleplat" | jq
+  -d "username=mepram_admin" \
+  -d "password=mepram_admin_pass" | jq
 ```
 
 The resulting access token should include `sub`, `preferred_username`,
