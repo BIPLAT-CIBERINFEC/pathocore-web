@@ -94,53 +94,53 @@
   ],
   "users": [
     {
-      "username": "daniel",
-      "password": "dareleplat",
-      "first_name": "Daniel",
-      "last_name": "VM",
-      "email": "daniel@example.org",
+      "username": "mepram_admin",
+      "password": "mepram_admin_pass",
+      "first_name": "MEPRAM",
+      "last_name": "Admin",
+      "email": "mepram.admin@example.org",
       "groups": [
         "/use-cases/mepram/labs/lab1/admin",
         "/use-cases/relecov/labs/lab2/view"
       ]
     },
     {
-      "username": "maria",
-      "password": "mariapass",
-      "first_name": "Maria",
-      "last_name": "Tester",
-      "email": "maria@example.org",
+      "username": "relecov_admin",
+      "password": "relecov_admin_pass",
+      "first_name": "RELECOV",
+      "last_name": "Admin",
+      "email": "relecov.admin@example.org",
       "groups": [
         "/use-cases/relecov/admin"
       ]
     },
     {
-      "username": "alba",
-      "password": "albapass",
-      "first_name": "Alba",
-      "last_name": "view",
-      "email": "alba@example.org",
+      "username": "redlabra_viewer",
+      "password": "redlabra_viewer_pass",
+      "first_name": "RedLabRa",
+      "last_name": "Viewer",
+      "email": "redlabra.viewer@example.org",
       "groups": [
         "/use-cases/redlabra/view"
       ]
     },
     {
-      "username": "ines",
-      "password": "inespass",
-      "first_name": "Ines",
-      "last_name": "Hybrid",
-      "email": "ines@example.org",
+      "username": "hybrid_user",
+      "password": "hybrid_user_pass",
+      "first_name": "Hybrid",
+      "last_name": "User",
+      "email": "hybrid.user@example.org",
       "groups": [
         "/use-cases/mepram/labs/lab2/view",
         "/use-cases/redlabra/admin"
       ]
     },
     {
-      "username": "nora",
-      "password": "norapass",
-      "first_name": "Nora",
-      "last_name": "Models",
-      "email": "nora@example.org",
+      "username": "models_admin",
+      "password": "models_admin_pass",
+      "first_name": "Models",
+      "last_name": "Admin",
+      "email": "models.admin@example.org",
       "groups": [
         "/use-cases/ai-models/admin"
       ]
