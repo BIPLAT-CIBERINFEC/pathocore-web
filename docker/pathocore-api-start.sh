@@ -55,6 +55,11 @@ EMAIL_HOST_PASSWORD='${EMAIL_HOST_PASSWORD:-}'
 EMAIL_USE_TLS='${EMAIL_USE_TLS:-False}'
 
 PATHOCORE_ENABLE_LEGACY_BASIC_AUTH='${PATHOCORE_ENABLE_LEGACY_BASIC_AUTH:-true}'
+PATHOCORE_ENABLE_PUBLIC_READ_ENDPOINTS='${PATHOCORE_ENABLE_PUBLIC_READ_ENDPOINTS:-true}'
+PATHOCORE_CREATE_DEFAULT_SUPERUSER='${PATHOCORE_CREATE_DEFAULT_SUPERUSER:-false}'
+DJANGO_SUPERUSER_USERNAME='${DJANGO_SUPERUSER_USERNAME:-admin}'
+DJANGO_SUPERUSER_EMAIL='${DJANGO_SUPERUSER_EMAIL:-admin@example.org}'
+DJANGO_SUPERUSER_PASSWORD='${DJANGO_SUPERUSER_PASSWORD:-admin_pass}'
 KEYCLOAK_ISSUER='${KEYCLOAK_ISSUER:-}'
 KEYCLOAK_JWKS_URL='${KEYCLOAK_JWKS_URL:-}'
 KEYCLOAK_AUDIENCE='${KEYCLOAK_AUDIENCE:-pathocore-api}'
@@ -81,6 +86,11 @@ run_management_tasks() {
     cd "${APP_INSTALL_PATH}"
     source virtualenv/bin/activate
     python manage.py migrate --noinput
+
+    if [ "${PATHOCORE_CREATE_DEFAULT_SUPERUSER:-false}" = "true" ]; then
+        python manage.py ensure_default_superuser
+    fi
+
     python manage.py collectstatic --noinput
 
     if [ "${LOAD_INITIAL_TABLES:-false}" = "true" ]; then
