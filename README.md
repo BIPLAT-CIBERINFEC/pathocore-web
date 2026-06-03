@@ -133,6 +133,13 @@ Servicios principales en test:
 - API DB MySQL: `127.0.0.1:6606`
 - Keycloak DB MySQL: `127.0.0.1:6607`
 
+El compose de test crea o actualiza automaticamente el superusuario Django de
+la API para acceso local a `/admin/`, `/swagger/` y endpoints protegidos:
+
+```text
+admin / admin_pass
+```
+
 ## Keycloak
 
 La configuracion reproducible de Keycloak vive en:
