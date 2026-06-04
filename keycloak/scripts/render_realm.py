@@ -257,6 +257,33 @@ def build_user(user_config):
     }
 
 
+def build_smtp_server(config):
+    smtp_config = config.get("smtp")
+    if not smtp_config:
+        return None
+
+    smtp_server = {
+        "host": smtp_config["host"],
+        "port": str(smtp_config.get("port", 25)),
+        "from": smtp_config["from"],
+        "fromDisplayName": smtp_config.get("from_display_name", "PathoCore"),
+        "replyTo": smtp_config.get("reply_to", smtp_config["from"]),
+        "replyToDisplayName": smtp_config.get(
+            "reply_to_display_name", smtp_config.get("from_display_name", "PathoCore")
+        ),
+        "auth": str(bool(smtp_config.get("auth", False))).lower(),
+        "ssl": str(bool(smtp_config.get("ssl", False))).lower(),
+        "starttls": str(bool(smtp_config.get("starttls", False))).lower(),
+    }
+
+    if smtp_config.get("user"):
+        smtp_server["user"] = smtp_config["user"]
+    if smtp_config.get("password"):
+        smtp_server["password"] = smtp_config["password"]
+
+    return smtp_server
+
+
 def render_realm(config):
     shared_scope_name = config["shared_client_scope"]["name"]
     client_scopes = [build_shared_client_scope(config)]
@@ -273,6 +300,10 @@ def render_realm(config):
             for client_config in config["clients"]
         ],
     }
+    smtp_server = build_smtp_server(config)
+    if smtp_server:
+        realm["smtpServer"] = smtp_server
+
     session_config = config.get("session", {})
     for field in REALM_SESSION_FIELDS:
         if field in session_config:

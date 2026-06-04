@@ -380,6 +380,17 @@
       "optionalClientScopes": []
     }
   ],
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@pathocore.local",
+    "fromDisplayName": "PathoCore",
+    "replyTo": "support@pathocore.local",
+    "replyToDisplayName": "PathoCore Support",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
   "ssoSessionIdleTimeout": 28800,
   "ssoSessionMaxLifespan": 86400,
   "clientSessionIdleTimeout": 28800,
