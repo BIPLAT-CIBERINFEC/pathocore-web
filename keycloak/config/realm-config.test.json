@@ -9,6 +9,17 @@
     "revokeRefreshToken": true,
     "refreshTokenMaxReuse": 0
   },
+  "smtp": {
+    "host": "mailpit",
+    "port": 1025,
+    "from": "no-reply@pathocore.local",
+    "from_display_name": "PathoCore",
+    "reply_to": "support@pathocore.local",
+    "reply_to_display_name": "PathoCore Support",
+    "auth": false,
+    "ssl": false,
+    "starttls": false
+  },
   "group_root": "use-cases",
   "global_groups": [
     "superusers"
