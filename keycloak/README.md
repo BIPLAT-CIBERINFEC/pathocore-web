@@ -99,6 +99,47 @@ Semantics:
   - `pathocore-web`: public, standard flow enabled, direct grants enabled
   - `pathocore-api`: bearer-only API client, login flows disabled
 
+## Email Actions
+
+The test realm includes SMTP settings rendered by
+`keycloak/scripts/render_realm.py`. The local Docker Compose test stack uses
+Mailpit as an SMTP catcher:
+
+```text
+SMTP host: mailpit
+SMTP port: 1025
+Inbox UI: http://127.0.0.1:8025
+Sender: no-reply@pathocore.local
+```
+
+When `pathocore-api` approves an access request, it calls Keycloak
+`execute-actions-email` with `UPDATE_PASSWORD` and `VERIFY_EMAIL`. In the test
+stack, the user email is captured in Mailpit instead of being sent externally.
+
+The API must have action emails enabled:
+
+```env
+KEYCLOAK_ADMIN_SEND_ACTION_EMAILS=true
+```
+
+For production, configure the SMTP block in
+`keycloak/config/realm-config.prod.json` before rendering the realm import. Use
+a real sender address and authenticated SMTP credentials. Keep the production
+config file out of git if it contains secrets.
+
+Keycloak only imports the realm on fresh startup. If the realm already exists,
+changing the import JSON is not enough. Recreate the Keycloak data volume for a
+clean test import:
+
+```bash
+python keycloak/scripts/render_realm.py --profile test
+docker compose --env-file .env -f docker-compose.test.yml down -v
+docker compose --env-file .env -f docker-compose.test.yml up -d
+```
+
+For an already running local realm, configure SMTP from the admin console under
+Realm settings > Email, or use a fresh import as shown above.
+
 ## Example users
 
 - `mepram_admin` / `mepram_admin_pass`
