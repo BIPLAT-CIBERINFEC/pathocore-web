@@ -1,4 +1,5 @@
 import { PathocoreApiClient } from "@/api/client";
+import { MEPRAM_API_BASE_URL } from "@/lib/constants";
 import { formatInteger, stripOntology, truncateLabel } from "@/lib/format";
 import type {
   ApiCountItem,
@@ -11,6 +12,7 @@ import type {
 import type { ChartDatum, KpiStat } from "@/types/databrowser";
 import type {
   MepramAmrGeneRecord,
+  MepramExplorerData,
   MepramExplorerFilterOptions,
   MepramExplorerRow,
   MepramMultiSeriesChart,
@@ -24,6 +26,61 @@ const MEPRAM_DATA_MODE =
   import.meta.env.VITE_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
   import.meta.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() ||
   "simulated";
+
+interface MepramApiDomainRow {
+  domain_id: string | null;
+  medical_concepts: number | null;
+  participants: number | null;
+}
+
+interface MepramApiMetadataResponse {
+  age_groups: string[];
+  capabilities: Record<string, boolean>;
+  domains: MepramApiDomainRow[];
+  event_types: string[];
+  genders: string[];
+  schema: string;
+  total_patients: number;
+  vocabularies: string[];
+}
+
+interface MepramApiCohortSummaryResponse {
+  by_age: Array<{ age_group: string | null; patients: number | null }>;
+  by_age_sex: Array<{
+    age_group: string | null;
+    gender: string | null;
+    patients: number | null;
+  }>;
+  by_sex: Array<{ gender: string | null; patients: number | null }>;
+  total_patients: number;
+}
+
+interface MepramApiFactConceptRow {
+  concept_id: number;
+  concept_name: string | null;
+  domain_id: string | null;
+  event_type: string | null;
+  patient_count: number | null;
+  record_count?: number | null;
+}
+
+interface MepramApiNumericMeasurementRow {
+  concept_id: number;
+  concept_name: string | null;
+  event_type: string | null;
+  n_patients: number | null;
+  n_records: number | null;
+  unit_name: string | null;
+}
+
+interface MepramApiCategoricalMeasurementRow {
+  concept_id: number;
+  concept_name: string | null;
+  event_type: string | null;
+  patient_count: number | null;
+  record_count: number | null;
+  value_concept_name: string | null;
+}
 const SIMULATED_ANNUAL_PATHOGEN_SERIES: MepramMultiSeriesChart = {
   data: [
     {
@@ -833,7 +890,143 @@ function kpis({
   ];
 }
 
-async function loadLiveMepramSnapshot(
+function clinicalChartItems<T extends object>(
+  rows: T[],
+  labelKey: keyof T & string,
+  valueKey: keyof T & string,
+  options: { limit?: number; truncate?: boolean } = {},
+): ChartDatum[] {
+  const values = rows
+    .map((row) => {
+      const rowValues = row as Record<string, unknown>;
+      const rawLabel = rowValues[labelKey];
+      const rawValue = rowValues[valueKey];
+      const value = typeof rawValue === "number" ? rawValue : Number(rawValue ?? 0);
+
+      if (!rawLabel || !Number.isFinite(value) || value <= 0) {
+        return null;
+      }
+
+      const label = String(rawLabel);
+      return {
+        label: options.truncate ? truncateLabel(label) : label,
+        value,
+      };
+    })
+    .filter((item): item is ChartDatum => item !== null)
+    .sort((left, right) => right.value - left.value);
+
+  return typeof options.limit === "number" ? values.slice(0, options.limit) : values;
+}
+
+function emptyMultiSeriesChart(): MepramMultiSeriesChart {
+  return { data: [], series: [], simulated: false };
+}
+
+function emptyExplorer(notes: string[]): MepramExplorerData {
+  return {
+    filterOptions: explorerFilterOptions([]),
+    notes,
+    operationalFieldsSimulated: false,
+    rows: [],
+    totalLoaded: 0,
+  };
+}
+
+function clinicalKpis({
+  conceptCount,
+  domainCount,
+  measurementCount,
+  totalPatients,
+}: {
+  conceptCount: number;
+  domainCount: number;
+  measurementCount: number;
+  totalPatients: number;
+}): KpiStat[] {
+  return [
+    {
+      label: "Pacientes en cohorte",
+      note: "Pacientes distintos cargados desde dim_patient",
+      value: formatInteger(totalPatients),
+    },
+    {
+      label: "Dominios OMOP",
+      note: "Dominios clínicos disponibles en fact_domain",
+      value: formatInteger(domainCount),
+    },
+    {
+      label: "Conceptos agregados",
+      note: "Conceptos con recuentos clínicos precomputados",
+      value: formatInteger(conceptCount),
+    },
+    {
+      label: "Mediciones visibles",
+      note: "Mediciones numéricas o categóricas devueltas por la API",
+      value: formatInteger(measurementCount),
+    },
+  ];
+}
+
+function overviewFromMepramApi({
+  categoricalMeasurements,
+  cohort,
+  domains,
+  facts,
+  metadata,
+  numericMeasurements,
+}: {
+  categoricalMeasurements: MepramApiCategoricalMeasurementRow[];
+  cohort: MepramApiCohortSummaryResponse;
+  domains: MepramApiDomainRow[];
+  facts: MepramApiFactConceptRow[];
+  metadata: MepramApiMetadataResponse;
+  numericMeasurements: MepramApiNumericMeasurementRow[];
+}): MepramOverviewData {
+  const totalPatients = cohort.total_patients || metadata.total_patients;
+  const measurementCount = numericMeasurements.length + categoricalMeasurements.length;
+
+  return {
+    analyzedSamples: totalPatients,
+    annualPathogenSeries: emptyMultiSeriesChart(),
+    centers: [],
+    collectionTimeline: clinicalChartItems(cohort.by_age, "age_group", "patients"),
+    collectingRegions: [],
+    infectionTypes: clinicalChartItems(domains, "domain_id", "participants"),
+    kpis: clinicalKpis({
+      conceptCount: facts.length,
+      domainCount: domains.length,
+      measurementCount,
+      totalPatients,
+    }),
+    notes: [
+      `Datos clínicos agregados desde mepram-api (${metadata.schema}).`,
+      "La API actual expone estadísticas OMOP agregadas; el explorer operacional de aislados queda pendiente de una fuente específica.",
+    ],
+    participatingCenters: 0,
+    participatingRegions: 0,
+    pathogenDistributionSimulated: false,
+    projectPathogenDistribution: clinicalChartItems(facts, "concept_name", "patient_count", {
+      limit: 12,
+      truncate: true,
+    }),
+    resistanceSignalsSeries: emptyMultiSeriesChart(),
+    sequencingPlatforms: [],
+    specimenSources: clinicalChartItems(
+      categoricalMeasurements,
+      "value_concept_name",
+      "patient_count",
+      { limit: 12, truncate: true },
+    ),
+    specimenSourcesSimulated: false,
+    submittingRegions: clinicalChartItems(cohort.by_sex, "gender", "patients"),
+    territorialCoverage: [],
+    territorialCoverageSimulated: false,
+    totalSamples: totalPatients,
+  };
+}
+
+async function loadPathocoreUseCaseSnapshot(
   accessToken: string | null,
 ): Promise<MepramSnapshot> {
   const client = new PathocoreApiClient({ accessToken });
@@ -860,6 +1053,57 @@ async function loadLiveMepramSnapshot(
     integrationGaps: [],
     overview: overviewFromUseCaseSummary(summary),
     projectLabel: summary.project.label,
+  };
+}
+
+async function loadLiveMepramSnapshot(
+  accessToken: string | null,
+): Promise<MepramSnapshot> {
+  if (!MEPRAM_API_BASE_URL) {
+    return loadPathocoreUseCaseSnapshot(accessToken);
+  }
+
+  const client = new PathocoreApiClient({
+    accessToken,
+    baseUrl: MEPRAM_API_BASE_URL,
+    requestCredentials: "omit",
+  });
+  const [metadata, cohort, domains, facts, numericMeasurements, categoricalMeasurements] =
+    await Promise.all([
+      client.getJson<MepramApiMetadataResponse>({ path: "/metadata" }),
+      client.getJson<MepramApiCohortSummaryResponse>({ path: "/cohort/summary" }),
+      client.getJson<MepramApiDomainRow[]>({ path: "/domains" }),
+      client.getJson<MepramApiFactConceptRow[]>({
+        path: "/facts/concepts",
+        query: { limit: 100, stratification: "none" },
+      }),
+      client.getJson<MepramApiNumericMeasurementRow[]>({
+        path: "/measurements/numeric",
+        query: { limit: 100, stratification: "none" },
+      }),
+      client.getJson<MepramApiCategoricalMeasurementRow[]>({
+        path: "/measurements/categorical",
+        query: { limit: 100, stratification: "none" },
+      }),
+    ]);
+
+  return {
+    explorer: emptyExplorer([
+      "mepram-api está conectado y autenticado, pero no expone todavía el explorer operacional de aislados.",
+    ]),
+    generatedAt: new Date().toISOString(),
+    integrationGaps: metadata.capabilities.supports_isolate_explorer
+      ? []
+      : ["Explorer operacional de aislados no disponible en mepram-api."],
+    overview: overviewFromMepramApi({
+      categoricalMeasurements,
+      cohort,
+      domains,
+      facts,
+      metadata,
+      numericMeasurements,
+    }),
+    projectLabel: "MePRAM OMOP dashboard",
   };
 }
 

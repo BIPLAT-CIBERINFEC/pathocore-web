@@ -24,7 +24,8 @@
   "shared_client_scope": {
     "name": "pathocore-common",
     "audiences": [
-      "pathocore-api"
+      "pathocore-api",
+      "mepram-api"
     ],
     "include_identity_claims": true,
     "include_groups": true
@@ -77,6 +78,15 @@
     {
       "client_id": "ai-model-api",
       "name": "AI Model API",
+      "kind": "api",
+      "public_client": false,
+      "bearer_only": true,
+      "standard_flow_enabled": false,
+      "direct_access_grants_enabled": false
+    },
+    {
+      "client_id": "mepram-api",
+      "name": "MePRAM API",
       "kind": "api",
       "public_client": false,
       "bearer_only": true,

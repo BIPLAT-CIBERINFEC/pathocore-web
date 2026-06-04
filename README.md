@@ -74,7 +74,9 @@ Variables soportadas:
 - `VITE_KEYCLOAK_CLIENT_ID`
   Cliente frontend público. Por defecto: `pathocore-web`.
 - `VITE_USE_CASE_DATA_MODE`
-  Opcional. Usar `live` para que `casos-de-uso/mepram` consuma `/v1/use-cases/data-summary`; usar `simulated` solo para desarrollo visual sin API.
+  Opcional. Usar `live` para que `casos-de-uso/mepram` consuma datos reales; usar `simulated` solo para desarrollo visual sin API.
+- `VITE_MEPRAM_API_BASE_URL`
+  Base URL de `mepram-api`, incluyendo `/v1`, por ejemplo `http://127.0.0.1:8100/v1`. Cuando se define, la vista MePRAM live consulta esta API con `Authorization: Bearer <token>`.
 - `VITE_USE_CASE_ALERTS_CONTACT_EMAIL`
   Opcional. Correo visible en la seccion de alertas del caso de uso.
 
@@ -83,6 +85,7 @@ Ejemplo contra otra instancia local:
 ```bash
 PATHOCORE_API_PROXY_TARGET=http://127.0.0.1:8001 \
 VITE_API_BASE_URL=/api/v1 \
+VITE_MEPRAM_API_BASE_URL=http://127.0.0.1:8100/v1 \
 VITE_KEYCLOAK_URL=http://127.0.0.1:8080 \
 npm run dev
 ```
@@ -185,7 +188,7 @@ Valores clave para la API:
 
 - `KEYCLOAK_ISSUER`: issuer exacto esperado en el token.
 - `KEYCLOAK_JWKS_URL`: URL interna usada por la API para descargar JWKS.
-- `KEYCLOAK_AUDIENCE`: `pathocore-api`.
+- `KEYCLOAK_AUDIENCE`: `pathocore-api` para PathoCore API. La configuración Keycloak de test también incluye audience `mepram-api` para que `mepram-api` pueda validar el mismo token del frontend.
 - `KEYCLOAK_CLIENT_ID`: `pathocore-web`.
 
 ## Estructura
@@ -220,6 +223,15 @@ Segun la vista, la app consume endpoints reales del backend, incluyendo:
 - GET /v1/variants/reference-genomes
 - GET /v1/variants/filter-options
 - GET /v1/variants/search
+
+Cuando `VITE_MEPRAM_API_BASE_URL` está definido y `VITE_USE_CASE_DATA_MODE=live`, la vista MePRAM consume además la API MePRAM protegida con Keycloak:
+
+- GET /v1/metadata
+- GET /v1/cohort/summary
+- GET /v1/domains
+- GET /v1/facts/concepts
+- GET /v1/measurements/numeric
+- GET /v1/measurements/categorical
 
 ## Rutas principales
 
