@@ -78,7 +78,7 @@ install_or_update_app() {
     if [ ! -f "${APP_INSTALL_PATH}/manage.py" ]; then
         bash install.sh --install app --docker --git_revision "${GIT_REVISION:-current}" --conf "${INSTALL_CONF}"
     else
-        yes Y | bash install.sh --upgrade app --docker --git_revision "${GIT_REVISION:-current}" --conf "${INSTALL_CONF}"
+        bash install.sh --upgrade app --docker --git_revision "${GIT_REVISION:-current}" --conf "${INSTALL_CONF}"
     fi
 }
 

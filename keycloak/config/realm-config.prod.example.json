@@ -8,6 +8,19 @@
     "view",
     "admin"
   ],
+  "smtp": {
+    "host": "smtp.example.org",
+    "port": 587,
+    "from": "no-reply@pathocore.example.org",
+    "from_display_name": "PathoCore",
+    "reply_to": "support@pathocore.example.org",
+    "reply_to_display_name": "PathoCore Support",
+    "auth": true,
+    "user": "smtp-user",
+    "password": "change-me",
+    "ssl": false,
+    "starttls": true
+  },
   "shared_client_scope": {
     "name": "pathocore-common",
     "audiences": [
