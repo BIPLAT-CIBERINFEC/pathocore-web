@@ -1,6 +1,6 @@
 # PathoCore Web
 
-Frontend React para PathoCore. Esta app consume `pathocore-api` para el databrowser generico y puede consumir `mepram-api` para la vista live del caso de uso MePRAM.
+Frontend React para PathoCore. Esta app consume `pathocore-api` para el databrowser generico y las vistas de casos de uso. El stack Docker de desarrollo tambien levanta `mepram-api` para dejarla operativa junto al resto de servicios, pero la web no la consume directamente en esta rama.
 
 La app incluye:
 
@@ -30,9 +30,8 @@ Tambien existe un bloque placeholder para `Datos agregados / Records`, reservado
 - Node.js 18+
 - npm 9+
 - PathoCore API disponible por HTTP
-- MePRAM API disponible por HTTP solo si se quiere usar la vista MePRAM en modo live
 
-La web nunca se conecta directamente a MySQL. Siempre consume APIs HTTP bajo `/v1`: `pathocore-api` para el databrowser y `mepram-api` para MePRAM cuando esta configurada.
+La web nunca se conecta directamente a MySQL. Siempre consume PathoCore API por HTTP bajo `/v1`; las bases de datos quedan encapsuladas detras de sus APIs.
 
 ## Arranque rapido
 
@@ -76,8 +75,6 @@ Variables soportadas:
   Cliente frontend público. Por defecto: `pathocore-web`.
 - `VITE_USE_CASE_DATA_MODE`
   Opcional. Usar `live` para que `casos-de-uso/mepram` consuma datos reales; usar `simulated` solo para desarrollo visual sin API.
-- `VITE_MEPRAM_API_BASE_URL`
-  Base URL de MePRAM API, incluyendo `/v1`, por ejemplo `http://127.0.0.1:8100/v1`. Cuando se define, la vista MePRAM live consulta MePRAM API con `Authorization: Bearer <token>`.
 - `VITE_USE_CASE_ALERTS_CONTACT_EMAIL`
   Opcional. Correo visible en la seccion de alertas del caso de uso.
 
@@ -86,7 +83,6 @@ Ejemplo contra otra instancia local:
 ```bash
 PATHOCORE_API_PROXY_TARGET=http://127.0.0.1:8001 \
 VITE_API_BASE_URL=/api/v1 \
-VITE_MEPRAM_API_BASE_URL=http://127.0.0.1:8100/v1 \
 VITE_KEYCLOAK_URL=http://127.0.0.1:8080 \
 npm run dev
 ```
@@ -96,24 +92,15 @@ Keycloak cuando no hay sesión activa.
 
 ## Docker orchestrator
 
-Este repositorio actua como orquestador local para levantar la web, PathoCore API,
-Keycloak y sus bases de datos. Tambien puede levantar MePRAM API con un profile
-opcional.
+Este repositorio actua como orquestador local para levantar la web, PathoCore API, MePRAM API, Keycloak y sus bases de datos.
 
-Requisito para el stack base: clonar `pathocore-api` como repositorio hermano
-de `pathocore-web`, porque el compose construye PathoCore API desde
-`../pathocore-api`.
-
-Requisito adicional para el profile MePRAM: clonar `mepram-api` como repositorio
-hermano de `pathocore-web`, porque el compose construye MePRAM API desde
-`../mepram-api`.
+Requisitos del stack: clonar `pathocore-api` y `mepram-api` como repositorios hermanos de `pathocore-web`, porque el compose construye ambas APIs desde `../pathocore-api` y `../mepram-api`.
 
 ```bash
 cd ~/path_to/devel
 git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-api.git pathocore-api
-git clone -b dev https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
-# Optional, only when using --profile mepram
 git clone -b develop https://github.com/BU-ISCIII/mepram-omop-api.git mepram-api
+git clone -b dev https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
 ```
 
 Expected:
@@ -122,7 +109,7 @@ Expected:
 devel/
   pathocore-web/
   pathocore-api/
-  mepram-api/        # solo necesario con --profile mepram
+  mepram-api/
 ```
 
 Preparar variables:
@@ -138,13 +125,7 @@ Levantar entorno de pruebas, con puertos publicados directamente:
 docker compose --env-file .env -f docker-compose.test.yml up -d --build
 ```
 
-Levantar tambien MePRAM API y su base de datos MySQL:
-
-```bash
-docker compose --env-file .env -f docker-compose.test.yml --profile mepram up -d --build
-```
-
-Despues de levantar el profile MePRAM, carga `dashboard.sql` en MePRAM API:
+Despues de levantar el stack, carga `dashboard.sql` en MePRAM API cuando quieras poblar su base de datos local:
 
 ```bash
 docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_api mkdir -p /data
@@ -158,13 +139,10 @@ Servicios principales en test:
 
 - Web: `http://127.0.0.1:3000`
 - PathoCore API: `http://127.0.0.1:8000`
+- MePRAM API: `http://127.0.0.1:8100`
 - Keycloak: `http://127.0.0.1:8080`
 - PathoCore API DB MySQL: `127.0.0.1:6606`
 - Keycloak DB MySQL: `127.0.0.1:6607`
-
-Servicios opcionales con el profile MePRAM:
-
-- MePRAM API: `http://127.0.0.1:8100`
 - MePRAM API DB MySQL: `127.0.0.1:6608`
 
 El compose de test crea o actualiza automaticamente el superusuario Django de
@@ -222,7 +200,7 @@ Valores clave para PathoCore API:
 - `KEYCLOAK_AUDIENCE`: audience esperada por PathoCore API, normalmente `pathocore-api`.
 - `KEYCLOAK_CLIENT_ID`: cliente frontend, normalmente `pathocore-web`.
 
-Valores clave para MePRAM API, usados solo con `--profile mepram`:
+Valores clave para MePRAM API:
 
 - `MEPRAM_KEYCLOAK_ISSUER`: issuer exacto esperado en el token.
 - `MEPRAM_KEYCLOAK_JWKS_URL`: URL interna usada por MePRAM API para descargar JWKS.
@@ -265,20 +243,6 @@ principales de PathoCore. Segun la vista, la web consume endpoints como:
 - GET /v1/variants/reference-genomes
 - GET /v1/variants/filter-options
 - GET /v1/variants/search
-
-### MePRAM API
-
-MePRAM API se configura con `VITE_MEPRAM_API_BASE_URL`. La usa solo la vista
-MePRAM cuando `VITE_USE_CASE_DATA_MODE=live`. La vista envia el token de
-Keycloak del usuario como `Authorization: Bearer <token>` y consume endpoints
-de MePRAM API como:
-
-- GET /v1/metadata
-- GET /v1/cohort/summary
-- GET /v1/domains
-- GET /v1/facts/concepts
-- GET /v1/measurements/numeric
-- GET /v1/measurements/categorical
 
 ## Rutas principales
 
