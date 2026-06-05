@@ -3,9 +3,6 @@ import type { EntryCardContent } from "@/types/databrowser";
 export const DEFAULT_API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.trim() || "/api/v1";
 
-export const MEPRAM_API_BASE_URL =
-  import.meta.env.VITE_MEPRAM_API_BASE_URL?.trim() || "";
-
 export const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL?.trim() || "";
 export const KEYCLOAK_REALM =
   import.meta.env.VITE_KEYCLOAK_REALM?.trim() || "ciberisciii_datahub";
