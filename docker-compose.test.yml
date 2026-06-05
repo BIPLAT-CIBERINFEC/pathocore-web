@@ -145,6 +145,73 @@ services:
       - pathocore_api_logs:/opt/pathocore-api/logs
       - pathocore_api_static:/opt/pathocore-api/static
 
+  mepram_db:
+    profiles: ["mepram"]
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MEPRAM_DB_NAME:-mepram_api}
+      MYSQL_USER: ${MEPRAM_DB_USER:-mepram}
+      MYSQL_PASSWORD: ${MEPRAM_DB_PASSWORD:-mepram_password}
+      MYSQL_ROOT_PASSWORD: ${MEPRAM_DB_ROOT_PASSWORD:-root}
+    ports:
+      - "${MEPRAM_DB_PORT_HOST:-6608}:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - mepram_db_data:/var/lib/mysql
+
+  mepram_api:
+    profiles: ["mepram"]
+    build:
+      context: ../mepram-api
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    restart: unless-stopped
+    depends_on:
+      mepram_db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      MEPRAM_API_DEBUG: ${MEPRAM_API_DEBUG:-true}
+      MEPRAM_API_ALLOWED_HOSTS: ${MEPRAM_API_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      MEPRAM_DB_HOST: mepram_db
+      MEPRAM_DB_PORT: 3306
+      MEPRAM_DB_NAME: ${MEPRAM_DB_NAME:-mepram_api}
+      MEPRAM_DB_USER: ${MEPRAM_DB_USER:-mepram}
+      MEPRAM_DB_PASSWORD: ${MEPRAM_DB_PASSWORD:-mepram_password}
+      MEPRAM_DASHBOARD_SCHEMA: ${MEPRAM_DASHBOARD_SCHEMA:-mepram_api}
+      MEPRAM_CORS_ALLOWED_ORIGINS: ${MEPRAM_CORS_ALLOWED_ORIGINS:-http://127.0.0.1:3000,http://localhost:3000}
+      MEPRAM_AUTH_REQUIRED: ${MEPRAM_AUTH_REQUIRED:-true}
+      MEPRAM_DOCS_REQUIRE_STAFF: ${MEPRAM_DOCS_REQUIRE_STAFF:-true}
+      MEPRAM_KEYCLOAK_ISSUER: ${MEPRAM_KEYCLOAK_ISSUER:-http://127.0.0.1:8080/realms/ciberisciii_datahub}
+      MEPRAM_KEYCLOAK_JWKS_URL: ${MEPRAM_KEYCLOAK_JWKS_URL:-http://keycloak:8080/realms/ciberisciii_datahub/protocol/openid-connect/certs}
+      MEPRAM_KEYCLOAK_AUDIENCE: ${MEPRAM_KEYCLOAK_AUDIENCE:-mepram-api}
+      MEPRAM_KEYCLOAK_CLIENT_ID: ${MEPRAM_KEYCLOAK_CLIENT_ID:-pathocore-web}
+      MEPRAM_KEYCLOAK_JWKS_CACHE_TTL_SECONDS: ${MEPRAM_KEYCLOAK_JWKS_CACHE_TTL_SECONDS:-300}
+      MEPRAM_KEYCLOAK_JWKS_TIMEOUT_SECONDS: ${MEPRAM_KEYCLOAK_JWKS_TIMEOUT_SECONDS:-5}
+    ports:
+      - "${MEPRAM_API_PORT:-8100}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=5).read()\nPY",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - mepram_api_data:/data
+
   pathocore_web:
     build:
       context: .
@@ -191,6 +258,8 @@ services:
 
 volumes:
   keycloak_db_data:
+  mepram_api_data:
+  mepram_db_data:
   pathocore_api_documents:
   pathocore_api_logs:
   pathocore_api_static:
