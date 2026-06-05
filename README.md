@@ -1,6 +1,6 @@
 # PathoCore Web
 
-Frontend React para PathoCore. Esta app consume `pathocore-api` para el databrowser generico y las vistas de casos de uso. El stack Docker de desarrollo tambien levanta `epram-omop-api` para dejar la MePRAM API operativa junto al resto de servicios, pero la web no la consume directamente en esta rama.
+Frontend React para PathoCore. Esta app consume `pathocore-api` para el databrowser generico y las vistas de casos de uso. El stack Docker de desarrollo tambien levanta `mepram-omop-api` para dejar la MePRAM API operativa junto al resto de servicios, pero la web no la consume directamente en esta rama.
 
 La app incluye:
 
@@ -94,12 +94,12 @@ Keycloak cuando no hay sesión activa.
 
 Este repositorio actua como orquestador local para levantar la web, PathoCore API, MePRAM API, Keycloak y sus bases de datos.
 
-Requisitos del stack: clonar `pathocore-api` y `epram-omop-api` como repositorios hermanos de `pathocore-web`, porque el compose construye ambas APIs desde `../pathocore-api` y `../epram-omop-api`.
+Requisitos del stack: clonar `pathocore-api` y `mepram-omop-api` como repositorios hermanos de `pathocore-web`, porque el compose construye ambas APIs desde `../pathocore-api` y `../mepram-omop-api`.
 
 ```bash
 cd ~/path_to/devel
 git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-api.git pathocore-api
-git clone -b develop https://github.com/BU-ISCIII/epram-omop-api.git epram-omop-api
+git clone -b develop https://github.com/BU-ISCIII/mepram-omop-api.git mepram-omop-api
 git clone -b dev https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
 ```
 
@@ -109,7 +109,7 @@ Expected:
 devel/
   pathocore-web/
   pathocore-api/
-  epram-omop-api/
+  mepram-omop-api/
 ```
 
 Preparar variables:
