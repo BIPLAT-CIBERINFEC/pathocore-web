@@ -207,6 +207,36 @@ Valores clave para MePRAM OMOP API:
 - `MEPRAM_KEYCLOAK_AUDIENCE`: audience esperada por MePRAM OMOP API, normalmente `mepram-api`.
 - `MEPRAM_KEYCLOAK_CLIENT_ID`: cliente frontend, normalmente `pathocore-web`.
 
+En un primer arranque limpio, Keycloak importa el realm renderizado con el
+cliente bearer-only `mepram-api`, el audience `mepram-api` incluido en los
+tokens de `pathocore-web`, y usuarios de prueba como:
+
+```text
+mepram_admin / mepram_admin_pass
+```
+
+Si el volumen de Keycloak ya existia antes de cambiar el realm, Keycloak no
+reimporta automaticamente esos cambios. En ese caso, fuerza un reimport limpio
+con `docker compose -f docker-compose.test.yml down -v` antes de volver a
+levantar el stack, o actualiza el realm manualmente desde la consola de
+administracion.
+
+Una comprobacion rapida de seguridad para MePRAM OMOP API es:
+
+```bash
+TOKEN=$(curl -s -X POST \
+  http://127.0.0.1:8080/realms/ciberisciii_datahub/protocol/openid-connect/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'client_id=pathocore-web' \
+  -d 'grant_type=password' \
+  -d 'username=mepram_admin' \
+  -d 'password=mepram_admin_pass' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+
+curl -H "Authorization: Bearer $TOKEN" \
+  http://127.0.0.1:8100/v1/cohort/summary
+```
+
 ## Estructura
 
 ```text
