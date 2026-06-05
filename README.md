@@ -1,6 +1,6 @@
 # PathoCore Web
 
-Frontend React para PathoCore. Esta app consume `pathocore-api` para el databrowser generico y las vistas de casos de uso. El stack Docker de desarrollo tambien levanta `mepram-omop-api` para dejar la MePRAM API operativa junto al resto de servicios, pero la web no la consume directamente en esta rama.
+Frontend React para PathoCore. Esta app consume `pathocore-api` para el databrowser generico y las vistas de casos de uso. El stack Docker de desarrollo tambien levanta `mepram-omop-api` para dejar la MePRAM OMOP API operativa junto al resto de servicios, pero la web no la consume directamente en esta rama.
 
 La app incluye:
 
@@ -92,7 +92,7 @@ Keycloak cuando no hay sesión activa.
 
 ## Docker orchestrator
 
-Este repositorio actua como orquestador local para levantar la web, PathoCore API, MePRAM API, Keycloak y sus bases de datos.
+Este repositorio actua como orquestador local para levantar la web, PathoCore API, MePRAM OMOP API, Keycloak y sus bases de datos.
 
 Requisitos del stack: clonar `pathocore-api` y `mepram-omop-api` como repositorios hermanos de `pathocore-web`, porque el compose construye ambas APIs desde `../pathocore-api` y `../mepram-omop-api`.
 
@@ -125,13 +125,13 @@ Levantar entorno de pruebas, con puertos publicados directamente:
 docker compose --env-file .env -f docker-compose.test.yml up -d --build
 ```
 
-Despues de levantar el stack, carga `dashboard.sql` en MePRAM API cuando quieras poblar su base de datos local:
+Despues de levantar el stack, carga `dashboard.sql` en MePRAM OMOP API cuando quieras poblar su base de datos local:
 
 ```bash
-docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_api mkdir -p /data
-docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_api \
+docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_omop_api mkdir -p /data
+docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_omop_api \
   sh -c 'cat > /data/dashboard.sql' < ../dashboard.sql
-docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_api \
+docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_omop_api \
   python manage.py import_dashboard_sql /data/dashboard.sql --truncate
 ```
 
@@ -139,11 +139,11 @@ Servicios principales en test:
 
 - Web: `http://127.0.0.1:3000`
 - PathoCore API: `http://127.0.0.1:8000`
-- MePRAM API: `http://127.0.0.1:8100`
+- MePRAM OMOP API: `http://127.0.0.1:8100`
 - Keycloak: `http://127.0.0.1:8080`
 - PathoCore API DB MySQL: `127.0.0.1:6606`
 - Keycloak DB MySQL: `127.0.0.1:6607`
-- MePRAM API DB MySQL: `127.0.0.1:6608`
+- MePRAM OMOP API DB MySQL: `127.0.0.1:6608`
 
 El compose de test crea o actualiza automaticamente el superusuario Django de
 PathoCore API para acceso local a `/admin/`, `/swagger/` y endpoints protegidos:
@@ -200,11 +200,11 @@ Valores clave para PathoCore API:
 - `KEYCLOAK_AUDIENCE`: audience esperada por PathoCore API, normalmente `pathocore-api`.
 - `KEYCLOAK_CLIENT_ID`: cliente frontend, normalmente `pathocore-web`.
 
-Valores clave para MePRAM API:
+Valores clave para MePRAM OMOP API:
 
 - `MEPRAM_KEYCLOAK_ISSUER`: issuer exacto esperado en el token.
-- `MEPRAM_KEYCLOAK_JWKS_URL`: URL interna usada por MePRAM API para descargar JWKS.
-- `MEPRAM_KEYCLOAK_AUDIENCE`: audience esperada por MePRAM API, normalmente `mepram-api`.
+- `MEPRAM_KEYCLOAK_JWKS_URL`: URL interna usada por MePRAM OMOP API para descargar JWKS.
+- `MEPRAM_KEYCLOAK_AUDIENCE`: audience esperada por MePRAM OMOP API, normalmente `mepram-api`.
 - `MEPRAM_KEYCLOAK_CLIENT_ID`: cliente frontend, normalmente `pathocore-web`.
 
 ## Estructura
