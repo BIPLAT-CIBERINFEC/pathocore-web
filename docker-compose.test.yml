@@ -146,7 +146,6 @@ services:
       - pathocore_api_static:/opt/pathocore-api/static
 
   mepram_db:
-    profiles: ["mepram"]
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     restart: unless-stopped
@@ -167,7 +166,6 @@ services:
       - mepram_db_data:/var/lib/mysql
 
   mepram_api:
-    profiles: ["mepram"]
     build:
       context: ../mepram-api
     command: >
@@ -222,7 +220,6 @@ services:
         condition: service_healthy
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
-      VITE_MEPRAM_API_BASE_URL: ${VITE_MEPRAM_API_BASE_URL:-http://127.0.0.1:8100/v1}
       PATHOCORE_API_PROXY_TARGET: ${PATHOCORE_API_PROXY_TARGET:-http://pathocore_api:8000}
       VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://127.0.0.1:8080}
       VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-ciberisciii_datahub}
