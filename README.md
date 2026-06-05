@@ -119,20 +119,31 @@ cd pathocore-web
 cp .env.example .env
 ```
 
-Levantar entorno de pruebas, con puertos publicados directamente:
+Levantar entorno de pruebas con el instalador de contenedores:
+
+```bash
+bash container_install.sh --test
+```
+
+Para levantar el stack y cargar las dos bases de datos en el mismo paso, pasa
+los dos dumps por separado:
+
+```bash
+bash container_install.sh --test \
+  --pathocore_api_sql ../pathocore_api_testing_seed.sql.gz \
+  --mepram_omop_sql ../dashboard.sql
+```
+
+`--pathocore_api_sql` carga el seed de PathoCore API en `pathocore_db`. Acepta
+ficheros `.sql` y `.sql.gz`. `--mepram_omop_sql` copia `dashboard.sql` al
+servicio `mepram_omop_api` y ejecuta `python manage.py import_dashboard_sql`
+contra la base MySQL de MePRAM OMOP API.
+
+Tambien puedes levantar el stack manualmente con compose si no necesitas cargar
+datos en ese momento:
 
 ```bash
 docker compose --env-file .env -f docker-compose.test.yml up -d --build
-```
-
-Despues de levantar el stack, carga `dashboard.sql` en MePRAM OMOP API cuando quieras poblar su base de datos local:
-
-```bash
-docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_omop_api mkdir -p /data
-docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_omop_api \
-  sh -c 'cat > /data/dashboard.sql' < ../dashboard.sql
-docker compose --env-file .env -f docker-compose.test.yml exec -T mepram_omop_api \
-  python manage.py import_dashboard_sql /data/dashboard.sql --truncate
 ```
 
 Servicios principales en test:
