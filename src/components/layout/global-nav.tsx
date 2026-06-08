@@ -64,7 +64,7 @@ export function GlobalNav() {
             }
             to="/use-cases/mepram"
           >
-            MePRAM temporal
+            MEPRAM
           </NavLink>
         </div>
       </details>

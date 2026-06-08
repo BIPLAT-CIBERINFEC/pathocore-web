@@ -241,6 +241,34 @@ import_pathocore_api_sql() {
     fi
 }
 
+ensure_pathocore_api_superuser() {
+    local username email password
+
+    username="$(read_env_value DJANGO_SUPERUSER_USERNAME admin)"
+    email="$(read_env_value DJANGO_SUPERUSER_EMAIL admin@example.org)"
+    password="$(read_env_value DJANGO_SUPERUSER_PASSWORD admin_pass)"
+
+    echo "Ensuring Django superuser '$username' after PathoCore API seed import"
+    compose_exec exec -T pathocore_api bash -lc \
+        "cd /opt/pathocore-api && virtualenv/bin/python manage.py ensure_default_superuser --username '$username' --email '$email' --password '$password'"
+}
+
+ensure_pathocore_api_seed_migrations() {
+    local db_user db_password db_name
+
+    db_user="$(read_env_value DB_USER pathocore)"
+    db_password="$(read_env_value DB_PASSWORD pathocore_password)"
+    db_name="$(read_env_value DB_NAME pathocore_api)"
+
+    echo "Ensuring PathoCore API seed migration state"
+    compose_exec exec -T pathocore_db mysql -u"$db_user" -p"$db_password" "$db_name" -e "
+        INSERT IGNORE INTO django_migrations (app, name, applied)
+        VALUES
+            ('core', '0011_access_request', NOW()),
+            ('core', '0012_access_request_revoked_status', NOW());
+    "
+}
+
 import_mepram_omop_sql() {
     local sql_path="$1"
     local container_id=""
@@ -275,6 +303,8 @@ done
 
 if [ -n "$pathocore_api_sql" ] && [ "$skip_pathocore_api_sql" = false ]; then
     import_pathocore_api_sql "$pathocore_api_sql"
+    ensure_pathocore_api_seed_migrations
+    ensure_pathocore_api_superuser
 else
     echo "Skipping PathoCore API SQL import"
 fi
