@@ -130,7 +130,7 @@ los dos dumps por separado:
 
 ```bash
 bash container_install.sh --test \
-  --pathocore_api_sql ../pathocore_api_testing_seed.sql.gz \
+  --pathocore_api_sql ../pathocore_api_testing_seed.sql \
   --mepram_omop_sql ../dashboard.sql
 ```
 
