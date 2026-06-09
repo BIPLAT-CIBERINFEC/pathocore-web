@@ -264,6 +264,8 @@ ensure_pathocore_api_seed_migrations() {
     compose_exec exec -T pathocore_db mysql -u"$db_user" -p"$db_password" "$db_name" -e "
         INSERT IGNORE INTO django_migrations (app, name, applied)
         VALUES
+            ('core', '0009_alter_schema_user_name_nullable', NOW()),
+            ('core', '0010_remove_unused_metadata_models', NOW()),
             ('core', '0011_access_request', NOW()),
             ('core', '0012_access_request_revoked_status', NOW());
     "
