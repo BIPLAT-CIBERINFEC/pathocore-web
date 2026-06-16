@@ -156,8 +156,9 @@ Servicios principales en test:
 - Keycloak DB MySQL: `127.0.0.1:6607`
 - MePRAM OMOP API DB MySQL: `127.0.0.1:6608`
 
-El compose de test crea o actualiza automaticamente el superusuario Django de
-PathoCore API para acceso local a `/admin/`, `/swagger/` y endpoints protegidos:
+El arranque de test crea o actualiza automaticamente el superusuario Django de
+PathoCore API y MePRAM OMOP API para acceso local a `/admin/`, `/swagger/` y
+endpoints protegidos por staff login:
 
 ```text
 admin / admin_pass
@@ -217,6 +218,8 @@ Valores clave para MePRAM OMOP API:
 - `MEPRAM_KEYCLOAK_JWKS_URL`: URL interna usada por MePRAM OMOP API para descargar JWKS.
 - `MEPRAM_KEYCLOAK_AUDIENCE`: audience esperada por MePRAM OMOP API, normalmente `mepram-api`.
 - `MEPRAM_KEYCLOAK_CLIENT_ID`: cliente frontend, normalmente `pathocore-web`.
+- `MEPRAM_CREATE_DEFAULT_SUPERUSER`: crea o actualiza el superusuario Django
+  local de MePRAM OMOP API para Swagger/admin. En test usa `admin / admin_pass`.
 
 En un primer arranque limpio, Keycloak importa el realm renderizado con el
 cliente bearer-only `mepram-api`, el audience `mepram-api` incluido en los
