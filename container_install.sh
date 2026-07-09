@@ -10,7 +10,7 @@ This script installs the PathoCore Web test stack and can load the two local API
 Usage: $0 [--env_file] [--compose_file] [--pathocore_api_sql] [--mepram_omop_sql] [--engine] [--test]
 
 Options:
-    --env_file              Env file used by compose. Default: .env if present, otherwise .env.example
+    --env_file              Env file used by compose. Required for production. In test mode, defaults to .env if present, otherwise .env.example
     --compose_file          Compose file to use. Default with --test: docker-compose.test.yml
     --pathocore_api_sql     Path to PathoCore API MySQL seed dump (.sql or .sql.gz)
     --mepram_omop_sql       Path to MePRAM OMOP dashboard.sql imported through Django
@@ -96,6 +96,11 @@ else
 fi
 
 if [ -z "$env_file" ]; then
+    if [ "$mode" = "production" ]; then
+        echo "Production deployments require --env_file with a non-committed settings file."
+        exit 1
+    fi
+
     if [ -f ".env" ]; then
         env_file=".env"
     else
