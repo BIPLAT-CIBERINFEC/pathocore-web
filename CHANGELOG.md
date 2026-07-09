@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 - [#12](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/12) Use MePRAM OMOP API bootstrap for superuser creation
-- [#13](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/13) Add pathocore-api env var PUBLIC_API_THROTTLE_RATE
+- [#13](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/13) Add production orchestrator support for PathoCore API, MePRAM OMOP API, Keycloak and web services.
 
 ### `Fixed`
 
