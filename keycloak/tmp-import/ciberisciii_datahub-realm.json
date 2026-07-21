@@ -17,33 +17,6 @@
             },
             {
               "name": "admin"
-            },
-            {
-              "name": "labs",
-              "subGroups": [
-                {
-                  "name": "lab1",
-                  "subGroups": [
-                    {
-                      "name": "view"
-                    },
-                    {
-                      "name": "admin"
-                    }
-                  ]
-                },
-                {
-                  "name": "lab2",
-                  "subGroups": [
-                    {
-                      "name": "view"
-                    },
-                    {
-                      "name": "admin"
-                    }
-                  ]
-                }
-              ]
             }
           ]
         },
@@ -55,33 +28,6 @@
             },
             {
               "name": "admin"
-            },
-            {
-              "name": "labs",
-              "subGroups": [
-                {
-                  "name": "lab2",
-                  "subGroups": [
-                    {
-                      "name": "view"
-                    },
-                    {
-                      "name": "admin"
-                    }
-                  ]
-                },
-                {
-                  "name": "lab3",
-                  "subGroups": [
-                    {
-                      "name": "view"
-                    },
-                    {
-                      "name": "admin"
-                    }
-                  ]
-                }
-              ]
             }
           ]
         },
@@ -237,8 +183,8 @@
         }
       ],
       "groups": [
-        "/use-cases/mepram/labs/lab1/admin",
-        "/use-cases/relecov/labs/lab2/view"
+        "/use-cases/mepram/admin",
+        "/use-cases/relecov/view"
       ]
     },
     {
@@ -292,7 +238,7 @@
         }
       ],
       "groups": [
-        "/use-cases/mepram/labs/lab2/view",
+        "/use-cases/mepram/view",
         "/use-cases/redlabra/admin"
       ]
     },

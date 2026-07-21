@@ -40,17 +40,11 @@
   "use_cases": [
     {
       "name": "mepram",
-      "labs": [
-        "lab1",
-        "lab2"
-      ]
+      "labs": []
     },
     {
       "name": "relecov",
-      "labs": [
-        "lab2",
-        "lab3"
-      ]
+      "labs": []
     },
     {
       "name": "redlabra",
@@ -125,8 +119,8 @@
       "last_name": "Admin",
       "email": "mepram.admin@example.org",
       "groups": [
-        "/use-cases/mepram/labs/lab1/admin",
-        "/use-cases/relecov/labs/lab2/view"
+        "/use-cases/mepram/admin",
+        "/use-cases/relecov/view"
       ]
     },
     {
@@ -156,7 +150,7 @@
       "last_name": "User",
       "email": "hybrid.user@example.org",
       "groups": [
-        "/use-cases/mepram/labs/lab2/view",
+        "/use-cases/mepram/view",
         "/use-cases/redlabra/admin"
       ]
     },
