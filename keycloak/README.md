@@ -52,8 +52,6 @@ the canonical group grammar:
 ```text
 /use-cases/<use-case>/view
 /use-cases/<use-case>/admin
-/use-cases/<use-case>/labs/<lab>/view
-/use-cases/<use-case>/labs/<lab>/admin
 /superusers
 ```
 
@@ -68,8 +66,6 @@ Semantics:
 
 - `/use-cases/<uc>/admin` grants use-case-wide administration
 - `/use-cases/<uc>/view` grants use-case-wide read access
-- `/use-cases/<uc>/labs/<lab>/admin` grants administration only for that lab
-- `/use-cases/<uc>/labs/<lab>/view` grants read access only for that lab
 - `/superusers` grants full access across APIs that honor this realm group
 
 ## Realm contents
@@ -143,14 +139,14 @@ Realm settings > Email, or use a fresh import as shown above.
 ## Example users
 
 - `mepram_admin` / `mepram_admin_pass`
-  - `/use-cases/mepram/labs/lab1/admin`
-  - `/use-cases/relecov/labs/lab2/view`
+  - `/use-cases/mepram/admin`
+  - `/use-cases/relecov/view`
 - `relecov_admin` / `relecov_admin_pass`
   - `/use-cases/relecov/admin`
 - `redlabra_viewer` / `redlabra_viewer_pass`
   - `/use-cases/redlabra/view`
 - `hybrid_user` / `hybrid_user_pass`
-  - `/use-cases/mepram/labs/lab2/view`
+  - `/use-cases/mepram/view`
   - `/use-cases/redlabra/admin`
 - `models_admin` / `models_admin_pass`
   - `/use-cases/ai-models/admin`

@@ -45,7 +45,6 @@ export default defineConfig(({ mode }) => {
           headers: {
             Host: "localhost",
           },
-          rewrite: (pathToRewrite) => pathToRewrite.replace(/^\/api/, ""),
         },
       },
     },

@@ -31,7 +31,7 @@ Tambien existe un bloque placeholder para `Datos agregados / Records`, reservado
 - npm 9+
 - PathoCore API disponible por HTTP
 
-La web nunca se conecta directamente a MySQL. Siempre consume PathoCore API por HTTP bajo `/v1`; las bases de datos quedan encapsuladas detras de sus APIs.
+La web nunca se conecta directamente a MySQL. Siempre consume PathoCore API por HTTP bajo `/api/v1`; las bases de datos quedan encapsuladas detras de sus APIs.
 
 ## Arranque rapido
 
@@ -248,7 +248,7 @@ TOKEN=$(curl -s -X POST \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
 
 curl -H "Authorization: Bearer $TOKEN" \
-  http://127.0.0.1:8100/v1/cohort/summary
+  http://127.0.0.1:8100/api/v1/cohort/summary
 ```
 
 ## Estructura
@@ -276,17 +276,17 @@ PathoCore API se configura con `VITE_API_BASE_URL` y
 `PATHOCORE_API_PROXY_TARGET`. La usan el databrowser generico y las vistas
 principales de PathoCore. Segun la vista, la web consume endpoints como:
 
-- GET /v1/databrowser/overview-summary
-- GET /v1/databrowser/metadata-summary
-- GET /v1/databrowser/schema-summary
-- GET /v1/databrowser/metadata/property-distribution
-- GET /v1/samples
-- GET /v1/samples/{sample_unique_id}/metadata
-- GET /v1/samples/metadata/search
-- GET /v1/variants/summary
-- GET /v1/variants/reference-genomes
-- GET /v1/variants/filter-options
-- GET /v1/variants/search
+- GET /api/v1/databrowser/overview-summary
+- GET /api/v1/databrowser/metadata-summary
+- GET /api/v1/databrowser/schema-summary
+- GET /api/v1/databrowser/metadata/property-distribution
+- GET /api/v1/samples
+- GET /api/v1/samples/{sample_unique_id}/metadata
+- GET /api/v1/samples/metadata/search
+- GET /api/v1/variants/summary
+- GET /api/v1/variants/reference-genomes
+- GET /api/v1/variants/filter-options
+- GET /api/v1/variants/search
 
 ## Rutas principales
 
