@@ -46,7 +46,7 @@ export default function CohortOverview({
    setErrorMsg(null);
 
    const apiBase =
-     process.env.NEXT_PUBLIC_PATHOCORE_API_URL || "http://localhost:8100/v1";
+     process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
 
    fetch(`${apiBase}/cohort/summary`, {
      headers: {

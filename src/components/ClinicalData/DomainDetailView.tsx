@@ -51,7 +51,7 @@ const loadDomainConcepts = useCallback(() => {
   setErrorMsg(null);
 
   const apiBase =
-    process.env.NEXT_PUBLIC_PATHOCORE_API_URL || "http://localhost:8100/v1";
+    process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
   const url = `${apiBase}/domains/${domainId}/concepts`;
 
   fetch(url, {
@@ -123,7 +123,7 @@ const loadDomainConcepts = useCallback(() => {
 
 try {
   const apiBase =
-    process.env.NEXT_PUBLIC_PATHOCORE_API_URL || "http://localhost:8100/v1";
+    process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
 
   const res = await fetch(`${apiBase}/concepts/${id}/detail`, {
     method: "GET",
@@ -138,7 +138,7 @@ try {
     throw new Error("Unauthorized session scope expired.");
   }
 
-  if (!res.ok) throw new Error("No se pudo obtener el detalle del concepto");
+  if (!res.ok) throw new Error("Could not retrieve concept details");
 
   const detailData = await res.json();
   setConceptDetails((prev) => ({ ...prev, [id]: detailData }));

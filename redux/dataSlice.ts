@@ -6,15 +6,13 @@ export const fetchSchemaSummary = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       
-      const response = await axios.get(
-        "http://localhost:3000/api/v1/databrowser/schema-summary"
-      );
+      const response = await axios.get("/api/v1/databrowser/schema-summary");
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message ||
           error.message ||
-          "Error al conectar con el servidor de datos genómicos"
+          "Error connecting to the genomic data server"
       );
     }
   }

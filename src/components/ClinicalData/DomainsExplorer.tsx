@@ -36,7 +36,7 @@ export default function DomainsExplorer({
     if (!accessToken) return;
     const controller = new AbortController();
 
-    fetch("/api/clinical/v1/domains", {
+    fetch("/api/omop/v1/domains", {
       signal: controller.signal,
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -67,7 +67,7 @@ export default function DomainsExplorer({
     if (!selectedDomain || !accessToken) return;
     const controller = new AbortController();
 
-    fetch(`/api/clinical/v1/domains/${selectedDomain}/concepts`, {
+    fetch(`/api/omop/v1/domains/${selectedDomain}/concepts`, {
       signal: controller.signal,
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -96,7 +96,7 @@ export default function DomainsExplorer({
     const controller = new AbortController();
     setDetailLoading(true);
 
-    fetch(`/api/clinical/v1/concepts/${selectedConceptId}/detail`, {
+    fetch(`/api/omop/v1/concepts/${selectedConceptId}/detail`, {
       signal: controller.signal,
       headers: {
         Authorization: `Bearer ${accessToken}`,

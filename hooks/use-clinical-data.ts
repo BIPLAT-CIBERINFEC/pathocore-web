@@ -19,9 +19,10 @@ export function useClinicalData(
 
       setStatus("loading");
       setError(null);
-      const baseUrl = process.env.NEXT_PUBLIC_PATHOCORE_API_URL;
+      const baseUrl =
+        process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
       try {   
-        const response = await fetch(`${baseUrl}/v1/${path}`, {
+        const response = await fetch(`${baseUrl}/${path}`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${accessToken}`,

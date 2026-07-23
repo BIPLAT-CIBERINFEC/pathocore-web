@@ -243,7 +243,7 @@ export default function MetadataExplorer() {
   const [registeredMaps, setRegisteredMaps] = useState<Record<string, boolean>>(
     {}
   );
- const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
   useEffect(() => {
     async function initializeDashboard() {
       try {
@@ -254,10 +254,8 @@ export default function MetadataExplorer() {
 
         let schemaJson = null;
         try {
-          const apiBase =
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
           const schemaRes = await fetch(
-            `${baseUrl}databrowser/schema-summary`
+            `${baseUrl}/databrowser/schema-summary`
           );
           if (schemaRes.ok) {
             schemaJson = await schemaRes.json();
@@ -740,7 +738,7 @@ function PropertyAccordionItem({
     setError(null);
 
     const apiBase =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+      process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
 
     fetch(
       `${apiBase}/databrowser/metadata/property-distribution?property=${encodeURIComponent(

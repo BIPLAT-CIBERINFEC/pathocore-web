@@ -4,33 +4,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
+  const apiTarget = (
+    process.env.PATHOCORE_API_PROXY_TARGET || "http://127.0.0.1:8000"
+  ).replace(/\/+$/, "");
+
   try {
-    const backendRes = await fetch(
-      "http://127.0.0.1:8001/v1/databrowser/metadata-summary",
-      {
-        headers: {
-          Authorization:
-            "Basic " + Buffer.from("admin:admin_pass").toString("base64"),
-        },
-        cache: "no-store",
-      }
-    );
+    const backendRes = await fetch(`${apiTarget}/api/v1/databrowser/metadata-summary`, {
+      cache: "no-store",
+    });
 
     if (!backendRes.ok) {
       const errorBody = await backendRes
         .text()
-        .catch(() => "No se pudo leer el cuerpo del error");
+        .catch(() => "Could not read backend error body");
 
       console.error(
-        `❌ [Backend Error] El puerto 8001 respondió con status: ${backendRes.status}`
+        `[Backend Error] PathoCore API responded with status: ${backendRes.status}`
       );
-      console.error(
-        `❌ [Backend Error] Detalle enviado por Python:`,
-        errorBody
-      );
+      console.error("[Backend Error] Detail:", errorBody);
 
       return res.status(backendRes.status).json({
-        error: "Error en la API del backend",
+        error: "Backend API error",
         statusCode: backendRes.status,
         details: errorBody,
       });
@@ -41,6 +35,6 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
   } catch (error) {
     console.error("Error fetching metadata summary:", error);
-    return res.status(500).json({ error: "Failed to fetch data from bridge" });
+    return res.status(500).json({ error: "Failed to fetch backend data" });
   }
 }

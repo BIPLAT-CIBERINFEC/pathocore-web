@@ -5,18 +5,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Variant is required" });
   }
 
+  const apiTarget = (
+    process.env.PATHOCORE_API_PROXY_TARGET || "http://127.0.0.1:8000"
+  ).replace(/\/+$/, "");
+
   try {
     const encodedVariant = encodeURIComponent(variant);
 
     const response = await fetch(
-      `http://127.0.0.1:8001/v1/variants/search?page_size=100&variant=${encodedVariant}`,
-      {
-        headers: {
-          Authorization:
-            "Basic " + Buffer.from("admin:admin_pass").toString("base64"),
-        },
-        cache: "no-store",
-      }
+      `${apiTarget}/api/v1/variants/search?page_size=100&variant=${encodedVariant}`,
+      { cache: "no-store" }
     );
 
     if (!response.ok) {

@@ -469,9 +469,9 @@ function overviewFromUseCaseSummary(
       regionCount: summary.metrics.participating_regions,
     }),
     notes: [
-      "Datos agregados desde el endpoint cacheado de casos de uso de PathoCore API.",
+      "Aggregated data from the cached PathoCore API use-case endpoint.",
       ...missingOperationalFields(summary).map(
-        (field) => `Campo operativo pendiente o con baja cobertura: ${field}.`,
+        (field) => `Operational field pending or with low coverage: ${field}.`,
       ),
     ],
     participatingCenters: summary.metrics.participating_centers,
@@ -794,7 +794,7 @@ function buildSimulatedMepramSnapshot(): MepramSnapshot {
       territorialCoverageSimulated: true,
       totalSamples: rows.length,
     },
-    projectLabel: "Caso de uso pendiente",
+    projectLabel: "Pending use-case",
   };
 }
 

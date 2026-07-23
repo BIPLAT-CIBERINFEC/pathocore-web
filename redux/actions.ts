@@ -13,7 +13,7 @@ export const fetchSchemaSummary = createAsyncThunk(
       return rejectWithValue(
         error.response?.data?.message ||
           error.message ||
-          "Error al conectar con el servidor de datos genómicos"
+          "Error connecting to the genomic data server"
       );
     }
   }

@@ -31,7 +31,7 @@ interface MeasurementsExplorerProps {
 type MeasurementTableType = "numeric" | "categorical";
 
 const MEPRAM_API_BASE_URL =
-  process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "http://localhost:8100/v1";
+  process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
 
 const measurementEndpointByType: Record<MeasurementTableType, string> = {
   numeric: "/measurements/numeric",
@@ -221,7 +221,7 @@ export default function MeasurementsExplorer({
       }
 
       if (!detailRes.ok || !ageRes.ok || !sexRes.ok) {
-        throw new Error("No se pudo obtener el detalle del concepto");
+        throw new Error("Could not retrieve concept details");
       }
 
       const [detailData, ageData, sexData] = await Promise.all([
