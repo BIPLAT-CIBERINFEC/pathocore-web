@@ -1,15 +1,12 @@
 export default async function handler(req, res) {
+  const apiTarget = (
+    process.env.PATHOCORE_API_PROXY_TARGET || "http://127.0.0.1:8000"
+  ).replace(/\/+$/, "");
+
   try {
-    const response = await fetch(
-      "http://127.0.0.1:8001/v1/databrowser/overview-summary",
-      {
-        headers: {
-          Authorization:
-            "Basic " + Buffer.from("admin:admin_pass").toString("base64"),
-        },
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(`${apiTarget}/api/v1/databrowser/overview-summary`, {
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       return res.status(response.status).json({ error: "Backend error" });

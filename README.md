@@ -1,8 +1,8 @@
 # PathoCore Web
 
-PathoCore Web is the frontend and local Docker orchestrator for the PathoCore
-stack. It runs the web application together with PathoCore API, MePRAM OMOP API,
-Keycloak, MySQL services, and local mail tooling for development/testing.
+Frontend and Docker orchestrator for the PathoCore stack. The web application
+consumes PathoCore API for genomic data and MePRAM OMOP API for aggregated OMOP
+data. The frontend never connects directly to MySQL.
 
 ## Stack
 
@@ -13,20 +13,15 @@ Keycloak, MySQL services, and local mail tooling for development/testing.
 - Docker Compose
 - Keycloak
 
+## Requirements
+
+- Node.js 22+ for local frontend development
+- npm
+- Docker with the Compose plugin
+- `pathocore-api` and `mepram-omop-api` cloned as sibling repositories when
+  using the Docker orchestrator
+
 ## Repository Layout
-
-```text
-pathocore-web/
-  src/                    frontend source
-  public/                 static frontend assets
-  keycloak/               reproducible realm configuration
-  docker/                 container startup helpers
-  docker-compose.test.yml local testing stack
-  docker-compose.prod.yml production-oriented stack
-```
-
-The API repositories are expected as sibling directories when using the
-orchestrator:
 
 ```text
 devel/
@@ -35,14 +30,29 @@ devel/
   mepram-omop-api/
 ```
 
-## Local Frontend
+Example clone layout:
 
 ```bash
+mkdir -p ~/path_to/devel
+cd ~/path_to/devel
+
+git clone -b develop https://github.com/BIPLAT-CIBERINFEC/pathocore-api.git pathocore-api
+git clone -b develop https://github.com/BU-ISCIII/mepram-omop-api.git mepram-omop-api
+git clone -b dev https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git pathocore-web
+```
+
+## Local Frontend Only
+
+Use this when the APIs are already running elsewhere:
+
+```bash
+cd pathocore-web
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-Default local URL:
+Default URL:
 
 ```text
 http://127.0.0.1:3000
@@ -50,19 +60,20 @@ http://127.0.0.1:3000
 
 ## Docker Testing Stack
 
-Prepare local configuration:
+Prepare local variables:
 
 ```bash
+cd pathocore-web
 cp .env.example .env
 ```
 
-Start the full testing stack:
+Start the full stack:
 
 ```bash
 bash container_install.sh --test
 ```
 
-Start the stack and import testing SQL dumps:
+Start the stack and import SQL dumps:
 
 ```bash
 bash container_install.sh --test \
@@ -81,23 +92,31 @@ Mailpit:          http://127.0.0.1:8025
 Adminer:          http://127.0.0.1:8085
 ```
 
-## Configuration
+## Frontend API Routes
 
-Use `.env.example` as the public template. Keep real values only in local
-`.env` files or deployment-managed environment files.
+The browser uses relative API routes exposed by Next.js:
 
-Frontend-relevant variables:
+```text
+/api/v1/...       -> PathoCore API /api/v1/...
+/api/omop/v1/...  -> MePRAM OMOP API /v1/...
+```
 
-- `NEXT_PUBLIC_API_BASE_URL`: browser-facing PathoCore API route, normally `/api/v1`.
-- `NEXT_PUBLIC_MEPRAM_API_BASE_URL`: browser-facing clinical API route, normally `/api/clinical/v1`.
-- `PATHOCORE_API_PROXY_TARGET`: internal proxy target for PathoCore API.
-- `MEPRAM_OMOP_API_PROXY_TARGET`: internal proxy target for MePRAM OMOP API.
-- `NEXT_PUBLIC_KEYCLOAK_URL`: browser-facing Keycloak URL.
-- `NEXT_PUBLIC_KEYCLOAK_REALM`: Keycloak realm.
-- `NEXT_PUBLIC_KEYCLOAK_CLIENT_ID`: public frontend client.
-- `AUTH_SECRET`: local secret required if NextAuth remains enabled.
+Relevant variables:
 
-## Keycloak Realm
+```text
+NEXT_PUBLIC_API_BASE_URL=/api/v1
+NEXT_PUBLIC_MEPRAM_API_BASE_URL=/api/omop/v1
+PATHOCORE_API_PROXY_TARGET=http://pathocore_api:8000
+MEPRAM_OMOP_API_PROXY_TARGET=http://mepram_omop_api:8000
+NEXT_PUBLIC_KEYCLOAK_URL=http://127.0.0.1:8080
+NEXT_PUBLIC_KEYCLOAK_REALM=ciberisciii_datahub
+NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=pathocore-web
+```
+
+Keep real production values in deployment-managed environment files, not in the
+repository.
+
+## Keycloak
 
 Testing and production realm templates live under `keycloak/`.
 
@@ -107,10 +126,5 @@ Render the testing realm before a clean Keycloak import:
 python keycloak/scripts/render_realm.py --profile test
 ```
 
-For a full local Keycloak reimport, remove Docker volumes and restart the stack.
-
-## Notes
-
-- Public databrowser routes remain unauthenticated.
-- Private use-case routes authenticate through Keycloak.
-- The web app does not connect directly to MySQL; it consumes APIs over HTTP.
+If Keycloak already has a persisted database, changing the JSON is not enough:
+remove/recreate the Keycloak volume or update the client configuration manually.

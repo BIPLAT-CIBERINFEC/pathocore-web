@@ -18,6 +18,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/pages/data-tools/genomic-data.jsx", "src/components/GenomicData/Graficos/SchemaDistribution.jsx", "src/pages/use-cases/mepram.jsx", "src/components/UseCases/Mepram/MepramDataPage.tsx", "src/pages/api/v1/use-cases/data-summary.js", "src/components/GenomicData/index.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/pages/data-tools/genomic-data.jsx", "src/components/GenomicData/Graficos/SchemaDistribution.jsx", "src/pages/use-cases/mepram.jsx", "src/components/UseCases/Mepram/MepramDataPage.tsx", "src/components/GenomicData/index.jsx"],
   "exclude": ["node_modules"]
 }

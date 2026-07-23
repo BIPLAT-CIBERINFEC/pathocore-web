@@ -4,17 +4,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
+  const apiTarget = (
+    process.env.PATHOCORE_API_PROXY_TARGET || "http://127.0.0.1:8000"
+  ).replace(/\/+$/, "");
+
   try {
-    const response = await fetch(
-      "http://127.0.0.1:8001/v1/databrowser/schema-summary",
-      {
-        headers: {
-          Authorization:
-            "Basic " + Buffer.from("admin:admin_pass").toString("base64"),
-        },
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(`${apiTarget}/api/v1/databrowser/schema-summary`, {
+      cache: "no-store",
+    });
 
     const data = await response.json();
 

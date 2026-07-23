@@ -16,7 +16,7 @@ export default function SchemaExplorer() {
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/v1/databrowser/schema-summary")
+    fetch("/api/v1/databrowser/schema-summary")
       .then((res) => res.json())
       .then((json) => {
         const data = json.schema_cards || [];

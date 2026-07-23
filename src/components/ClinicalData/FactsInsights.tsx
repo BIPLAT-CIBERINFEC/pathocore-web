@@ -27,7 +27,7 @@ export default function FactsInsights({
     if (!accessToken) return;
     const controller = new AbortController();
 
-    fetch("/api/clinical/v1/facts/concepts?stratification=age_sex&limit=20", {
+    fetch("/api/omop/v1/facts/concepts?stratification=age_sex&limit=20", {
       signal: controller.signal,
       headers: { Authorization: `Bearer ${accessToken}` },
     })
