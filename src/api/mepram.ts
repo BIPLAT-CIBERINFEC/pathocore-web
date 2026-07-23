@@ -21,8 +21,8 @@ import type {
 
 const PROJECT_NAME = "mepram";
 const MEPRAM_DATA_MODE =
-  import.meta.env.VITE_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
-  import.meta.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() ||
+  process.env.VITE_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
+  process.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() ||
   "simulated";
 const SIMULATED_ANNUAL_PATHOGEN_SERIES: MepramMultiSeriesChart = {
   data: [
