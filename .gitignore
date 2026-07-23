@@ -5,19 +5,22 @@ node_modules/
 dist/
 dist-ssr/
 build/
+.next/
+out/
 
-# Vite / frontend caches
+# Frontend caches
 .vite/
 .vite-inspect/
 .eslintcache
 .stylelintcache
+tsconfig.tsbuildinfo
 
 # Test output
 coverage/
 playwright-report/
 test-results/
 
-# Logs
+# Log files
 logs
 *.log
 npm-debug.log*
@@ -47,11 +50,13 @@ secrets/
 *.pfx
 keycloak/config/realm-config.prod.json
 
-# Local-only project material
-mockup/
+# Python / generated helper caches
+__pycache__/
+*.py[cod]
 
 # OS files
 .DS_Store
+__MACOSX/
 Thumbs.db
 
 # Editor directories and files
@@ -64,8 +69,10 @@ Thumbs.db
 *.sln
 *.sw?
 
-# custom
+# Local-only project material
+mockup/
 BACKLOG.md
-docs/
-__pycache__/
-*.py[cod]
+docs/mepram-api-implementation.md
+
+# Vercel
+.vercel

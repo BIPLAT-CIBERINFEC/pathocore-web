@@ -129,8 +129,7 @@ export class PathocoreApiClient {
     let currentPage = 1;
     const aggregated: SampleListItem[] = [];
 
-    // The endpoint is paginated. We keep following pages to avoid silently
-    // dropping data if the dataset grows beyond the first page.
+ 
     while (true) {
       const page = await this.getJson<PaginatedResponse<SampleListItem>>({
         path: "/samples",
