@@ -58,7 +58,7 @@ Default URL:
 http://127.0.0.1:3000
 ```
 
-## Docker Testing Stack
+## Docker orchestrator
 
 Prepare local variables:
 
