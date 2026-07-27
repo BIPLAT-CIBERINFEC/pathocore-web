@@ -188,6 +188,42 @@
       ]
     },
     {
+      "username": "mepram_viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "MEPRAM",
+      "lastName": "Viewer",
+      "email": "mepram.viewer@example.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mepram_viewer_pass",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/use-cases/mepram/view"
+      ]
+    },
+    {
+      "username": "relecov_viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "RELECOV",
+      "lastName": "Viewer",
+      "email": "relecov.viewer@example.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "relecov_viewer_pass",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/use-cases/relecov/view"
+      ]
+    },
+    {
       "username": "relecov_admin",
       "enabled": true,
       "emailVerified": true,
@@ -224,22 +260,22 @@
       ]
     },
     {
-      "username": "hybrid_user",
+      "username": "multi_viewer",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Hybrid",
-      "lastName": "User",
-      "email": "hybrid.user@example.org",
+      "firstName": "Multi",
+      "lastName": "Viewer",
+      "email": "multi.viewer@example.org",
       "credentials": [
         {
           "type": "password",
-          "value": "hybrid_user_pass",
+          "value": "multi_viewer_pass",
           "temporary": false
         }
       ],
       "groups": [
         "/use-cases/mepram/view",
-        "/use-cases/redlabra/admin"
+        "/use-cases/relecov/view"
       ]
     },
     {

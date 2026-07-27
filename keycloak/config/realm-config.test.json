@@ -124,6 +124,26 @@
       ]
     },
     {
+      "username": "mepram_viewer",
+      "password": "mepram_viewer_pass",
+      "first_name": "MEPRAM",
+      "last_name": "Viewer",
+      "email": "mepram.viewer@example.org",
+      "groups": [
+        "/use-cases/mepram/view"
+      ]
+    },
+    {
+      "username": "relecov_viewer",
+      "password": "relecov_viewer_pass",
+      "first_name": "RELECOV",
+      "last_name": "Viewer",
+      "email": "relecov.viewer@example.org",
+      "groups": [
+        "/use-cases/relecov/view"
+      ]
+    },
+    {
       "username": "relecov_admin",
       "password": "relecov_admin_pass",
       "first_name": "RELECOV",
@@ -144,14 +164,14 @@
       ]
     },
     {
-      "username": "hybrid_user",
-      "password": "hybrid_user_pass",
-      "first_name": "Hybrid",
-      "last_name": "User",
-      "email": "hybrid.user@example.org",
+      "username": "multi_viewer",
+      "password": "multi_viewer_pass",
+      "first_name": "Multi",
+      "last_name": "Viewer",
+      "email": "multi.viewer@example.org",
       "groups": [
         "/use-cases/mepram/view",
-        "/use-cases/redlabra/admin"
+        "/use-cases/relecov/view"
       ]
     },
     {
