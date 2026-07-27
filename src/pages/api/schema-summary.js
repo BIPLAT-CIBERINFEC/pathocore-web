@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   ).replace(/\/+$/, "");
 
   try {
-    const response = await fetch(`${apiTarget}/api/v1/databrowser/schema-summary`, {
+    const response = await fetch(`${apiTarget}/v1/databrowser/schema-summary`, {
       cache: "no-store",
     });
 

@@ -94,10 +94,11 @@ Adminer:          http://127.0.0.1:8085
 
 ## Frontend API Routes
 
-The browser uses relative API routes exposed by Next.js:
+The browser uses relative API routes exposed by Next.js. These are frontend
+proxy routes, not the final backend prefixes:
 
 ```text
-/api/v1/...       -> PathoCore API /api/v1/...
+/api/v1/...       -> PathoCore API /v1/...
 /api/omop/v1/...  -> MePRAM OMOP API /v1/...
 ```
 

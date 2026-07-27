@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const encodedVariant = encodeURIComponent(variant);
 
     const response = await fetch(
-      `${apiTarget}/api/v1/variants/search?page_size=100&variant=${encodedVariant}`,
+      `${apiTarget}/v1/variants/search?page_size=100&variant=${encodedVariant}`,
       { cache: "no-store" }
     );
 

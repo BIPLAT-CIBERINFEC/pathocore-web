@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   ).replace(/\/+$/, "");
 
   try {
-    const backendRes = await fetch(`${apiTarget}/api/v1/databrowser/metadata-summary`, {
+    const backendRes = await fetch(`${apiTarget}/v1/databrowser/metadata-summary`, {
       cache: "no-store",
     });
 
