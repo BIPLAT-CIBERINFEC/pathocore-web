@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   ).replace(/\/+$/, "");
 
   try {
-    const response = await fetch(`${apiTarget}/api/v1/databrowser/overview-summary`, {
+    const response = await fetch(`${apiTarget}/v1/databrowser/overview-summary`, {
       cache: "no-store",
     });
 
