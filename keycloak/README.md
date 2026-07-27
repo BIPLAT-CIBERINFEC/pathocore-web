@@ -141,13 +141,17 @@ Realm settings > Email, or use a fresh import as shown above.
 - `mepram_admin` / `mepram_admin_pass`
   - `/use-cases/mepram/admin`
   - `/use-cases/relecov/view`
+- `mepram_viewer` / `mepram_viewer_pass`
+  - `/use-cases/mepram/view`
+- `relecov_viewer` / `relecov_viewer_pass`
+  - `/use-cases/relecov/view`
 - `relecov_admin` / `relecov_admin_pass`
   - `/use-cases/relecov/admin`
 - `redlabra_viewer` / `redlabra_viewer_pass`
   - `/use-cases/redlabra/view`
-- `hybrid_user` / `hybrid_user_pass`
+- `multi_viewer` / `multi_viewer_pass`
   - `/use-cases/mepram/view`
-  - `/use-cases/redlabra/admin`
+  - `/use-cases/relecov/view`
 - `models_admin` / `models_admin_pass`
   - `/use-cases/ai-models/admin`
 
