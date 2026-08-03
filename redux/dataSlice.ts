@@ -5,11 +5,9 @@ export const fetchSchemaSummary = createAsyncThunk(
   "data/fetchSchemaSummary",
   async (_, { rejectWithValue }) => {
     try {
-      
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+
       const response = await axios.get(
-        `${apiBase}/databrowser/schema-summary`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1"}/databrowser/schema-summary`
       );
       return response.data;
     } catch (error: any) {

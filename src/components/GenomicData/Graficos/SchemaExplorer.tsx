@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SectionHeading } from "@/components/mepram/MepramPrimitives";
-import { ChevronDown, Search, Info } from "lucide-react";  
+import { ChevronDown, Search, Info } from "lucide-react";
 
 export default function SchemaExplorer() {
   const [schemas, setSchemas] = useState<any[]>([]);
@@ -16,9 +16,7 @@ export default function SchemaExplorer() {
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
-
-    fetch(`${baseUrl}/databrowser/schema-summary`)
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1"}/databrowser/schema-summary`)
       .then((res) => res.json())
       .then((json) => {
         const data = json.schema_cards || [];

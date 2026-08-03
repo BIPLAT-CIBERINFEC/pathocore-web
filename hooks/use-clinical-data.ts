@@ -16,17 +16,12 @@ export function useClinicalData(
       setError(null);
       const baseUrl =
         process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
-      try {   
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-        if (accessToken) {
-          headers.Authorization = `Bearer ${accessToken}`;
-        }
-
+      try {
         const response = await fetch(`${baseUrl}/${path}`, {
           method: "GET",
-          headers,
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
 
         if (!response.ok) {
@@ -43,7 +38,7 @@ export function useClinicalData(
         setStatus("error");
       }
     },
-    [accessToken]
+    []
   );
 
   return { data, status, error, fetchData };
