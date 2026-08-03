@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 
 export function useMepram(accessToken?: string | null) {
+  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   const [snapshot, setSnapshot] = useState<any>(null);
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
-
   const refresh = useCallback(async () => {
  
     if (!accessToken) {
@@ -17,16 +17,16 @@ export function useMepram(accessToken?: string | null) {
     setStatus("loading");
     setError(null);
     try {
-      const response = await fetch(
-        "/api/v1/use-cases/data-summary?project_name=mepram",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  const response = await fetch(
+    `${API_URL}/use-cases/data-summary?project_name=mepram`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
       if (!response.ok) {       
         if (response.status === 401) {
