@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import {
   mepramNavigation,
@@ -9,6 +9,8 @@ import {
 } from "@/data/mepramDataBrowser";
 import Image from "next/image";
 import img from "../../../public/images/Logo Ciber+Mepram.png";
+import { useAuth } from "hooks/use-auth";
+import { Button } from "../ui/button";
 
 type Breadcrumb = { label: string; href?: string };
 
@@ -52,6 +54,13 @@ export function MepramBrowserLayout({
   const router = useRouter();
   const [query, setQuery] = useState("");
 
+  // 1. Estado para prevenir el error de hidratación en el Navbar
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const results = useMemo(() => {
     const value = query.trim().toLowerCase();
     if (!value) return [];
@@ -59,6 +68,9 @@ export function MepramBrowserLayout({
       `${entry.label} ${entry.type} ${entry.meta}`.toLowerCase().includes(value)
     );
   }, [query]);
+
+  // 2. Extraemos también el método logout (si existe en tu hook)
+  const { login, logout, accessToken } = useAuth();
 
   return (
     <>
@@ -82,7 +94,7 @@ export function MepramBrowserLayout({
                 <Image
                   src={img}
                   alt="Logo Ciber Mepram"
-                  className="h-12 w-auto object-contain" 
+                  className="h-12 w-auto object-contain"
                 />
               </div>
             </Link>
@@ -156,11 +168,62 @@ export function MepramBrowserLayout({
               })}
             </nav>
 
+            {/* ========================================== */}
+            {/* ZONA DE AUTENTICACIÓN DINÁMICA             */}
+            {/* ========================================== */}
             <div className="ml-auto">
-              <button className="rounded-full px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100">
-                Log in Intranet
-              </button>
+              {!isMounted ? (
+                // Skeleton loading sutil mientras decide si está logueado o no
+                <div className="h-9 w-32 animate-pulse rounded-full bg-slate-100" />
+              ) : accessToken ? (
+                // ESTADO: USUARIO LOGUEADO
+                <div className="group relative">
+                  <button className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4f46e5] text-xs font-bold text-white">
+                      U {/* Aquí podrías poner la inicial del usuario */}
+                    </div>
+                    My Account
+                  </button>
+
+                  <div className="pointer-events-none absolute right-0 top-[calc(100%)] z-20 min-w-[180px] rounded-3xl border border-slate-200 bg-white p-2 opacity-0 shadow-[0_24px_64px_rgba(15,23,42,0.14)] transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+                    <button
+                      onClick={() => {
+                        if (typeof logout === "function") {
+                          logout();
+                        }
+                      }}
+                      className="block w-full text-left rounded-2xl px-4 py-3 text-sm text-red-600 transition hover:bg-red-50 font-medium"
+                    >
+                      Log out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // ESTADO: USUARIO DESLOGUEADO
+                <div className="group relative">
+                  <button className="rounded-full px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100">
+                    Log in Intranet
+                  </button>
+
+                  <div className="pointer-events-none absolute right-0 top-[calc(100%)] z-20 min-w-[180px] rounded-3xl border border-slate-200 bg-white p-2 opacity-0 shadow-[0_24px_64px_rgba(15,23,42,0.14)] transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+                    <Button
+                      onClick={() => login()}
+                      className="block w-full rounded-2xl px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Log in
+                    </Button>
+
+                    <Link
+                      href="/signin"
+                      className="block rounded-2xl px-4 py-3 text-center text-sm text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Sign in
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
+            {/* ========================================== */}
           </div>
 
           {(router.pathname.startsWith("/data-tools") ||

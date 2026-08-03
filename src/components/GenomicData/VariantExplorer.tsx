@@ -169,7 +169,7 @@ export default function VariantExplorer({
     "#6366f1",
     "#a78bfa",
   ];
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
   useEffect(() => {
    
@@ -227,7 +227,7 @@ export default function VariantExplorer({
        params.append("sequencing_platform", sequencingPlatform);
 
      const apiBase =
-       process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+       process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
      const res = await fetch(`${apiBase}/variants/search?${params.toString()}`);
 

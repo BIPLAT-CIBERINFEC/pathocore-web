@@ -44,7 +44,7 @@ export default function OverviewSamples() {
   const [schemaData, setSchemaData] = useState<SchemaItem[]>([]);
 
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   useEffect(() => {
     setIsLoadingData(true);
     fetch(`${baseUrl}/databrowser/overview-summary`)

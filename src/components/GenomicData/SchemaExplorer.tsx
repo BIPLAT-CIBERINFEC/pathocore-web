@@ -54,12 +54,12 @@ export default function SchemaExplorer() {
     []
   );
   const [schemaDistData, setSchemaDistData] = useState<any[]>([]);
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   useEffect(() => {
     setLoading(true);
     fetch(`${baseUrl}/databrowser/schema-summary`)
       .then((res) => {
-        if (!res.ok) throw new Error("Internal API error");
+        if (!res.ok) throw new Error("Error en la API interna");
         return res.json();
       })
       .then((json) => {
@@ -80,7 +80,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
         }
       })
       .catch((err) => {
-        console.error("Error loading schema:", err);
+        console.error("Error cargando el schema:", err);
       })
       .finally(() => {
         setLoading(false);

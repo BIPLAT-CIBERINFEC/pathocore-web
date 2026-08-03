@@ -1,88 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { MepramBrowserLayout } from "@/components/mepram/MepramBrowserLayout";
-const snapshotCards = [
-  {
-    value: "18,742+",
-    label: "Participants",
-    text: "Aggregate participant cohort.",
-    accent: "from-[#ffb157] to-[#f58a2e]",
-    icon: (
-      <svg viewBox="0 0 64 64" className="h-16 w-16" fill="none">
-        <circle cx="32" cy="19" r="10" fill="#fff4e6" stroke="#2d2a7d" strokeWidth="2.5" />
-        <path
-          d="M18 49v-3c0-6.6 5.4-12 12-12h4c6.6 0 12 5.4 12 12v3"
-          fill="url(#people-fill)"
-          stroke="#2d2a7d"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M24 34.5c2.2 1.6 4.9 2.4 8 2.4s5.8-.8 8-2.4"
-          stroke="#2d2a7d"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <defs>
-          <linearGradient id="people-fill" x1="18" x2="46" y1="34" y2="49" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#ffc36b" />
-            <stop offset="1" stopColor="#f58a2e" />
-          </linearGradient>
-        </defs>
-      </svg>
-    ),
-  },
-  {
-    value: "31,406+",
-    label: "Clinical Episodes",
-    text: "Hospital activity summarized across sites.",
-    accent: "from-[#9ee6d7] to-[#47c4b0]",
-    icon: (
-      <svg viewBox="0 0 64 64" className="h-16 w-16" fill="none">
-        <path
-          d="M18 14h22l8 8v28a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4Z"
-          fill="#ebfbf8"
-          stroke="#2d2a7d"
-          strokeWidth="2.5"
-        />
-        <path d="M40 14v10h10" stroke="#2d2a7d" strokeWidth="2.5" strokeLinejoin="round" />
-        <path d="M23 31h16" stroke="#2d2a7d" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M23 39h18" stroke="#2d2a7d" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M23 47h12" stroke="#2d2a7d" strokeWidth="2.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "4,286+",
-    label: "Standard Concepts",
-    text: "Mapped concepts ready for public browsing.",
-    accent: "from-[#bfe4ff] to-[#78c3ff]",
-    icon: (
-      <svg viewBox="0 0 64 64" className="h-16 w-16" fill="none">
-        <ellipse cx="32" cy="15" rx="15" ry="6.5" fill="#edf6ff" stroke="#2d2a7d" strokeWidth="2.5" />
-        <path
-          d="M17 15v14c0 3.6 6.7 6.5 15 6.5s15-2.9 15-6.5V15"
-          fill="#bde8de"
-          stroke="#2d2a7d"
-          strokeWidth="2.5"
-        />
-        <path
-          d="M17 29v14c0 3.6 6.7 6.5 15 6.5s15-2.9 15-6.5V29"
-          fill="#d8f3ee"
-          stroke="#2d2a7d"
-          strokeWidth="2.5"
-        />
-      </svg>
-    ),
-  },
-];
+import { useState, useEffect } from "react";
 
 const projectCards = [
-  // {
-  //   title: "Redlabra",
-  //   href: "/use-cases/mepram",
-  //   text: "Public project space for network resources and future analytics.",
-  // },
   {
     title: "MePRAM",
     href: "/use-cases/mepram",
@@ -102,6 +24,191 @@ const modelHighlights = [
 ];
 
 export default function HomePage() {
+  const [kpis, setKpis] = useState({
+    records: "18,742+",
+    variables: "31,406+",
+    genomicVariants: "4,286+",
+  });
+
+  useEffect(() => {
+    async function fetchKPIs() {
+      try {
+        const mepramOmopBase =
+          process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
+        const pathocoreBase =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+
+        const [mepramMetaRes, pathocoreSummaryRes, pathocoreVariantsRes] =
+          await Promise.allSettled([
+            fetch(`${mepramOmopBase}/metadata`),
+            fetch(`${pathocoreBase}/databrowser/overview-summary`),
+            fetch(`${pathocoreBase}/variants/summary`),
+          ]);
+
+        let totalPatients = 0;
+        let totalConcepts = 0;
+        let sampleCount = 0;
+        let visibleProperties = 0;
+        let variantObservations = 0;
+
+        if (mepramMetaRes.status === "fulfilled" && mepramMetaRes.value.ok) {
+          const data = await mepramMetaRes.value.json();
+          totalPatients = data.total_patients || 0;
+          totalConcepts = data.total_medical_concepts || 0;
+        }
+
+        if (
+          pathocoreSummaryRes.status === "fulfilled" &&
+          pathocoreSummaryRes.value.ok
+        ) {
+          const data = await pathocoreSummaryRes.value.json();
+          sampleCount = data.metrics?.sample_count || 0;
+          visibleProperties = data.metrics?.visible_metadata_properties || 0;
+        }
+
+        if (
+          pathocoreVariantsRes.status === "fulfilled" &&
+          pathocoreVariantsRes.value.ok
+        ) {
+          const data = await pathocoreVariantsRes.value.json();
+          variantObservations = data.totals?.variant_observations || 0;
+        }
+
+        const formatNumber = (num: number) =>
+          num.toLocaleString() + (num > 0 ? "+" : "");
+
+        setKpis({
+          records: formatNumber(totalPatients + sampleCount),
+          variables: formatNumber(totalConcepts + visibleProperties),
+          genomicVariants: formatNumber(variantObservations),
+        });
+      } catch (error) {
+        console.error("Error fetching dynamic KPIs:", error);
+      }
+    }
+
+    fetchKPIs();
+  }, []);
+
+  const snapshotCards = [
+    {
+      value: kpis.records,
+      label: "Records",
+      text: "Sum of total patients (OMOP) and total samples (Pathocore).",
+      accent: "from-[#ffb157] to-[#f58a2e]",
+      icon: (
+        <svg viewBox="0 0 64 64" className="h-16 w-16" fill="none">
+          <circle
+            cx="32"
+            cy="19"
+            r="10"
+            fill="#fff4e6"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+          />
+          <path
+            d="M18 49v-3c0-6.6 5.4-12 12-12h4c6.6 0 12 5.4 12 12v3"
+            fill="url(#people-fill)"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M24 34.5c2.2 1.6 4.9 2.4 8 2.4s5.8-.8 8-2.4"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+          <defs>
+            <linearGradient
+              id="people-fill"
+              x1="18"
+              x2="46"
+              y1="34"
+              y2="49"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#ffc36b" />
+              <stop offset="1" stopColor="#f58a2e" />
+            </linearGradient>
+          </defs>
+        </svg>
+      ),
+    },
+    {
+      value: kpis.variables,
+      label: "Variables",
+      text: "Sum of OMOP concepts and Pathocore metadata properties.",
+      accent: "from-[#9ee6d7] to-[#47c4b0]",
+      icon: (
+        <svg viewBox="0 0 64 64" className="h-16 w-16" fill="none">
+          <path
+            d="M18 14h22l8 8v28a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4Z"
+            fill="#ebfbf8"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+          />
+          <path
+            d="M40 14v10h10"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M23 31h16"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M23 39h18"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M23 47h12"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      value: kpis.genomicVariants,
+      label: "Genomic Variants",
+      text: "Total genomic variant observations in the database.",
+      accent: "from-[#bfe4ff] to-[#78c3ff]",
+      icon: (
+        <svg viewBox="0 0 64 64" className="h-16 w-16" fill="none">
+          <ellipse
+            cx="32"
+            cy="15"
+            rx="15"
+            ry="6.5"
+            fill="#edf6ff"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+          />
+          <path
+            d="M17 15v14c0 3.6 6.7 6.5 15 6.5s15-2.9 15-6.5V15"
+            fill="#bde8de"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+          />
+          <path
+            d="M17 29v14c0 3.6 6.7 6.5 15 6.5s15-2.9 15-6.5V29"
+            fill="#d8f3ee"
+            stroke="#2d2a7d"
+            strokeWidth="2.5"
+          />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <MepramBrowserLayout
       title="Home"

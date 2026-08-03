@@ -6,13 +6,17 @@ export const fetchSchemaSummary = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       
-      const response = await axios.get("/api/v1/databrowser/schema-summary");
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+      const response = await axios.get(
+        `${apiBase}/databrowser/schema-summary`
+      );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message ||
           error.message ||
-          "Error connecting to the genomic data server"
+          "Error al conectar con el servidor de datos genómicos"
       );
     }
   }

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { PropertyDistributionPanel } from "@/components/databrowser/property-distribution-panel";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PropertyDistributionCard } from "@/types/databrowser";
+import { PropertyDistributionPanel } from "./property-distribution-panel";
 
 export function PropertyAccordionCard({
   item,

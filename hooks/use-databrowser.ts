@@ -1,5 +1,6 @@
+import { DatabrowserContext } from "@/providers/databrowser-context";
 import { useContext } from "react";
-import { DatabrowserContext } from "@/app/providers/databrowser-context";
+
 
 export function useDatabrowser() {
   const context = useContext(DatabrowserContext);

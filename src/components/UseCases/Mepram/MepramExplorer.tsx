@@ -19,9 +19,11 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  User,
 } from "lucide-react";
 import type { MepramExplorerRow, MepramAmrGeneRecord } from "@/types/mepram";
 import { useAuth } from "hooks/use-auth";
+import Link from "next/link";
 
 interface DataColumn {
   id: string;
@@ -369,7 +371,7 @@ export function MepramExplorer() {
   const [expandedSampleId, setExpandedSampleId] = useState<string | null>(null);
   const [activePage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   const fetchData = async () => {
     if (!accessToken) return;
     setLoading(true);
@@ -642,35 +644,54 @@ export function MepramExplorer() {
 
         <div className="flex min-h-[45vh] items-center justify-center px-4 py-8">
           <Surface className="w-full max-w-md border border-slate-100 p-8 text-center rounded-[24px] shadow-xl bg-white/80 backdrop-blur-sm">
+            {/* Ícono superior */}
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 border border-amber-200">
               <Lock className="h-5 w-5" />
             </div>
+
+            {/* Título */}
             <h2 className="text-xl font-bold text-slate-800 tracking-tight">
               Authentication Required
             </h2>
-            <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-              The Isolate Explorer section requires an active session to
-              securely access backend endpoints.
-            </p>
-            <p className="my-6 text-sm text-slate-600 leading-relaxed">
-              Click the button below to be redirected to the secure Keycloak
-              login panel and synchronize the Data Browser.
-            </p>
-            <Button
-              onClick={() => {
-                if (typeof login === "function") {
-                  void login();
-                } else {
-                  console.error(
-                    "The 'login' method is not available in the useAuth hook."
-                  );
-                }
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#4D45E1] py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98]"
-            >
-              <LogIn className="h-4 w-4" />
-              Sign In with Keycloak
-            </Button>
+
+            {/* Párrafos con color de texto unificado */}
+            <div className="mt-2 space-y-3 text-sm text-slate-600 leading-relaxed">
+              <p>
+                The Isolate Explorer section requires an active session to
+                securely access backend endpoints.
+              </p>
+              <p>
+                Click the button below to be redirected to the secure Keycloak
+                login panel and synchronize the Data Browser.
+              </p>
+            </div>
+
+            {/* Botones del mismo tamaño y con margen de separación */}
+            <div className="mt-6 flex flex-col gap-3">
+              <Button
+                onClick={() => {
+                  if (typeof login === "function") {
+                    void login();
+                  } else {
+                    console.error(
+                      "The 'login' method is not available in the useAuth hook."
+                    );
+                  }
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#4D45E1] py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98]"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In with Keycloak
+              </Button>
+
+              <Link
+                href="/signin"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#4D45E1] py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98]"
+              >
+                <User className="h-4 w-4" />
+                Sign in
+              </Link>
+            </div>
           </Surface>
         </div>
       </div>

@@ -7,8 +7,9 @@ import {
 } from "react";
 import { ApiError } from "@/api/client";
 import { loadDatabrowserSnapshot } from "@/api/databrowser";
-import { DatabrowserContext } from "@/app/providers/databrowser-context";
+
 import type { DatabrowserContextValue } from "@/types/databrowser";
+import { DatabrowserContext } from "./databrowser-context";
 
 const LEGACY_CREDENTIALS_STORAGE_KEY = "pathocore-web.api-credentials";
 
