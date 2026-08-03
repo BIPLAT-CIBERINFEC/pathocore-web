@@ -54,7 +54,6 @@ export function MepramBrowserLayout({
   const router = useRouter();
   const [query, setQuery] = useState("");
 
-  // 1. Estado para prevenir el error de hidratación en el Navbar
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -69,7 +68,6 @@ export function MepramBrowserLayout({
     );
   }, [query]);
 
-  // 2. Extraemos también el método logout (si existe en tu hook)
   const { login, logout, accessToken } = useAuth();
 
   return (
@@ -168,19 +166,14 @@ export function MepramBrowserLayout({
               })}
             </nav>
 
-            {/* ========================================== */}
-            {/* ZONA DE AUTENTICACIÓN DINÁMICA             */}
-            {/* ========================================== */}
             <div className="ml-auto">
               {!isMounted ? (
-                // Skeleton loading sutil mientras decide si está logueado o no
                 <div className="h-9 w-32 animate-pulse rounded-full bg-slate-100" />
               ) : accessToken ? (
-                // ESTADO: USUARIO LOGUEADO
                 <div className="group relative">
                   <button className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4f46e5] text-xs font-bold text-white">
-                      U {/* Aquí podrías poner la inicial del usuario */}
+
                     </div>
                     My Account
                   </button>
@@ -199,7 +192,6 @@ export function MepramBrowserLayout({
                   </div>
                 </div>
               ) : (
-                // ESTADO: USUARIO DESLOGUEADO
                 <div className="group relative">
                   <button className="rounded-full px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100">
                     Log in Intranet
@@ -223,7 +215,7 @@ export function MepramBrowserLayout({
                 </div>
               )}
             </div>
-            {/* ========================================== */}
+
           </div>
 
           {(router.pathname.startsWith("/data-tools") ||

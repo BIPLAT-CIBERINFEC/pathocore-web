@@ -38,9 +38,9 @@ export function MepramAdminRequests() {
   );
   const [activeTab, setActiveTab] = useState<RequestStatus>("pending");
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
-  // 1. Cargar solicitudes según el estado seleccionado (pending por defecto)
   const fetchRequests = async () => {
     if (!accessToken) return;
     setLoading(true);
@@ -71,7 +71,6 @@ export function MepramAdminRequests() {
     void fetchRequests();
   }, [accessToken, activeTab]);
 
-  // 2. Ejecutar acciones de backend (approve, reject, revoke)
   const handleAction = async (
     id: number | string,
     action: "approve" | "reject" | "revoke"
@@ -79,7 +78,6 @@ export function MepramAdminRequests() {
     if (!accessToken) return;
     setProcessingId(id);
 
-    // Nota por defecto según la acción realizada desde la intranet
     const reviewNoteMap = {
       approve: "Approved from MEPRAM intranet.",
       reject: "Rejected from MEPRAM intranet.",
@@ -106,7 +104,6 @@ export function MepramAdminRequests() {
         );
       }
 
-      // Remover la solicitud procesada del listado actual
       setRequests((prev) => prev.filter((req) => req.id !== id));
     } catch (err: any) {
       alert(err.message);
@@ -131,7 +128,6 @@ export function MepramAdminRequests() {
           }
         />
 
-        {/* Pestanas de filtrado por estado */}
         <div className="flex border-b border-slate-200 gap-2">
           {(
             ["pending", "approved", "rejected", "revoked"] as RequestStatus[]
@@ -150,7 +146,6 @@ export function MepramAdminRequests() {
           ))}
         </div>
 
-        {/* Feedback de Carga */}
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center min-h-[300px] space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
@@ -159,7 +154,6 @@ export function MepramAdminRequests() {
             </p>
           </div>
         ) : error ? (
-          /* Feedback de Error */
           <div className="p-8 border border-red-100 bg-red-50/50 rounded-[24px] flex flex-col items-center justify-center min-h-[250px] text-center">
             <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
             <h3 className="text-base font-bold text-slate-800">
@@ -175,7 +169,6 @@ export function MepramAdminRequests() {
             </Button>
           </div>
         ) : (
-          /* Tabla de Solicitudes */
           <div className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -231,7 +224,7 @@ export function MepramAdminRequests() {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {/* Acciones para Pendientes */}
+
                             {activeTab === "pending" && (
                               <>
                                 <Button
@@ -266,7 +259,6 @@ export function MepramAdminRequests() {
                               </>
                             )}
 
-                            {/* Acciones para Aprobadas */}
                             {activeTab === "approved" && (
                               <Button
                                 size="sm"
@@ -284,7 +276,6 @@ export function MepramAdminRequests() {
                               </Button>
                             )}
 
-                            {/* Sin acciones si ya están rechazadas o revocadas */}
                             {(activeTab === "rejected" ||
                               activeTab === "revoked") && (
                               <span className="text-xs text-slate-400 italic">
