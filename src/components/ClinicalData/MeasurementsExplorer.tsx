@@ -28,8 +28,7 @@ interface MeasurementsExplorerProps {
 
 type MeasurementTableType = "numeric" | "categorical";
 
-const MEPRAM_API_BASE_URL =
-  process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
+const MEPRAM_API_BASE_URL = process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
 
 const measurementEndpointByType: Record<MeasurementTableType, string> = {
   numeric: "/measurements/numeric",

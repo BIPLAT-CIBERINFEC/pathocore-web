@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 
 export function useMepram(accessToken?: string | null) {
-  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   const [snapshot, setSnapshot] = useState<any>(null);
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
   const refresh = useCallback(async () => {
- 
+
     if (!accessToken) {
       setStatus("loading");
       return;
@@ -28,7 +29,7 @@ export function useMepram(accessToken?: string | null) {
     }
   );
 
-      if (!response.ok) {       
+      if (!response.ok) {
         if (response.status === 401) {
           throw new Error("Unauthorized (401)");
         }
@@ -50,7 +51,7 @@ export function useMepram(accessToken?: string | null) {
     }
   }, [accessToken]);
 
-  
+
   useEffect(() => {
     void refresh();
   }, [accessToken, refresh]);

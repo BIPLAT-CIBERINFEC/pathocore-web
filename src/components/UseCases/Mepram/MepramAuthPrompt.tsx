@@ -113,11 +113,7 @@ export function MepramAuthPrompt() {
 
     try {
       const payload = {
-        username: formData.username,
-        email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        message: formData.message,
+        ...formData,
         requests: selectedKeys.map((useCaseName) => ({
           requested_use_case: useCaseName,
           requested_role: selectedAccesses[useCaseName],

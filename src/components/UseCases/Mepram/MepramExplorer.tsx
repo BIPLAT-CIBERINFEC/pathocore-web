@@ -371,8 +371,7 @@ export function MepramExplorer() {
   const [expandedSampleId, setExpandedSampleId] = useState<string | null>(null);
   const [activePage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   const fetchData = async () => {
     if (!accessToken) return;
     setLoading(true);

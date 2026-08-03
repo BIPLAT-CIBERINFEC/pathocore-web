@@ -254,6 +254,8 @@ export default function MetadataExplorer() {
 
         let schemaJson = null;
         try {
+          const apiBase =
+            process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
           const schemaRes = await fetch(
             `${baseUrl}/databrowser/schema-summary`
           );

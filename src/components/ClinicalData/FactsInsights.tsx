@@ -12,24 +12,21 @@ const TABS = [
 interface FactsInsightsProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
-  accessToken: string;
+  accessToken?: string;
 }
 
 export default function FactsInsights({
   activeSection,
   setActiveSection,
-  accessToken,
 }: FactsInsightsProps) {
   const [facts, setFacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!accessToken) return;
     const controller = new AbortController();
 
     fetch("/api/omop/v1/facts/concepts?stratification=age_sex&limit=20", {
       signal: controller.signal,
-      headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then((res) => {
         if (!res.ok) throw new Error("Network response was not ok");
@@ -49,7 +46,7 @@ export default function FactsInsights({
       });
 
     return () => controller.abort();
-  }, [accessToken]);
+  }, []);
 
   if (loading) {
     return (

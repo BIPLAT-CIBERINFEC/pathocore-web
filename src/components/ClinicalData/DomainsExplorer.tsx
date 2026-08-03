@@ -12,13 +12,12 @@ const TABS = [
 interface DomainsExplorerProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
-  accessToken: string;
+  accessToken?: string;
 }
 
 export default function DomainsExplorer({
   activeSection,
   setActiveSection,
-  accessToken,
 }: DomainsExplorerProps) {
   const [domains, setDomains] = useState<any[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>("Condition");
@@ -33,13 +32,11 @@ export default function DomainsExplorer({
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    if (!accessToken) return;
     const controller = new AbortController();
 
     fetch("/api/omop/v1/domains", {
       signal: controller.signal,
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     })
@@ -61,16 +58,15 @@ export default function DomainsExplorer({
       });
 
     return () => controller.abort();
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
-    if (!selectedDomain || !accessToken) return;
+    if (!selectedDomain) return;
     const controller = new AbortController();
 
     fetch(`/api/omop/v1/domains/${selectedDomain}/concepts`, {
       signal: controller.signal,
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     })
@@ -89,17 +85,16 @@ export default function DomainsExplorer({
       });
 
     return () => controller.abort();
-  }, [selectedDomain, accessToken]);
+  }, [selectedDomain]);
 
   useEffect(() => {
-    if (!selectedConceptId || !accessToken) return;
+    if (!selectedConceptId) return;
     const controller = new AbortController();
     setDetailLoading(true);
 
     fetch(`/api/omop/v1/concepts/${selectedConceptId}/detail`, {
       signal: controller.signal,
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     })
@@ -121,7 +116,7 @@ export default function DomainsExplorer({
       });
 
     return () => controller.abort();
-  }, [selectedConceptId, accessToken]);
+  }, [selectedConceptId]);
 
   const filteredConcepts =
     concepts?.data?.filter((c: any) =>

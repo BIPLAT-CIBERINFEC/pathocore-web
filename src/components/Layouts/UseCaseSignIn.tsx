@@ -41,7 +41,8 @@ export default function SignInPage() {
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
   useEffect(() => {
     const fetchCatalog = async () => {
