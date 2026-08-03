@@ -17,7 +17,7 @@ RUN npm ci --no-audit --no-fund --prefer-offline --fetch-retries=3 --fetch-timeo
 
 FROM deps AS build
 
-ARG NEXT_PUBLIC_API_BASE_URL=/api/v1
+ARG NEXT_PUBLIC_API_BASE_URL=/api/pathocore/v1
 ARG NEXT_PUBLIC_MEPRAM_API_BASE_URL=/api/omop/v1
 ARG NEXT_PUBLIC_KEYCLOAK_URL=
 ARG NEXT_PUBLIC_KEYCLOAK_REALM=ciberisciii_datahub

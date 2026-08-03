@@ -98,14 +98,14 @@ The browser uses relative API routes exposed by Next.js. These are frontend
 proxy routes, not the final backend prefixes:
 
 ```text
-/api/v1/...       -> PathoCore API /v1/...
+/api/pathocore/v1/...       -> PathoCore API /v1/...
 /api/omop/v1/...  -> MePRAM OMOP API /v1/...
 ```
 
 Relevant variables:
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=/api/v1
+NEXT_PUBLIC_API_BASE_URL=/api/pathocore/v1
 NEXT_PUBLIC_MEPRAM_API_BASE_URL=/api/omop/v1
 PATHOCORE_API_PROXY_TARGET=http://pathocore_api:8000
 MEPRAM_OMOP_API_PROXY_TARGET=http://mepram_omop_api:8000
