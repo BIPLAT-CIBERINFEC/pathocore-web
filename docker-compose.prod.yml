@@ -231,7 +231,7 @@ services:
       context: .
       target: prod
       args:
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api/v1}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api/pathocore/v1}
         NEXT_PUBLIC_MEPRAM_API_BASE_URL: ${NEXT_PUBLIC_MEPRAM_API_BASE_URL:-/api/omop/v1}
         NEXT_PUBLIC_KEYCLOAK_URL: ${NEXT_PUBLIC_KEYCLOAK_URL:?NEXT_PUBLIC_KEYCLOAK_URL is required}
         NEXT_PUBLIC_KEYCLOAK_REALM: ${NEXT_PUBLIC_KEYCLOAK_REALM:-ciberisciii_datahub}
