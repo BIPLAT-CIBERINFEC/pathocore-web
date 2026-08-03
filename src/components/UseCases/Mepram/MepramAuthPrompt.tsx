@@ -19,6 +19,21 @@ interface BaseFormData {
   requested_lab: string;
 }
 
+function formatApiError(errorData: any, status: number) {
+  if (typeof errorData?.error === "string") return errorData.error;
+  if (typeof errorData?.detail === "string") return errorData.detail;
+  if (errorData && typeof errorData === "object") {
+    const fieldErrors = Object.entries(errorData)
+      .map(([field, value]) => {
+        const message = Array.isArray(value) ? value.join(", ") : String(value);
+        return `${field}: ${message}`;
+      })
+      .join("; ");
+    if (fieldErrors) return fieldErrors;
+  }
+  return `HTTP error! status: ${status}`;
+}
+
 export function MepramAuthPrompt() {
   const [formData, setFormData] = useState<BaseFormData>({
     username: "",
@@ -130,9 +145,7 @@ export function MepramAuthPrompt() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
+        throw new Error(formatApiError(errorData, response.status));
       }
 
       setSubmitStatus("success");
