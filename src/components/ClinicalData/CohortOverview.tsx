@@ -23,15 +23,11 @@ import { ResponsivePie } from "@nivo/pie";
 interface CohortOverviewProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
-  accessToken: string;
-  onUnauthorized: () => void;
 }
 
 export default function CohortOverview({
   activeSection,
   setActiveSection,
-  accessToken,
-  onUnauthorized,
 }: CohortOverviewProps) {
   const [cohortData, setCohortData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,53 +35,38 @@ export default function CohortOverview({
 
   const colors = ["#4f46e5", "#8b5cf6", "#ec4899", "#6366f1"];
 
- const fetchCohortSummary = useCallback(() => {
-   if (!accessToken) return;
+  const fetchCohortSummary = useCallback(() => {
+    setLoading(true);
+    setErrorMsg(null);
 
-   setLoading(true);
-   setErrorMsg(null);
-
-   const apiBase =
-     process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
-
-   fetch(`${apiBase}/cohort/summary`, {
-     headers: {
-       Authorization: `Bearer ${accessToken}`,
-       "Content-Type": "application/json",
-     },
-   })
-     .then((res) => {
-       if (res.status === 401 || res.status === 403) {
-         onUnauthorized();
-         throw new Error("Unauthorized session scope expired.");
-       }
-       if (!res.ok)
-         throw new Error(`Server returned status code ${res.status}`);
-       return res.json();
-     })
-     .then((data) => {
-       setCohortData(data);
-       setLoading(false);
-     })
-     .catch((err) => {
-       if (err.message !== "Unauthorized session scope expired.") {
-         console.error("Error fetching cohort summary:", err);
-         setErrorMsg(
-           "Could not sync with the OMOP data node. Please try again."
-         );
-       }
-       setLoading(false);
-     });
- }, [accessToken, onUnauthorized]);
+    const apiBase =
+      process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
+    fetch(`${apiBase}/cohort/summary`)
+      .then((res) => {
+        if (!res.ok)
+          throw new Error(`Server returned status code ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setCohortData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching cohort summary:", err);
+        setErrorMsg(
+          "Could not sync with the OMOP data node. Please try again."
+        );
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     fetchCohortSummary();
   }, [fetchCohortSummary]);
 
-
   if (loading) {
     return (
-      <div className="space-y-8 w-full">       
+      <div className="space-y-8 w-full">
         <div className="grid gap-6 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Surface
@@ -100,7 +81,7 @@ export default function CohortOverview({
             </Surface>
           ))}
         </div>
-      
+
         <div className="grid gap-6 lg:grid-cols-2">
           {[1, 2].map((i) => (
             <Surface
@@ -115,7 +96,6 @@ export default function CohortOverview({
       </div>
     );
   }
-
 
   if (errorMsg || !cohortData) {
     return (

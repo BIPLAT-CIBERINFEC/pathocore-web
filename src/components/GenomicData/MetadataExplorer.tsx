@@ -243,7 +243,7 @@ export default function MetadataExplorer() {
   const [registeredMaps, setRegisteredMaps] = useState<Record<string, boolean>>(
     {}
   );
- const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
   useEffect(() => {
     async function initializeDashboard() {
       try {
@@ -738,7 +738,7 @@ function PropertyAccordionItem({
     setError(null);
 
     const apiBase =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+      process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
     fetch(
       `${apiBase}/databrowser/metadata/property-distribution?property=${encodeURIComponent(

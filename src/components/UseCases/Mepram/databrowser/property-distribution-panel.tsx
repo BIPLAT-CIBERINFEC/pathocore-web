@@ -10,7 +10,6 @@ import {
 } from "recharts";
 import { AlertCircle, LoaderCircle, MapPinned } from "lucide-react";
 import { ApiError, PathocoreApiClient } from "@/api/client";
-import { BarChartPanel } from "@/components/databrowser/chart-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +21,7 @@ import type {
   DatabrowserPropertyDistributionResponse,
   DatabrowserSummaryQuery,
 } from "@/types/api";
+import { BarChartPanel } from "./chart-card";
 
 const chartPalette = [
   "#0f766e",

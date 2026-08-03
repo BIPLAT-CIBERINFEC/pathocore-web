@@ -47,55 +47,55 @@ export function MepramDataPage() {
   const { login, accessToken } = useAuth();
   const { error, refresh, snapshot, status } = useMepram(accessToken);
 
-  const isUnauthorized =
-    error?.includes("401") ||
-    error?.toLowerCase().includes("unauthorized") ||
-    !accessToken;
+  // const isUnauthorized =
+  //   error?.includes("401") ||
+  //   error?.toLowerCase().includes("unauthorized") ||
+  //   !accessToken;
 
-  if (isUnauthorized) {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-700">
-        <MepramPageHeader
-          currentSection="Use case data"
-          sectionDescription="Quick read of the use case status with basic metrics, aggregated results, and dashboards of interest for monitoring."
-        />
+  // if (isUnauthorized) {
+  //   return (
+  //     <div className="space-y-6 animate-in fade-in duration-700">
+  //       <MepramPageHeader
+  //         currentSection="Use case data"
+  //         sectionDescription="Quick read of the use case status with basic metrics, aggregated results, and dashboards of interest for monitoring."
+  //       />
 
-        <div className="flex min-h-[45vh] items-center justify-center px-4 py-8">
-          <Surface className="w-full max-w-md border border-slate-100 p-8 text-center rounded-[24px] shadow-xl bg-white/80 backdrop-blur-sm">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 border border-amber-200">
-              <Lock className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-              Required Authentication
-            </h2>
-            <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-              The use case data section requires an active session to securely
-              query backend endpoints.
-            </p>
-            <p className="my-6 text-sm text-slate-600 leading-relaxed">
-              Click the button below to be redirected to the home panel Keycloak
-              secure session and synchronize the Data Browser.
-            </p>
-            <Button
-              onClick={() => {
-                if (typeof login === "function") {
-                  void login();
-                } else {
-                  console.error(
-                    "The 'login' method is not available in the useAuth hook."
-                  );
-                }
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#4D45E1] py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98]"
-            >
-              <LogIn className="h-4 w-4" />
-              Login with Keycloak
-            </Button>
-          </Surface>
-        </div>
-      </div>
-    );
-  }
+  //       <div className="flex min-h-[45vh] items-center justify-center px-4 py-8">
+  //         <Surface className="w-full max-w-md border border-slate-100 p-8 text-center rounded-[24px] shadow-xl bg-white/80 backdrop-blur-sm">
+  //           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+  //             <Lock className="h-5 w-5" />
+  //           </div>
+  //           <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+  //             Required Authentication
+  //           </h2>
+  //           <p className="mt-2 text-sm text-slate-500 leading-relaxed">
+  //             The use case data section requires an active session to securely
+  //             query backend endpoints.
+  //           </p>
+  //           <p className="my-6 text-sm text-slate-600 leading-relaxed">
+  //             Click the button below to be redirected to the home panel Keycloak
+  //             secure session and synchronize the Data Browser.
+  //           </p>
+  //           <Button
+  //             onClick={() => {
+  //               if (typeof login === "function") {
+  //                 void login();
+  //               } else {
+  //                 console.error(
+  //                   "The 'login' method is not available in the useAuth hook."
+  //                 );
+  //               }
+  //             }}
+  //             className="flex w-full items-center justify-center gap-2 rounded-full bg-[#4D45E1] py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98]"
+  //           >
+  //             <LogIn className="h-4 w-4" />
+  //             Login with Keycloak
+  //           </Button>
+  //         </Surface>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (!snapshot) {
     return (

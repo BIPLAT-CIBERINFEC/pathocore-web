@@ -12,22 +12,21 @@ export function useClinicalData(
 
   const fetchData = useCallback(
     async (path: string) => {
-      if (!accessToken) {
-        setStatus("loading");
-        return;
-      }
-
       setStatus("loading");
       setError(null);
       const baseUrl =
         process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
       try {   
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (accessToken) {
+          headers.Authorization = `Bearer ${accessToken}`;
+        }
+
         const response = await fetch(`${baseUrl}/${path}`, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
+          headers,
         });
 
         if (!response.ok) {

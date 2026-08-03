@@ -1,29 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-  Activity,
   ClipboardList,
-  Cpu,
   FlaskConical,
   HeartPulse,
   LayoutGrid,
-  Lock,
-  LogIn,
   Pill,
   Stethoscope,
   Users,
   ChevronLeft,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Surface } from "@/components/mepram/MepramPrimitives";
 
-import { useAuth } from "hooks/use-auth";
 import CohortOverview from "./CohortOverview";
 import DomainDetailView from "./DomainDetailView";
 import MeasurementsExplorer from "./MeasurementsExplorer";
-
 
 const CLINICAL_SECTIONS = [
   {
@@ -64,7 +57,6 @@ const CLINICAL_SECTIONS = [
     description:
       "Medication exposures, prescriptions, and active ingredient distributions.",
   },
-
   {
     id: "Observation",
     label: "Observation",
@@ -77,46 +69,6 @@ const CLINICAL_SECTIONS = [
 
 export default function ClinicalDataIndex() {
   const [activeSection, setActiveSection] = useState("home");
-  const [forceUnauthorized, setForceUnauthorized] = useState(false);
-  const { login, accessToken } = useAuth();
-
-  useEffect(() => {
-    if (accessToken) {
-      setForceUnauthorized(false);
-    }
-  }, [accessToken]);
-
-  const handleUnauthorized = () => {
-    setForceUnauthorized(true);
-  };
-
-  const isUnauthorized = !accessToken || forceUnauthorized;
-
-  if (isUnauthorized) {
-    return (
-      <div className="flex min-h-[45vh] items-center justify-center px-4 py-8 animate-in fade-in duration-700">
-        <Surface className="w-full max-w-md border border-slate-100 p-8 text-center rounded-[22px] bg-white shadow-xl relative z-10">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50/60 text-[#4f46e5]">
-            <Lock className="h-5 w-5" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900">
-            Protected Data Stream
-          </h3>
-          <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-            Access to aggregated OMOP clinical summaries requires an active
-            session profile. Please authenticate via the institutional portal.
-          </p>
-          <Button
-            onClick={() => login()}
-            className="mt-6 w-full gap-2 bg-[#2d2a7d] hover:bg-[#201e5c] text-white font-semibold py-2 px-4 rounded-xl shadow-md transition-all duration-200"
-          >
-            <LogIn className="h-4 w-4" />
-            Sign in with Keycloak
-          </Button>
-        </Surface>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -210,22 +162,14 @@ export default function ClinicalDataIndex() {
               <CohortOverview
                 activeSection={activeSection}
                 setActiveSection={setActiveSection}
-                accessToken={accessToken || ""}
-                onUnauthorized={handleUnauthorized}
               />
             ) : activeSection === "Measurement" ? (
               <MeasurementsExplorer
                 activeSection={activeSection}
                 setActiveSection={setActiveSection}
-                accessToken={accessToken || ""}
-                onUnauthorized={handleUnauthorized}
               />
             ) : (
-              <DomainDetailView
-                domainId={activeSection}
-                accessToken={accessToken || ""}
-                onUnauthorized={handleUnauthorized}
-              />
+              <DomainDetailView domainId={activeSection} />
             )}
           </div>
         </div>

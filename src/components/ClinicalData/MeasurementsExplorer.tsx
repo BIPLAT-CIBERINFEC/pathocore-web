@@ -24,8 +24,6 @@ import {
 interface MeasurementsExplorerProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
-  accessToken: string;
-  onUnauthorized?: () => void;
 }
 
 type MeasurementTableType = "numeric" | "categorical";
@@ -80,8 +78,6 @@ function normalizeDistributionRows(
 export default function MeasurementsExplorer({
   activeSection,
   setActiveSection,
-  accessToken,
-  onUnauthorized,
 }: MeasurementsExplorerProps) {
   const [numericData, setNumericData] = useState<any[]>([]);
   const [categoricalData, setCategoricalData] = useState<any[]>([]);
@@ -95,11 +91,9 @@ export default function MeasurementsExplorer({
   );
 
   const loadMeasurements = useCallback(() => {
-    if (!accessToken) return;
     const controller = new AbortController();
 
     const headers = {
-      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     };
@@ -121,10 +115,6 @@ export default function MeasurementsExplorer({
             signal: controller.signal,
           }
         ).then((res) => {
-          if (res.status === 401 || res.status === 403) {
-            if (onUnauthorized) onUnauthorized();
-            throw new Error("Unauthorized");
-          }
           if (!res.ok) throw new Error(`Numeric fetch failed: ${res.status}`);
           return res.json();
         }),
@@ -138,10 +128,6 @@ export default function MeasurementsExplorer({
             signal: controller.signal,
           }
         ).then((res) => {
-          if (res.status === 401 || res.status === 403) {
-            if (onUnauthorized) onUnauthorized();
-            throw new Error("Unauthorized");
-          }
           if (!res.ok)
             throw new Error(`Categorical fetch failed: ${res.status}`);
           return res.json();
@@ -162,7 +148,7 @@ export default function MeasurementsExplorer({
     });
 
     return () => controller.abort();
-  }, [accessToken, onUnauthorized]);
+  }, []);
 
   useEffect(() => {
     return loadMeasurements();
@@ -186,7 +172,6 @@ export default function MeasurementsExplorer({
 
     try {
       const headers = {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       };
@@ -211,17 +196,8 @@ export default function MeasurementsExplorer({
         ),
       ]);
 
-      if (
-        [detailRes, ageRes, sexRes].some(
-          (res) => res.status === 401 || res.status === 403
-        )
-      ) {
-        if (onUnauthorized) onUnauthorized();
-        return;
-      }
-
       if (!detailRes.ok || !ageRes.ok || !sexRes.ok) {
-        throw new Error("Could not retrieve concept details");
+        throw new Error("No se pudo obtener el detalle del concepto");
       }
 
       const [detailData, ageData, sexData] = await Promise.all([

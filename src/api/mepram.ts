@@ -21,9 +21,8 @@ import type {
 
 const PROJECT_NAME = "mepram";
 const MEPRAM_DATA_MODE =
-  process.env.VITE_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
-  process.env.VITE_MEPRAM_DATA_MODE?.trim().toLowerCase() ||
-  "simulated";
+  process.env.NEXT_PUBLIC_USE_CASE_DATA_MODE?.trim().toLowerCase() ||
+  "live";
 const SIMULATED_ANNUAL_PATHOGEN_SERIES: MepramMultiSeriesChart = {
   data: [
     {
@@ -469,9 +468,9 @@ function overviewFromUseCaseSummary(
       regionCount: summary.metrics.participating_regions,
     }),
     notes: [
-      "Aggregated data from the cached PathoCore API use-case endpoint.",
+      "Datos agregados desde el endpoint cacheado de casos de uso de PathoCore API.",
       ...missingOperationalFields(summary).map(
-        (field) => `Operational field pending or with low coverage: ${field}.`,
+        (field) => `Campo operativo pendiente o con baja cobertura: ${field}.`,
       ),
     ],
     participatingCenters: summary.metrics.participating_centers,
@@ -794,7 +793,7 @@ function buildSimulatedMepramSnapshot(): MepramSnapshot {
       territorialCoverageSimulated: true,
       totalSamples: rows.length,
     },
-    projectLabel: "Pending use-case",
+    projectLabel: "Caso de uso pendiente",
   };
 }
 

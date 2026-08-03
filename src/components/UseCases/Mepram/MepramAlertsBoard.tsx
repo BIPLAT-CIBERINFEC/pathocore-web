@@ -63,33 +63,33 @@ const SCOPE_META: Record<
 export function MepramAlertsBoard() {
   const { login, accessToken } = useAuth();
 
-  if (!accessToken) {
-    return (
-      <Surface className="flex flex-col items-center py-16 p-6">
-        <ShieldCheck className="h-16 w-16 text-slate-300 mb-6" />
+  // if (!accessToken) {
+  //   return (
+  //     <Surface className="flex flex-col items-center py-16 p-6">
+  //       <ShieldCheck className="h-16 w-16 text-slate-300 mb-6" />
 
-        <SectionHeading
-          title="Acceso restringido"
-          description="La información de vigilancia genómica y alertas epidemiológicas es confidencial y requiere autorización."
-        />
+  //       <SectionHeading
+  //         title="Acceso restringido"
+  //         description="La información de vigilancia genómica y alertas epidemiológicas es confidencial y requiere autorización."
+  //       />
 
-        <button
-          onClick={() => {
-            if (typeof login === "function") {
-              void login();
-            } else {
-              console.error(
-                "The 'login' method is not available in the useAuth hook."
-              );
-            }
-          }}
-          className="mt-8 rounded-xl bg-slate-900 px-8 py-3.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors shadow-sm"
-        >
-          Iniciar sesión con Keycloak
-        </button>
-      </Surface>
-    );
-  }
+  //       <button
+  //         onClick={() => {
+  //           if (typeof login === "function") {
+  //             void login();
+  //           } else {
+  //             console.error(
+  //               "The 'login' method is not available in the useAuth hook."
+  //             );
+  //           }
+  //         }}
+  //         className="mt-8 rounded-xl bg-slate-900 px-8 py-3.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors shadow-sm"
+  //       >
+  //         Iniciar sesión con Keycloak
+  //       </button>
+  //     </Surface>
+  //   );
+  // }
 
   return (
     <div className="space-y-6">

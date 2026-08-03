@@ -24,15 +24,9 @@ import {
 
 interface DomainDetailViewProps {
   domainId: string;
-  accessToken: string;
-  onUnauthorized: () => void;
 }
 
-export default function DomainDetailView({
-  domainId,
-  accessToken,
-  onUnauthorized,
-}: DomainDetailViewProps) {
+export default function DomainDetailView({ domainId }: DomainDetailViewProps) {
   const [concepts, setConcepts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,48 +38,39 @@ export default function DomainDetailView({
     {}
   );
 
-const loadDomainConcepts = useCallback(() => {
-  if (!accessToken) return;
+  const loadDomainConcepts = useCallback(() => {
+    setLoading(true);
+    setErrorMsg(null);
 
-  setLoading(true);
-  setErrorMsg(null);
+    const apiBase =
+      process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
+    const url = `${apiBase}/domains/${domainId}/concepts`;
 
-  const apiBase =
-    process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
-  const url = `${apiBase}/domains/${domainId}/concepts`;
-
-  fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-  })
-    .then((res) => {
-      if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
-        throw new Error("Unauthorized session scope expired.");
-      }
-      if (!res.ok)
-        throw new Error(`Server returned status code: ${res.status}`);
-      return res.json();
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     })
-    .then((data) => {
-      const dataArray = Array.isArray(data) ? data : data?.data || [];
-      setConcepts(dataArray);
-      setLoading(false);
-    })
-    .catch((err) => {
-      if (err.message !== "Unauthorized session scope expired.") {
+      .then((res) => {
+        if (!res.ok)
+          throw new Error(`Server returned status code: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const dataArray = Array.isArray(data) ? data : data?.data || [];
+        setConcepts(dataArray);
+        setLoading(false);
+      })
+      .catch((err) => {
         console.error(`Error requesting concepts for ${domainId}:`, err);
         setErrorMsg(
           err.message ||
             "Failed to establish synchronization with the primary repository node."
         );
-      }
-      setLoading(false);
-    });
-}, [domainId, accessToken, onUnauthorized]);
+        setLoading(false);
+      });
+  }, [domainId]);
 
   useEffect(() => {
     loadDomainConcepts();
@@ -121,32 +106,27 @@ const loadDomainConcepts = useCallback(() => {
 
     setLoadingDetails((prev) => ({ ...prev, [id]: true }));
 
-try {
-  const apiBase =
-    process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
+    try {
+      const apiBase =
+        process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
 
-  const res = await fetch(`${apiBase}/concepts/${id}/detail`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
+      const res = await fetch(`${apiBase}/concepts/${id}/detail`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-  if (res.status === 401 || res.status === 403) {
-    onUnauthorized();
-    throw new Error("Unauthorized session scope expired.");
-  }
+      if (!res.ok)
+        throw new Error("No se pudo obtener el detalle del concepto");
 
-  if (!res.ok) throw new Error("Could not retrieve concept details");
-
-  const detailData = await res.json();
-  setConceptDetails((prev) => ({ ...prev, [id]: detailData }));
-} catch (err) {
-  console.error(`Error fetching detail for concept ${id}:`, err);
-} finally {
-  setLoadingDetails((prev) => ({ ...prev, [id]: false }));
-}
+      const detailData = await res.json();
+      setConceptDetails((prev) => ({ ...prev, [id]: detailData }));
+    } catch (err) {
+      console.error(`Error fetching detail for concept ${id}:`, err);
+    } finally {
+      setLoadingDetails((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   if (loading) {

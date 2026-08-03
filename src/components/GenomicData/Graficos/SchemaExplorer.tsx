@@ -16,7 +16,9 @@ export default function SchemaExplorer() {
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetch("/api/v1/databrowser/schema-summary")
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+
+    fetch(`${baseUrl}/databrowser/schema-summary`)
       .then((res) => res.json())
       .then((json) => {
         const data = json.schema_cards || [];
