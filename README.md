@@ -117,6 +117,28 @@ NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=pathocore-web
 Keep real production values in deployment-managed environment files, not in the
 repository.
 
+## Host Apache Reverse Proxy
+
+Host Apache templates are available in `conf/`:
+
+```text
+conf/pathocore_apache_logs.conf
+conf/pathocore_apache_reverse_proxy.conf
+conf/pathocore_apache_server-status.conf
+```
+
+Expected public DNS mapping:
+
+```text
+mepram-des-datahub.<domain>           -> 127.0.0.1:3000
+mepram-des-api-pathocore.<domain>     -> 127.0.0.1:8000
+mepram-des-keycloak-pathocore.<domain> -> 127.0.0.1:8080
+mepram-des-api-omop.<domain>          -> 127.0.0.1:8100
+```
+
+Use deployment-managed environment files for the real DNS values. Do not commit
+host-specific rendered Apache files or secrets.
+
 ## Keycloak
 
 Testing and production realm templates live under `keycloak/`.
