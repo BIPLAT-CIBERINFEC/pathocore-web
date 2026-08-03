@@ -87,7 +87,7 @@ export default function DataBrowserDashboard() {
         const href = target.getAttribute("href");
         if (href === "/data-tools/clinical-data") {
           e.preventDefault();
-          e.stopPropagation(); 
+          e.stopPropagation();
           scrollToSection("clinical-section");
         } else if (href === "/data-tools/genomic-data") {
           e.preventDefault();
@@ -141,24 +141,24 @@ export default function DataBrowserDashboard() {
 
   return (
     <div className={`browser-override active-${activeSection}`}>
-     
+
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        /* Ocultar el botón original de Data browser */
+
         a[href="/data-tools/data-browser"] {
           display: none !important;
         }
 
-        /* Forzar color azul activo según la sección visible en el scroll */
+
         .browser-override.active-clinical a[href="/data-tools/clinical-data"],
         .browser-override.active-genomic a[href="/data-tools/genomic-data"] {
           background-color: #4f46e5 !important;
           color: white !important;
           border-color: #4f46e5 !important;
         }
-        
-        /* Ajustar color del texto interior por si el layout usa spans/iconos */
+
+
         .browser-override.active-clinical a[href="/data-tools/clinical-data"] *,
         .browser-override.active-genomic a[href="/data-tools/genomic-data"] * {
            color: white !important;

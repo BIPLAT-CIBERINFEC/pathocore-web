@@ -34,21 +34,19 @@ type RequestStatus = "pending" | "approved" | "rejected" | "revoked";
 export function MepramAdminBoard() {
   const { accessToken } = useAuth();
 
-  // Data states
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // UI states
   const [processingId, setProcessingId] = useState<number | string | null>(
     null
   );
   const [activeTab, setActiveTab] = useState<RequestStatus>("pending");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
-  // 1. Fetch requests
   const fetchRequests = async () => {
     if (!accessToken) return;
 
@@ -80,11 +78,9 @@ export function MepramAdminBoard() {
 
   useEffect(() => {
     void fetchRequests();
-    // Clear search term when changing tabs to prevent confusion
     setSearchTerm("");
   }, [accessToken, activeTab]);
 
-  // 2. Execute actions
   const handleAction = async (
     id: number | string,
     action: "approve" | "reject" | "revoke"
@@ -118,7 +114,6 @@ export function MepramAdminBoard() {
         );
       }
 
-      // Optimistic removal from the current list
       setRequests((prev) => prev.filter((req) => req.id !== id));
     } catch (err: any) {
       alert(err.message);
@@ -127,7 +122,6 @@ export function MepramAdminBoard() {
     }
   };
 
-  // 3. Local filtering by search
   const filteredRequests = requests.filter((req) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
@@ -142,7 +136,7 @@ export function MepramAdminBoard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <Surface className="p-6 space-y-6">
-        {/* Header */}
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -163,9 +157,9 @@ export function MepramAdminBoard() {
           </Badge>
         </div>
 
-        {/* Navigation and Search Controls */}
+
         <div className="flex flex-col md:flex-row justify-between gap-4 border-b border-slate-200 pb-2">
-          {/* Tabs */}
+
           <div className="flex gap-2 overflow-x-auto">
             {(
               ["pending", "approved", "rejected", "revoked"] as RequestStatus[]
@@ -184,7 +178,7 @@ export function MepramAdminBoard() {
             ))}
           </div>
 
-          {/* Search */}
+
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
@@ -197,7 +191,7 @@ export function MepramAdminBoard() {
           </div>
         </div>
 
-        {/* Loading & Error Feedback */}
+
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[300px] space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
@@ -221,7 +215,7 @@ export function MepramAdminBoard() {
             </Button>
           </div>
         ) : (
-          /* Requests Table */
+
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">

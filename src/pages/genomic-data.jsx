@@ -2,7 +2,6 @@ import { useState } from "react";
 import { MepramBrowserLayout } from "@/components/mepram/MepramBrowserLayout";
 import { Surface, SectionHeading } from "@/components/mepram/MepramPrimitives";
 
-// Importaremos los subcomponentes (los crearemos a continuación)
 import OverviewSamples from "@/components/GenomicData/OverviewSamples";
 import SchemaExplorer from "@/components/GenomicData/SchemaExplorer";
 import MetadataExplorer from "@/components/GenomicData/MetadataExplorer";

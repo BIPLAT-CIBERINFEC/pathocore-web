@@ -29,11 +29,9 @@ export function MepramAuthPrompt() {
     requested_lab: "",
   });
 
-  // Estado para las selecciones: { "mepram": "view", "relecov": "admin" }
   const [selectedAccesses, setSelectedAccesses] = useState<
     Record<string, string>
   >({});
-  // Estado para el select principal
   const [currentSelection, setCurrentSelection] = useState<string>("");
 
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
@@ -44,7 +42,8 @@ export function MepramAuthPrompt() {
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -70,7 +69,6 @@ export function MepramAuthPrompt() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Función para agregar el caso de uso seleccionado desde el <select>
   const handleAddUseCase = () => {
     if (!currentSelection) return;
 
@@ -78,20 +76,20 @@ export function MepramAuthPrompt() {
     if (selectedItem && !selectedAccesses[currentSelection]) {
       setSelectedAccesses((prev) => ({
         ...prev,
-        [currentSelection]: selectedItem.roles[0] || "view", // Asigna el primer rol por defecto
+        [currentSelection]: selectedItem.roles[0] || "view",
       }));
     }
-    setCurrentSelection(""); // Resetea el select
+    setCurrentSelection("");
   };
 
-  // Función para eliminar un caso de uso de la lista
+
   const handleRemoveUseCase = (useCaseName: string) => {
     const newSelections = { ...selectedAccesses };
     delete newSelections[useCaseName];
     setSelectedAccesses(newSelections);
   };
 
-  // Función para cambiar el rol de un caso de uso ya agregado
+
   const handleChangeRole = (useCaseName: string, role: string) => {
     setSelectedAccesses((prev) => ({
       ...prev,
@@ -140,6 +138,7 @@ export function MepramAuthPrompt() {
           errorData.error || `HTTP error! status: ${response.status}`
         );
       }
+
       setSubmitStatus("success");
     } catch (error: any) {
       setSubmitStatus("error");
@@ -151,7 +150,6 @@ export function MepramAuthPrompt() {
     }
   };
 
-  // Opciones disponibles para agregar (excluye las que ya están seleccionadas)
   const availableOptions = catalog.filter((c) => !selectedAccesses[c.name]);
 
   if (submitStatus === "success") {
@@ -190,7 +188,6 @@ export function MepramAuthPrompt() {
       )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        {/* --- Información del Usuario --- */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="space-y-1">
             <label
@@ -262,7 +259,6 @@ export function MepramAuthPrompt() {
           </div>
         </div>
 
-        {/* --- Selector de Casos de Uso --- */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-900">
@@ -273,7 +269,6 @@ export function MepramAuthPrompt() {
             )}
           </div>
 
-          {/* El Selector Principal */}
           <div className="flex gap-2">
             <select
               className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-50"
@@ -304,7 +299,6 @@ export function MepramAuthPrompt() {
             </Button>
           </div>
 
-          {/* Lista de Seleccionados con su Selector de Rol */}
           {Object.keys(selectedAccesses).length > 0 && (
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
               <h4 className="text-xs font-semibold uppercase text-slate-500 mb-2">
@@ -357,7 +351,6 @@ export function MepramAuthPrompt() {
           )}
         </div>
 
-        {/* --- Mensaje --- */}
         <div className="space-y-1">
           <label
             htmlFor="message"

@@ -20,7 +20,6 @@ import { MepramAlertsBoard } from "@/components/UseCases/Mepram/MepramAlertsBoar
 import { MepramAdminBoard } from "@/components/UseCases/Mepram/MepramAdminBoard";
 import Link from "next/link";
 
-// Utilidad para decodificar el JWT de Keycloak de forma segura
 const decodeToken = (token: string) => {
   try {
     const base64Url = token.split(".")[1];
@@ -44,7 +43,6 @@ export default function MepramUseCasePage() {
   const router = useRouter();
   const { accessToken, login } = useAuth();
 
-  // 1. Estado para controlar si ya estamos en el cliente
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -53,7 +51,6 @@ export default function MepramUseCasePage() {
 
   const activeSection = router.query.section || "home";
 
-  // Verificación de rol de administrador
   const tokenPayload = accessToken ? decodeToken(accessToken) : null;
   const isAdmin =
     tokenPayload?.groups?.includes("/use-cases/mepram/admin") ?? false;
@@ -96,8 +93,7 @@ export default function MepramUseCasePage() {
     },
   ];
 
-  // 2. Mientras no esté montado, renderizamos un esqueleto neutral idéntico
-  // tanto en el SSR como en el primer render del cliente para evitar el mismatch.
+
   if (!isMounted) {
     return (
       <MepramBrowserLayout
@@ -169,9 +165,7 @@ export default function MepramUseCasePage() {
       </MepramBrowserLayout>
     );
   }
-  // =========================================================================
 
-  // Si pasa la barrera, renderizamos la app normalmente
   return (
     <MepramBrowserLayout
       title="PathoCore - Mepram Use Case"
@@ -195,7 +189,6 @@ export default function MepramUseCasePage() {
         ].filter(Boolean) as any
       }
     >
-      {/* Botón superior de Admin (violeta institucional) por encima de las cards */}
       {isAdmin && activeSection === "home" && (
         <div className="mb-6 flex justify-end">
           <Button
@@ -213,25 +206,25 @@ export default function MepramUseCasePage() {
           {navigationCards.map((card) => (
             <Surface
               key={card.id}
-              className="flex flex-col h-full hover:border-[#4f46e5]/40 transition-all border-slate-100/50 border-2 rounded-[24px] p-0 overflow-hidden cursor-pointer group"
+              className="group flex h-full cursor-pointer flex-col justify-between rounded-[24px] border border-slate-100 bg-white p-0 shadow-[0_12px_34px_rgba(45,42,125,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-[#4f46e5]/30 hover:shadow-[0_20px_44px_rgba(79,70,229,0.08)]"
             >
               <div
-                className="p-6 flex flex-col h-full w-full text-left select-none"
+                className="flex h-full w-full flex-col p-6 text-left select-none"
                 onClick={() => setActiveSection(card.id)}
               >
-                <div className="flex justify-between items-start mb-6">
-                  <div className="p-3 bg-slate-50 rounded-xl text-xl group-hover:bg-[#4f46e5]/10 transition-colors">
+                <div className="mb-4">
+                  <div className="inline-flex rounded-2xl bg-indigo-50/60 p-3.5 text-[#4f46e5] transition-all duration-300 group-hover:bg-[#4f46e5] group-hover:text-white">
                     {card.icon}
                   </div>
-                  <span className="text-[10px] font-bold py-1 px-3 bg-slate-100 rounded-full text-slate-500 uppercase tracking-wider">
+                  <span className="ml-3 inline-flex items-center gap-1.5 rounded-full bg-[#f1efff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2d2a7d] transition-colors">
                     {card.eyebrow}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-semibold text-slate-900 mb-3 tracking-tight">
+                <h3 className="mt-3 mb-3 font-serif text-xl font-bold tracking-tight text-slate-900 transition-colors group-hover:text-[#4f46e5]">
                   {card.title}
                 </h3>
-                <p className="text-sm text-slate-500 leading-relaxed mb-6 flex-grow">
+                <p className="mb-6 flex-grow text-xs leading-relaxed text-slate-500 line-clamp-2">
                   {card.description}
                 </p>
 
@@ -240,7 +233,7 @@ export default function MepramUseCasePage() {
                     e.stopPropagation();
                     setActiveSection(card.id);
                   }}
-                  className="text-sm font-bold text-slate-900 flex items-center gap-2 group-hover:text-[#4f46e5] transition-colors"
+                  className="mt-6 flex items-center gap-1 border-t border-slate-50 pt-4 text-xs font-bold text-slate-400 transition-all group-hover:text-[#4f46e5]"
                 >
                   Open section{" "}
                   <span className="transition-transform group-hover:translate-x-1">
