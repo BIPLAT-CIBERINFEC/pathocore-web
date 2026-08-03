@@ -33,7 +33,11 @@ function headerValue(value: string | string[] | undefined) {
   return value;
 }
 
-function getForwardHeaders(req: NextApiRequest, hostHeader?: string) {
+function getForwardHeaders(
+  req: NextApiRequest,
+  body: string | undefined,
+  hostHeader?: string
+) {
   const headers: Record<string, string> = {
     Accept: headerValue(req.headers.accept) ?? "application/json",
   };
@@ -45,6 +49,9 @@ function getForwardHeaders(req: NextApiRequest, hostHeader?: string) {
   }
   if (contentType) {
     headers["Content-Type"] = contentType;
+  }
+  if (body !== undefined) {
+    headers["Content-Length"] = Buffer.byteLength(body).toString();
   }
   if (hostHeader) {
     headers.Host = hostHeader;
@@ -115,11 +122,12 @@ export async function proxyApiRequest(
   appendQueryString(targetUrl, req.query);
 
   try {
+    const body = getForwardBody(req);
     const response = await requestUpstream(
       targetUrl,
       req.method,
-      getForwardHeaders(req, options.hostHeader),
-      getForwardBody(req)
+      getForwardHeaders(req, body, options.hostHeader),
+      body
     );
 
     const contentType = response.headers["content-type"];
