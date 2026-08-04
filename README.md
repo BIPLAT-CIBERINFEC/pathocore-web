@@ -123,6 +123,14 @@ NEXTAUTH_URL=http://127.0.0.1:3000
 Keep real production values in deployment-managed environment files, not in the
 repository.
 
+For production, start from the dedicated template instead:
+
+```bash
+cp conf/production.env.example /srv/containers/bind/pathocore-web/production.env
+```
+
+Every `CHANGE_ME` value in that file must be reviewed before deployment.
+
 ## Production Apache Reverse Proxy
 
 Production runs Apache as a Docker Compose service in the same network as the
@@ -155,6 +163,7 @@ PATHOCORE_FORWARDED_PORT=443
 ```
 
 Use deployment-managed environment files for the real DNS values and secrets.
+Do not use `.env.example` for production deployments.
 
 ## Keycloak
 
