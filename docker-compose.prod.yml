@@ -244,6 +244,9 @@ services:
       PATHOCORE_API_PROXY_TARGET: ${PATHOCORE_API_PROXY_TARGET:-http://pathocore_api:8000}
       MEPRAM_OMOP_API_PROXY_TARGET: ${MEPRAM_OMOP_API_PROXY_TARGET:-http://mepram_omop_api:8000}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      AUTH_URL: ${AUTH_URL:?AUTH_URL is required}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-${AUTH_URL}}
     ports:
       - "${PATHOCORE_WEB_BIND_HOST:-127.0.0.1}:${PATHOCORE_WEB_PORT:-3000}:3000"
     healthcheck:

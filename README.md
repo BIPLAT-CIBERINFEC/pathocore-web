@@ -112,6 +112,9 @@ MEPRAM_OMOP_API_PROXY_TARGET=http://mepram_omop_api:8000
 NEXT_PUBLIC_KEYCLOAK_URL=http://127.0.0.1:8080
 NEXT_PUBLIC_KEYCLOAK_REALM=ciberisciii_datahub
 NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=pathocore-web
+AUTH_URL=http://127.0.0.1:3000
+AUTH_TRUST_HOST=true
+NEXTAUTH_URL=http://127.0.0.1:3000
 ```
 
 Keep real production values in deployment-managed environment files, not in the
