@@ -92,6 +92,9 @@ Mailpit:          http://127.0.0.1:8025
 Adminer:          http://127.0.0.1:8085
 ```
 
+The testing stack does not run Apache. It exposes application services directly
+for local development.
+
 ## Frontend API Routes
 
 The browser uses relative API routes exposed by Next.js. These are frontend
@@ -120,27 +123,38 @@ NEXTAUTH_URL=http://127.0.0.1:3000
 Keep real production values in deployment-managed environment files, not in the
 repository.
 
-## Host Apache Reverse Proxy
+## Production Apache Reverse Proxy
 
-Host Apache templates are available in `conf/`:
+Production runs Apache as a Docker Compose service in the same network as the
+application containers. Apache is the only service that should be exposed by the
+production compose file.
+
+The Apache configuration is versioned under `conf/` and mounted into the
+container by `docker-compose.prod.yml`.
+
+Apache routes requests by DNS host name:
 
 ```text
-conf/pathocore_apache_logs.conf
-conf/pathocore_apache_reverse_proxy.conf
-conf/pathocore_apache_server-status.conf
+mepram-datahub.<domain>            -> pathocore_web:3000
+mepram-api-pathocore.<domain>      -> pathocore_api:8000
+mepram-keycloak-pathocore.<domain> -> keycloak:8080
+mepram-api-omop.<domain>           -> mepram_omop_api:8000
 ```
 
-Expected public DNS mapping:
+Relevant production variables:
 
 ```text
-mepram-des-datahub.<domain>           -> 127.0.0.1:3000
-mepram-des-api-pathocore.<domain>     -> 127.0.0.1:8000
-mepram-des-keycloak-pathocore.<domain> -> 127.0.0.1:8080
-mepram-des-api-omop.<domain>          -> 127.0.0.1:8100
+HTTP_BIND_HOST=0.0.0.0
+HTTP_PORT=80
+PATHOCORE_DATAHUB_SERVER_NAME=mepram-datahub.<domain>
+PATHOCORE_API_SERVER_NAME=mepram-api-pathocore.<domain>
+PATHOCORE_KEYCLOAK_SERVER_NAME=mepram-keycloak-pathocore.<domain>
+MEPRAM_OMOP_API_SERVER_NAME=mepram-api-omop.<domain>
+PATHOCORE_FORWARDED_PROTO=https
+PATHOCORE_FORWARDED_PORT=443
 ```
 
-Use deployment-managed environment files for the real DNS values. Do not commit
-host-specific rendered Apache files or secrets.
+Use deployment-managed environment files for the real DNS values and secrets.
 
 ## Keycloak
 
