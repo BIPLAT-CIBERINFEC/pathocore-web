@@ -22,7 +22,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
                 className="h-12 w-auto object-contain"
               />
               <img
-                src="/images/Logo PRTR dos líneas_COLOR.png"
+                src="/images/logo-prtr-dos-lineas-color.png"
                 alt="Plan de Recuperación, Transformación y Resiliencia"
                 className="h-26 w-auto object-contain"
               />

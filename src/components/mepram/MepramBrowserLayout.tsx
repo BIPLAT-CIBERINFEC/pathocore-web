@@ -8,7 +8,7 @@ import {
   searchIndex,
 } from "@/data/mepramDataBrowser";
 import Image from "next/image";
-import img from "../../../public/images/Logo Ciber+Mepram.png";
+import img from "../../../public/images/logo-ciber-mepram.png";
 import { useAuth } from "hooks/use-auth";
 import { Button } from "../ui/button";
 
