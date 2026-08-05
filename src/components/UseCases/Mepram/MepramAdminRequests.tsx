@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AccessDecisionNoteDialog } from "./AccessDecisionNoteDialog";
 
 interface AccessRequest {
   id: number | string;
@@ -27,6 +28,13 @@ interface AccessRequest {
 }
 
 type RequestStatus = "pending" | "approved" | "rejected" | "revoked";
+type ReviewAction = "reject" | "revoke";
+
+interface PendingReviewAction {
+  id: number | string;
+  action: ReviewAction;
+  requestLabel: string;
+}
 
 export function MepramAdminRequests() {
   const { accessToken } = useAuth();
@@ -37,6 +45,9 @@ export function MepramAdminRequests() {
     null
   );
   const [activeTab, setActiveTab] = useState<RequestStatus>("pending");
+  const [pendingReviewAction, setPendingReviewAction] =
+    useState<PendingReviewAction | null>(null);
+  const [reviewNote, setReviewNote] = useState("");
 
   const baseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "/api/pathocore/v1";
@@ -73,16 +84,26 @@ export function MepramAdminRequests() {
 
   const handleAction = async (
     id: number | string,
-    action: "approve" | "reject" | "revoke"
+    action: "approve" | "reject" | "revoke",
+    reviewNoteOverride?: string
   ) => {
     if (!accessToken) return;
-    setProcessingId(id);
 
     const reviewNoteMap = {
       approve: "Approved from MEPRAM intranet.",
       reject: "Rejected from MEPRAM intranet.",
       revoke: "Access revoked from MEPRAM intranet.",
     };
+    const reviewNote =
+      action === "approve"
+        ? reviewNoteMap.approve
+        : reviewNoteOverride || "";
+
+    if ((action === "reject" || action === "revoke") && !reviewNote.trim()) {
+      return;
+    }
+
+    setProcessingId(id);
 
     try {
       const response = await fetch(
@@ -93,7 +114,7 @@ export function MepramAdminRequests() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ review_note: reviewNoteMap[action] }),
+          body: JSON.stringify({ review_note: reviewNote.trim() }),
         }
       );
 
@@ -105,11 +126,37 @@ export function MepramAdminRequests() {
       }
 
       setRequests((prev) => prev.filter((req) => req.id !== id));
+      setPendingReviewAction(null);
+      setReviewNote("");
     } catch (err: any) {
       alert(err.message);
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const openReviewDialog = (request: AccessRequest, action: ReviewAction) => {
+    setPendingReviewAction({
+      id: request.id,
+      action,
+      requestLabel: `#${request.id} - ${request.first_name} ${request.last_name} (${request.email})`,
+    });
+    setReviewNote("");
+  };
+
+  const closeReviewDialog = () => {
+    if (processingId) return;
+    setPendingReviewAction(null);
+    setReviewNote("");
+  };
+
+  const submitReviewAction = () => {
+    if (!pendingReviewAction) return;
+    void handleAction(
+      pendingReviewAction.id,
+      pendingReviewAction.action,
+      reviewNote
+    );
   };
 
   return (
@@ -232,7 +279,7 @@ export function MepramAdminRequests() {
                                   variant="outline"
                                   className="h-8 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                                   disabled={processingId === req.id}
-                                  onClick={() => handleAction(req.id, "reject")}
+                                  onClick={() => openReviewDialog(req, "reject")}
                                 >
                                   {processingId === req.id ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -265,7 +312,7 @@ export function MepramAdminRequests() {
                                 variant="outline"
                                 className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
                                 disabled={processingId === req.id}
-                                onClick={() => handleAction(req.id, "revoke")}
+                                onClick={() => openReviewDialog(req, "revoke")}
                               >
                                 {processingId === req.id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -305,6 +352,17 @@ export function MepramAdminRequests() {
           </div>
         )}
       </Surface>
+      {pendingReviewAction && (
+        <AccessDecisionNoteDialog
+          action={pendingReviewAction.action}
+          requestLabel={pendingReviewAction.requestLabel}
+          note={reviewNote}
+          processing={processingId === pendingReviewAction.id}
+          onNoteChange={setReviewNote}
+          onCancel={closeReviewDialog}
+          onConfirm={submitReviewAction}
+        />
+      )}
     </div>
   );
 }
