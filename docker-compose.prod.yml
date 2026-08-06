@@ -93,8 +93,8 @@ services:
       DB_NAME: ${DB_NAME:-pathocore_api}
       DB_HOST: pathocore_db
       DB_PORT: 3306
-      LOCAL_SERVER_IP: ${LOCAL_SERVER_IP:-127.0.0.1}
-      DNS_URL: ${DNS_URL:?DNS_URL is required}
+      PATHOCORE_API_LOCAL_SERVER_IP: ${PATHOCORE_API_LOCAL_SERVER_IP:-127.0.0.1}
+      PATHOCORE_API_DNS_URL: ${PATHOCORE_API_DNS_URL:?PATHOCORE_API_DNS_URL is required}
       PATHOCORE_ENABLE_LEGACY_BASIC_AUTH: ${PATHOCORE_ENABLE_LEGACY_BASIC_AUTH:-false}
       PATHOCORE_ENABLE_PUBLIC_READ_ENDPOINTS: ${PATHOCORE_ENABLE_PUBLIC_READ_ENDPOINTS:-true}
       PUBLIC_API_THROTTLE_RATE: ${PUBLIC_API_THROTTLE_RATE:-500/hour}
@@ -224,7 +224,6 @@ services:
         NEXT_PUBLIC_KEYCLOAK_REALM: ${NEXT_PUBLIC_KEYCLOAK_REALM:-ciberisciii_datahub}
         NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: ${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID:-pathocore-web}
         NEXT_PUBLIC_USE_CASE_DATA_MODE: ${NEXT_PUBLIC_USE_CASE_DATA_MODE:-live}
-        NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL: ${NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL:-}
         AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
     restart: unless-stopped
     depends_on:
@@ -242,7 +241,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       AUTH_URL: ${AUTH_URL:?AUTH_URL is required}
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-${AUTH_URL}}
+      NEXTAUTH_URL: ${AUTH_URL:?AUTH_URL is required}
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 10s
