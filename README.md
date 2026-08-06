@@ -119,8 +119,11 @@ NEXT_PUBLIC_KEYCLOAK_REALM=ciberisciii_datahub
 NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=pathocore-web
 AUTH_URL=http://127.0.0.1:3000
 AUTH_TRUST_HOST=true
-NEXTAUTH_URL=http://127.0.0.1:3000
 ```
+
+`AUTH_URL` is the public web URL used by Auth.js;
+PathoCore API host settings use the explicit `PATHOCORE_API_LOCAL_SERVER_IP`
+and `PATHOCORE_API_DNS_URL` names in the environment files.
 
 Keep real production values in deployment-managed environment files, not in the
 repository.
@@ -132,6 +135,91 @@ cp conf/production.env.example /srv/containers/bind/pathocore-web/production.env
 ```
 
 Every `CHANGE_ME` value in that file must be reviewed before deployment.
+
+## Important Environment Variables
+
+Use `.env.example` for local testing and `conf/production.env.example` as the
+starting point for server deployments. Do not commit real deployment files.
+
+### Public Web URLs
+
+These values must match the URL used by users in the browser:
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `AUTH_URL` | `https://mepram-datahub.<domain>` | Public URL of the web app used by Auth.js session handling. |
+| `NEXT_PUBLIC_KEYCLOAK_URL` | `https://mepram-keycloak-pathocore.<domain>` | Public Keycloak URL used by the browser for login. |
+| `KEYCLOAK_PUBLIC_URL` | `https://mepram-keycloak-pathocore.<domain>` | Public Keycloak URL used by the Keycloak container hostname config. |
+
+`NEXTAUTH_URL` is intentionally not configured by users. Docker Compose derives
+it from `AUTH_URL` for compatibility with the underlying auth library.
+
+### Frontend API Routes
+
+These are browser-facing relative paths. They should usually stay unchanged:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | `/api/pathocore/v1` | Browser path for PathoCore API calls through Next.js. |
+| `NEXT_PUBLIC_MEPRAM_API_BASE_URL` | `/api/omop/v1` | Browser path for MePRAM OMOP API calls through Next.js. |
+
+The browser should not call container names or internal ports directly.
+
+### Internal Service Targets
+
+These values are used inside the Docker network:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PATHOCORE_API_PROXY_TARGET` | `http://pathocore_api:8000` | Internal target for PathoCore API proxy requests. |
+| `MEPRAM_OMOP_API_PROXY_TARGET` | `http://mepram_omop_api:8000` | Internal target for MePRAM OMOP API proxy requests. |
+| `KEYCLOAK_JWKS_URL` | `http://keycloak:8080/.../certs` | Internal URL used by PathoCore API to validate Keycloak tokens. |
+| `KEYCLOAK_ADMIN_BASE_URL` | `http://keycloak:8080` | Internal URL used by PathoCore API for Keycloak admin operations. |
+
+In Docker/Podman deployments, these should normally use service names, not
+public DNS names.
+
+### Apache Host Routing
+
+These variables only apply to production, where Apache runs as a container and
+routes requests by the incoming `Host` header:
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `PATHOCORE_DATAHUB_SERVER_NAME` | `mepram-datahub.<domain>` | Hostname routed to the web container. |
+| `PATHOCORE_API_SERVER_NAME` | `mepram-api-pathocore.<domain>` | Hostname routed to PathoCore API. |
+| `PATHOCORE_KEYCLOAK_SERVER_NAME` | `mepram-keycloak-pathocore.<domain>` | Hostname routed to Keycloak. |
+| `MEPRAM_OMOP_API_SERVER_NAME` | `mepram-api-omop.<domain>` | Hostname routed to MePRAM OMOP API. |
+
+These are not full URLs. They are hostnames used by Apache `ServerName`.
+
+### PathoCore API Host Settings
+
+These values are passed to the `pathocore-api` installer:
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `PATHOCORE_API_LOCAL_SERVER_IP` | `127.0.0.1` | Host/IP inserted into PathoCore API Django settings. |
+| `PATHOCORE_API_DNS_URL` | `mepram-api-pathocore.<domain>` | Public API hostname inserted into PathoCore API Django settings. |
+
+`PATHOCORE_API_SERVER_NAME` and `PATHOCORE_API_DNS_URL` usually have the same
+value in production, but they are used by different layers: Apache routing vs.
+PathoCore API configuration.
+
+### Secrets and Credentials
+
+These must be changed for any shared or production deployment:
+
+| Variable | Purpose |
+|---|---|
+| `AUTH_SECRET` | Auth.js cookie/session signing secret. Generate with `openssl rand -base64 48`. |
+| `DB_PASSWORD`, `DB_ROOT_PASSWORD` | PathoCore API database credentials. |
+| `MEPRAM_DB_PASSWORD`, `MEPRAM_DB_ROOT_PASSWORD` | MePRAM OMOP database credentials. |
+| `KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_DB_ROOT_PASSWORD` | Keycloak database credentials. |
+| `KC_BOOTSTRAP_ADMIN_PASSWORD` | Initial Keycloak admin password. |
+| `KEYCLOAK_ADMIN_PASSWORD` | Password used by PathoCore API for Keycloak admin API calls. |
+| `DJANGO_SUPERUSER_PASSWORD` | Optional PathoCore API superuser password. |
+| `MEPRAM_DJANGO_SUPERUSER_PASSWORD` | Optional MePRAM OMOP API superuser password. |
 
 ## Production Apache Reverse Proxy
 
