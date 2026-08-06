@@ -182,7 +182,7 @@ read_env_value() {
 }
 
 service_container_id() {
-    compose_exec ps -q "$1" | head -n 1
+    compose_exec ps --format '{{.ID}} {{index .Labels "com.docker.compose.service"}}' | awk -v svc="$1" '$2==svc {print $1}'
 }
 
 service_exists() {
