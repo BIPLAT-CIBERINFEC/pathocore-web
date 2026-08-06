@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- [#25](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/25) Fixed issues with podman-compose ps -q
+
 ### `Dependencies`
 
 ### `Deprecated`
