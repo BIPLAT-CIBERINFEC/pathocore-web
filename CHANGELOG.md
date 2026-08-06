@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Changed`
 
 - [#14](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/14) Align the test stack with PathoCore API `/api/v1` routing and simplified use-case groups.
+- [#24](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/24) Simplify deployment environment variables
 
 ### `Added`
 
