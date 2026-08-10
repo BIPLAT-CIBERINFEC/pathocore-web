@@ -193,6 +193,10 @@ routes requests by the incoming `Host` header:
 
 These are not full URLs. They are hostnames used by Apache `ServerName`.
 
+`container_install.sh` renders the Apache templates from `conf/` before
+starting the production compose stack. The Apache container mounts those
+rendered files, so it never receives unexpanded placeholders.
+
 ### Derived MePRAM OMOP API Settings
 
 In production, the orchestrator derives these MePRAM OMOP API settings from the
@@ -207,6 +211,7 @@ MEPRAM_CORS_ALLOWED_ORIGINS  <- PATHOCORE_FORWARDED_PROTO://PATHOCORE_DATAHUB_SE
 Set those variables explicitly only when a deployment needs extra aliases or
 additional frontend origins. `USE_X_FORWARDED_HOST` is configured by
 `mepram-omop-api`, not by this orchestrator.
+
 
 ### PathoCore API Host Settings
 

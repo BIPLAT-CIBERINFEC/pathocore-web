@@ -278,8 +278,8 @@ services:
       retries: 30
       start_period: 30s
     volumes:
-      - ./conf/pathocore_apache_logs.conf:/etc/httpd/conf.d/pathocore-logs.conf:ro,z
-      - ./conf/pathocore_apache_reverse_proxy.conf:/etc/httpd/conf.d/pathocore-reverse-proxy.conf:ro,z
+      - ${PATHOCORE_HOST_APACHE_CONF_DIR:-/srv/containers/bind/pathocore-web/apache_conf}/pathocore_apache_logs.conf:/etc/httpd/conf.d/pathocore-logs.conf:ro,z
+      - ${PATHOCORE_HOST_APACHE_CONF_DIR:-/srv/containers/bind/pathocore-web/apache_conf}/pathocore_apache_reverse_proxy.conf:/etc/httpd/conf.d/pathocore-reverse-proxy.conf:ro,z
       - pathocore_api_documents:/var/www/pathocore-api/documents:ro,z
       - pathocore_api_static:/var/www/pathocore-api/static:ro,z
       - ${PATHOCORE_HOST_APACHE_LOG_DIR:-/var/log/local/pathocore-web/apache}:/var/log/httpd:z
