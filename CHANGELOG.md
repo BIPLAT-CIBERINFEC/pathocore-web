@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#12](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/12) Use MePRAM OMOP API bootstrap for superuser creation
 - [#13](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/13) Add production orchestrator support for PathoCore API, MePRAM OMOP API, Keycloak and web services.
 - [#23](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/23) Require review notes for rejected and revoked access requests
+- [#27](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/27) Expose OMOP proxy origin settings
 
 ### `Fixed`
 
