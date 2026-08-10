@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Fixed`
 
 - [#25](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/25) Fixed issues with podman-compose ps -q
+- [#29](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/29) Render Apache reverse proxy configuration before production startup
 
 ### `Dependencies`
 
