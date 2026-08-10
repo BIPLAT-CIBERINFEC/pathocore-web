@@ -181,6 +181,59 @@ read_env_value() {
     fi
 }
 
+sed_replacement_escape() {
+    printf '%s' "$1" | sed -e 's/[|&\\]/\\&/g'
+}
+
+render_apache_config() {
+    local src="$1"
+    local dst="$2"
+    local tmp_file=""
+    local pathocore_datahub_server_name pathocore_api_server_name
+    local pathocore_keycloak_server_name mepram_omop_api_server_name
+    local pathocore_forwarded_proto pathocore_forwarded_port
+
+    pathocore_datahub_server_name="$(read_env_value PATHOCORE_DATAHUB_SERVER_NAME "")"
+    pathocore_api_server_name="$(read_env_value PATHOCORE_API_SERVER_NAME "")"
+    pathocore_keycloak_server_name="$(read_env_value PATHOCORE_KEYCLOAK_SERVER_NAME "")"
+    mepram_omop_api_server_name="$(read_env_value MEPRAM_OMOP_API_SERVER_NAME "")"
+    pathocore_forwarded_proto="$(read_env_value PATHOCORE_FORWARDED_PROTO https)"
+    pathocore_forwarded_port="$(read_env_value PATHOCORE_FORWARDED_PORT 443)"
+
+    tmp_file="$(mktemp)"
+    sed \
+        -e "s|__PATHOCORE_DATAHUB_SERVER_NAME__|$(sed_replacement_escape "$pathocore_datahub_server_name")|g" \
+        -e "s|__PATHOCORE_API_SERVER_NAME__|$(sed_replacement_escape "$pathocore_api_server_name")|g" \
+        -e "s|__PATHOCORE_KEYCLOAK_SERVER_NAME__|$(sed_replacement_escape "$pathocore_keycloak_server_name")|g" \
+        -e "s|__MEPRAM_OMOP_API_SERVER_NAME__|$(sed_replacement_escape "$mepram_omop_api_server_name")|g" \
+        -e "s|__PATHOCORE_FORWARDED_PROTO__|$(sed_replacement_escape "$pathocore_forwarded_proto")|g" \
+        -e "s|__PATHOCORE_FORWARDED_PORT__|$(sed_replacement_escape "$pathocore_forwarded_port")|g" \
+        "$src" > "$tmp_file"
+
+    cp "$tmp_file" "$dst"
+    chmod 0644 "$dst"
+    rm -f "$tmp_file"
+}
+
+prepare_apache_bind_mounts() {
+    local apache_conf_path=""
+
+    if [ "$mode" != "production" ]; then
+        return 0
+    fi
+
+    apache_conf_path="$(read_env_value PATHOCORE_HOST_APACHE_CONF_DIR /srv/containers/bind/pathocore-web/apache_conf)"
+    mkdir -p "$apache_conf_path"
+
+    echo "Rendering Apache configuration into $apache_conf_path"
+    render_apache_config \
+        "conf/pathocore_apache_reverse_proxy.conf" \
+        "$apache_conf_path/pathocore_apache_reverse_proxy.conf"
+    render_apache_config \
+        "conf/pathocore_apache_logs.conf" \
+        "$apache_conf_path/pathocore_apache_logs.conf"
+}
+
 service_container_id() {
     if [ "$engine" = "docker" ]; then
         compose_exec ps -q "$1" | head -n 1
@@ -304,6 +357,7 @@ set_engine
 echo "Deploying PathoCore Web stack"
 echo "  compose: $compose_file"
 echo "  env:     $env_file"
+prepare_apache_bind_mounts
 compose_exec build
 compose_exec up -d --remove-orphans
 
