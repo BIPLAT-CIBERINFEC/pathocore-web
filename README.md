@@ -226,6 +226,11 @@ These values are passed to the `pathocore-api` installer:
 value in production, but they are used by different layers: Apache routing vs.
 PathoCore API configuration.
 
+The production compose stack derives PathoCore API CSRF trusted origins from
+`PATHOCORE_API_SERVER_NAME` and `PATHOCORE_FORWARDED_PROTO`. Set
+`PATHOCORE_API_CSRF_TRUSTED_ORIGINS` only when the API must trust additional
+public origins.
+
 ### Secrets and Credentials
 
 These must be changed for any shared or production deployment:
