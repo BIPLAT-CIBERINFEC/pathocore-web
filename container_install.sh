@@ -322,9 +322,9 @@ else
     echo "Skipping MePRAM OMOP SQL import"
 fi
 
-compose_exec ps
-
 echo "Installation completed"
+echo "Running services and published ports:"
+compose_exec ps
 echo "  Web:              http://127.0.0.1:$(read_env_value PATHOCORE_WEB_PORT 3000)"
 echo "  PathoCore API:    http://127.0.0.1:$(read_env_value PATHOCORE_API_PORT 8000)"
 echo "  MePRAM OMOP API:  http://127.0.0.1:$(read_env_value MEPRAM_OMOP_API_PORT 8100)"
