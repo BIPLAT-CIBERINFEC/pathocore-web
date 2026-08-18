@@ -1,43 +1,54 @@
 services:
-  # BEGIN BU-ISCIII SERVICE: pathocore_web (nextjs)
-  pathocore_web:
-    image: "${PATHOCORE_WEB_IMAGE:-pathocore-web:local}"
+  # BEGIN BU-ISCIII SERVICE: mepram_omop_api (django)
+  mepram_omop_api:
+    image: "${MEPRAM_OMOP_API_IMAGE:-mepram-omop-api:local}"
     build:
-      context: "."
+      context: "../mepram-omop-api"
       dockerfile: "Dockerfile"
       args:
         GIT_REVISION: ${GIT_REVISION:-current}
-        NEXT_PUBLIC_API_BASE_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_API_BASE_URL:?PATHOCORE_WEB_NEXT_PUBLIC_API_BASE_URL is required}
-        NEXT_PUBLIC_MEPRAM_API_BASE_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_MEPRAM_API_BASE_URL:?PATHOCORE_WEB_NEXT_PUBLIC_MEPRAM_API_BASE_URL is required}
-        NEXT_PUBLIC_KEYCLOAK_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_URL:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_URL is required}
-        NEXT_PUBLIC_KEYCLOAK_REALM: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM is required}
-        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_CLIENT_ID:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_CLIENT_ID is required}
-        NEXT_PUBLIC_USE_CASE_DATA_MODE: ${PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_DATA_MODE:?PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_DATA_MODE is required}
-        NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL: ${PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL:-}
+        # Safe committed test settings are available inside the build context.
+        INSTALL_CONF: "conf/docker_test_settings.txt"
+        USE_INSTALL_CONF_SECRET: "false"
+        RENDER_DJANGO_SETTINGS: "true"
+        APP_UID: ${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}
+        APP_GID: ${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}
+        APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
+        APP_REPO_PATH: ${MEPRAM_OMOP_API_REPO_PATH:?MEPRAM_OMOP_API_REPO_PATH is required}
+        APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
     restart: unless-stopped
-    user: "${PATHOCORE_WEB_APP_UID:?PATHOCORE_WEB_APP_UID is required}:${PATHOCORE_WEB_APP_GID:?PATHOCORE_WEB_APP_GID is required}"
+    user: "${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}:${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}"
     environment:
-      APP_PORT: ${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}
-      HOSTNAME: 0.0.0.0
-      AUTH_SECRET: ${PATHOCORE_WEB_AUTH_SECRET:?PATHOCORE_WEB_AUTH_SECRET is required}
-      AUTH_URL: ${PATHOCORE_WEB_AUTH_URL:?PATHOCORE_WEB_AUTH_URL is required}
-      AUTH_TRUST_HOST: ${PATHOCORE_WEB_AUTH_TRUST_HOST:?PATHOCORE_WEB_AUTH_TRUST_HOST is required}
-      NEXTAUTH_URL: ${PATHOCORE_WEB_NEXTAUTH_URL:?PATHOCORE_WEB_NEXTAUTH_URL is required}
-      PATHOCORE_API_PROXY_TARGET: ${PATHOCORE_WEB_PATHOCORE_API_PROXY_TARGET:?PATHOCORE_WEB_PATHOCORE_API_PROXY_TARGET is required}
-      MEPRAM_OMOP_API_PROXY_TARGET: ${PATHOCORE_WEB_MEPRAM_OMOP_API_PROXY_TARGET:?PATHOCORE_WEB_MEPRAM_OMOP_API_PROXY_TARGET is required}
-    read_only: true
-    tmpfs:
-      - /tmp:size=16m,mode=1777
-      - /app/.next/cache:size=64m,uid=${PATHOCORE_WEB_APP_UID:?PATHOCORE_WEB_APP_UID is required},gid=${PATHOCORE_WEB_APP_GID:?PATHOCORE_WEB_APP_GID is required},mode=0750
+      APP_MODE: dev
+      INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
+      APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
+      APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
+      PROJECT_MODULE: "conf"
+      DB_HOST: mepram_omop_api_db
+      DB_PORT: ${MEPRAM_OMOP_API_DB_PORT:?MEPRAM_OMOP_API_DB_PORT is required}
+      DB_NAME: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
+      DB_USER: ${MEPRAM_OMOP_API_DB_USER:?MEPRAM_OMOP_API_DB_USER is required}
+      DB_PASSWORD: ${MEPRAM_OMOP_API_DB_PASSWORD:?MEPRAM_OMOP_API_DB_PASSWORD is required}
+      DJANGO_SECRET_KEY: ${MEPRAM_OMOP_API_DJANGO_SECRET_KEY:?MEPRAM_OMOP_API_DJANGO_SECRET_KEY is required}
+      DJANGO_ALLOWED_HOSTS: ${MEPRAM_OMOP_API_DJANGO_ALLOWED_HOSTS:?MEPRAM_OMOP_API_DJANGO_ALLOWED_HOSTS is required}
+      API_CORS_ALLOWED_ORIGINS: ${MEPRAM_OMOP_API_API_CORS_ALLOWED_ORIGINS:-}
+      API_THROTTLE_RATE: ${MEPRAM_OMOP_API_API_THROTTLE_RATE:-500/hour}
+      API_DOCS_REQUIRE_STAFF: ${MEPRAM_OMOP_API_API_DOCS_REQUIRE_STAFF:-true}
+    depends_on:
+      mepram_omop_api_db:
+        condition: service_healthy
+    volumes:
+      - mepram_omop_api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
+      - mepram_omop_api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:z
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:' + process.env.APP_PORT + '/health/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))\""]
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['APP_PORT'] + '/health/', timeout=3)"]
       interval: 10s
       timeout: 5s
       retries: 12
     ports:
-      - "0.0.0.0:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}"
+      - "0.0.0.0:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}"
     networks: [deployment_net]
-  # END BU-ISCIII SERVICE: pathocore_web
+  # END BU-ISCIII SERVICE: mepram_omop_api
   # BEGIN BU-ISCIII SERVICE: pathocore_api (django)
   pathocore_api:
     image: "${PATHOCORE_API_IMAGE:-pathocore-api:local}"
@@ -105,66 +116,55 @@ services:
       - "0.0.0.0:${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}:${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}"
     networks: [deployment_net]
   # END BU-ISCIII SERVICE: pathocore_api
-  # BEGIN BU-ISCIII SERVICE: mepram_omop_api (django)
-  mepram_omop_api:
-    image: "${MEPRAM_OMOP_API_IMAGE:-mepram-omop-api:local}"
+  # BEGIN BU-ISCIII SERVICE: pathocore_web (nextjs)
+  pathocore_web:
+    image: "${PATHOCORE_WEB_IMAGE:-pathocore-web:local}"
     build:
-      context: "../mepram-omop-api"
+      context: "."
       dockerfile: "Dockerfile"
       args:
         GIT_REVISION: ${GIT_REVISION:-current}
-        # Safe committed test settings are available inside the build context.
-        INSTALL_CONF: "conf/docker_test_settings.txt"
-        USE_INSTALL_CONF_SECRET: "false"
-        RENDER_DJANGO_SETTINGS: "true"
-        APP_UID: ${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}
-        APP_GID: ${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}
-        APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
-        APP_REPO_PATH: ${MEPRAM_OMOP_API_REPO_PATH:?MEPRAM_OMOP_API_REPO_PATH is required}
-        APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
+        NEXT_PUBLIC_API_BASE_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_API_BASE_URL:?PATHOCORE_WEB_NEXT_PUBLIC_API_BASE_URL is required}
+        NEXT_PUBLIC_MEPRAM_API_BASE_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_MEPRAM_API_BASE_URL:?PATHOCORE_WEB_NEXT_PUBLIC_MEPRAM_API_BASE_URL is required}
+        NEXT_PUBLIC_KEYCLOAK_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_URL:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_URL is required}
+        NEXT_PUBLIC_KEYCLOAK_REALM: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM is required}
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_CLIENT_ID:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_CLIENT_ID is required}
+        NEXT_PUBLIC_USE_CASE_DATA_MODE: ${PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_DATA_MODE:?PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_DATA_MODE is required}
+        NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL: ${PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL:-}
     restart: unless-stopped
-    user: "${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}:${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}"
+    user: "${PATHOCORE_WEB_APP_UID:?PATHOCORE_WEB_APP_UID is required}:${PATHOCORE_WEB_APP_GID:?PATHOCORE_WEB_APP_GID is required}"
     environment:
-      APP_MODE: dev
-      INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
-      APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
-      APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
-      PROJECT_MODULE: "conf"
-      DB_HOST: mepram_omop_api_db
-      DB_PORT: ${MEPRAM_OMOP_API_DB_PORT:?MEPRAM_OMOP_API_DB_PORT is required}
-      DB_NAME: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
-      DB_USER: ${MEPRAM_OMOP_API_DB_USER:?MEPRAM_OMOP_API_DB_USER is required}
-      DB_PASSWORD: ${MEPRAM_OMOP_API_DB_PASSWORD:?MEPRAM_OMOP_API_DB_PASSWORD is required}
-      DJANGO_SECRET_KEY: ${MEPRAM_OMOP_API_DJANGO_SECRET_KEY:?MEPRAM_OMOP_API_DJANGO_SECRET_KEY is required}
-      DJANGO_ALLOWED_HOSTS: ${MEPRAM_OMOP_API_DJANGO_ALLOWED_HOSTS:?MEPRAM_OMOP_API_DJANGO_ALLOWED_HOSTS is required}
-      API_CORS_ALLOWED_ORIGINS: ${MEPRAM_OMOP_API_API_CORS_ALLOWED_ORIGINS:-}
-      API_THROTTLE_RATE: ${MEPRAM_OMOP_API_API_THROTTLE_RATE:-500/hour}
-      API_DOCS_REQUIRE_STAFF: ${MEPRAM_OMOP_API_API_DOCS_REQUIRE_STAFF:-true}
-    depends_on:
-      mepram_omop_api_db:
-        condition: service_healthy
-    volumes:
-      - mepram_omop_api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
-      - mepram_omop_api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:z
+      APP_PORT: ${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}
+      HOSTNAME: 0.0.0.0
+      AUTH_SECRET: ${PATHOCORE_WEB_AUTH_SECRET:?PATHOCORE_WEB_AUTH_SECRET is required}
+      AUTH_URL: ${PATHOCORE_WEB_AUTH_URL:?PATHOCORE_WEB_AUTH_URL is required}
+      AUTH_TRUST_HOST: ${PATHOCORE_WEB_AUTH_TRUST_HOST:?PATHOCORE_WEB_AUTH_TRUST_HOST is required}
+      NEXTAUTH_URL: ${PATHOCORE_WEB_NEXTAUTH_URL:?PATHOCORE_WEB_NEXTAUTH_URL is required}
+      PATHOCORE_API_PROXY_TARGET: ${PATHOCORE_WEB_PATHOCORE_API_PROXY_TARGET:?PATHOCORE_WEB_PATHOCORE_API_PROXY_TARGET is required}
+      MEPRAM_OMOP_API_PROXY_TARGET: ${PATHOCORE_WEB_MEPRAM_OMOP_API_PROXY_TARGET:?PATHOCORE_WEB_MEPRAM_OMOP_API_PROXY_TARGET is required}
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /app/.next/cache:size=64m,mode=1777
     healthcheck:
-      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['APP_PORT'] + '/health/', timeout=3)"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:' + process.env.APP_PORT + '/health/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 12
     ports:
-      - "0.0.0.0:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}"
+      - "0.0.0.0:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}"
     networks: [deployment_net]
-  # END BU-ISCIII SERVICE: mepram_omop_api
+  # END BU-ISCIII SERVICE: pathocore_web
   # BEGIN BU-ISCIII ADDON: apache
   apache:
     image: registry.access.redhat.com/ubi9/httpd-24:latest
     restart: unless-stopped
     depends_on:
-      pathocore_web:
+      mepram_omop_api:
         condition: service_healthy
       pathocore_api:
         condition: service_healthy
-      mepram_omop_api:
+      pathocore_web:
         condition: service_healthy
       keycloak:
         condition: service_healthy
@@ -184,10 +184,10 @@ services:
       # Disposable log volume avoids writing test logs into production paths.
       - apache_test_logs:/var/log/httpd:z
       # GENERATED MULTI-APP MOUNTS: disposable test static/document volumes.
-      - pathocore_api_test_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:ro,z
-      - pathocore_api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:ro,z
       - mepram_omop_api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:ro,z
       - mepram_omop_api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:ro,z
+      - pathocore_api_test_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:ro,z
+      - pathocore_api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:ro,z
       # OPTIONAL APP MOUNTS belong in ADDONS.apache.MOUNTS.
     networks: [deployment_net]
   # END BU-ISCIII ADDON: apache
@@ -246,20 +246,6 @@ services:
       - ${KEYCLOAK_IMPORT_PATH:-./keycloak/tmp-import}:/opt/keycloak/data/import:ro,z
     networks: [deployment_net]
   # END BU-ISCIII ADDON: keycloak
-  pathocore_api_db:
-    image: docker.io/library/mysql:8.0
-    environment:
-      MYSQL_DATABASE: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
-      MYSQL_USER: ${PATHOCORE_API_DB_USER:?PATHOCORE_API_DB_USER is required}
-      MYSQL_PASSWORD: ${PATHOCORE_API_DB_PASSWORD:?PATHOCORE_API_DB_PASSWORD is required}
-      MYSQL_ROOT_PASSWORD: ${PATHOCORE_API_DB_ROOT_PASSWORD:?PATHOCORE_API_DB_ROOT_PASSWORD is required}
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-    volumes: [pathocore_api_test_db:/var/lib/mysql]
-    networks: [deployment_net]
   mepram_omop_api_db:
     image: docker.io/library/mysql:8.0
     environment:
@@ -274,16 +260,30 @@ services:
       retries: 20
     volumes: [mepram_omop_api_test_db:/var/lib/mysql]
     networks: [deployment_net]
+  pathocore_api_db:
+    image: docker.io/library/mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
+      MYSQL_USER: ${PATHOCORE_API_DB_USER:?PATHOCORE_API_DB_USER is required}
+      MYSQL_PASSWORD: ${PATHOCORE_API_DB_PASSWORD:?PATHOCORE_API_DB_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${PATHOCORE_API_DB_ROOT_PASSWORD:?PATHOCORE_API_DB_ROOT_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes: [pathocore_api_test_db:/var/lib/mysql]
+    networks: [deployment_net]
 
 networks:
   deployment_net:
 
 volumes:
-  pathocore_api_test_db:
-  pathocore_api_test_documents:
-  pathocore_api_test_static:
   mepram_omop_api_test_db:
   mepram_omop_api_test_documents:
   mepram_omop_api_test_static:
+  pathocore_api_test_db:
+  pathocore_api_test_documents:
+  pathocore_api_test_static:
   apache_test_logs:
   keycloak_db_data:

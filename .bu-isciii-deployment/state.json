@@ -51,8 +51,8 @@
     ".dockerignore": "bd9c115511d6b9dae318e4b6a85ddb282e60a46fd89c6cdecccdc20c668eb0e9",
     ".gitignore": "de487336ed72efd6601b985eda1c83754d6ee33b1cb4ce9f8973411caae833ed",
     "Dockerfile": "23785f729cf00d1671c60115cadf10251cc8628d1aa5bbfa6697e3422b332f40",
-    "LEAME.md": "40229ec4f28883930af2d1d20783c4b7406c8bdb7a9a5f50cb79d3551f5d157d",
-    "README.md": "cf297227032d1347731760cc0d40aaf5192b37aa5c97ebd80b03e2121a027e21",
+    "LEAME.md": "cd85d7f67b507632d181652582559bb0e726068d332f57f2736ddeb36ae71dce",
+    "README.md": "6337379c43a70148d5e4610000cdb8363ae4c9fce93541727819f0e888dc37af",
     "conf/INSTALL_SETTINGS.md": "831586a74cdbad6b00ad7cea1d2f2cd2fab407c9e3f4d963a2b2a854c16536e3",
     "conf/apache/00-logs.conf": "3c2ab4e693e528d2cad37c0c5bb0bc4511803a7f206b339182de192d4e398092",
     "conf/apache/01-reverse-proxy.conf": "236045c25b220bf8963d05cc2543be2a35d00bf0243ddf055b04f895d7d70e18",
@@ -63,11 +63,11 @@
     "conf/docker_test_settings.txt": "bc18faded32706d50a3b6f8151b39e158418761e8595d19754932a27267ba054",
     "conf/keycloak/keycloak_production_settings.txt": "beade98f6b8dcf6f3f9302b9f55425dd554bdd0a841291c3270ee8f116206746",
     "conf/keycloak/keycloak_test_settings.txt": "7756c9efcd9fbde78a2dce0a9cd7cf41818d705a8c746acbbf6b74611769265e",
-    "container_install.sh": "584c47358e4c07868fa8e029d7ddf233c9fe3c18dca01d261010d729db1514ff",
-    "docker-compose.prod.yml": "16dcd20369f0c49cc73f6de29efd0914bf6f1fc17f5cedf54231fdea9b7535c0",
-    "docker-compose.test.yml": "6214f103b4c6a940603e5b44a07f87c26835e34724a8ea279a42cf0216fc2c58",
+    "container_install.sh": "a60dc043b6bf3e837e6d34300cb4afe0e1e7d9ae689493479b541f4ff398892c",
+    "docker-compose.prod.yml": "4a33567516c13533c1e80504d22c8b7607f29e794938691f63c2e988bd365126",
+    "docker-compose.test.yml": "8475248f18d5d3e29778db0b2ed5dad0b76d1c975dc779139767a1800921883f",
     "scripts/container_start.sh": "7f85e924a9b28f22a307a7a1dc36e1ee7ee93a827de3b27d99047646fbbcfa08",
-    "scripts/smoke_test.sh": "1313ace579c5214c686e9c359ab0761db8d6ce6ffcbca5d02fdd830b82d9b3da"
+    "scripts/smoke_test.sh": "f05efb3c3dd8dbfee0d39f0b6eb216e0acb82a67b5b92ccc858d924640c7e657"
   },
   "source": "BU-ISCIII deployment standards",
   "standard_version": "0.1.0"
