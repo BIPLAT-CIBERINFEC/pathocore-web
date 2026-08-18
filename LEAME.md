@@ -266,7 +266,24 @@ de restauracion.
 
 ## Ejecutar la actualizacion
 
-Ejecutar el comando de instalación/upgrade:
+En la primera instalacion de produccion, cargar los dos juegos de datos que
+necesita la web. Al tratarse de un despliegue con varios servicios, usar una
+opcion `--demo_data_map <servicio>,<fichero-sql>` por API; `--demo_data` solo es
+valido para despliegues con un unico servicio. Las rutas siguientes parten del
+checkout conjunto `pathocore-all` y deben apuntar a ficheros SQL revisados:
+
+```bash
+bash container_install.sh --action install --engine podman \
+  --git_revision <revision-aprobada> \
+  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt \
+  --demo_data_map pathocore_api,../pathocore_api_demo_data.sql \
+  --demo_data_map mepram_omop_api,../mepram-omop-dashboard.sql \
+  2>&1 | tee "$(date +%Y%m%d_%H%M%S)_prod_install.log"
+```
+
+Los mapas de datos solo se admiten con `--action install`. En actualizaciones
+posteriores, conservar las bases de datos persistentes y ejecutar sin volver a
+importar los SQL:
 
 ```bash
 bash container_install.sh --action upgrade --engine podman \
