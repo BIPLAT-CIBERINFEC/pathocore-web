@@ -59,7 +59,7 @@
     "conf/apache/02-server-status.conf": "c3b5d26f9b551083faf0d85b188bfa9c577ff0bd3b805f0ec104fe4f7d5101cb",
     "conf/apache/apache_production_settings.txt": "55ea7121f44cb8cef520d0097d989b6de57f4d5cdb5b43bac0a50467bda95917",
     "conf/apache/apache_test_settings.txt": "3e77f5b2bc70a9db1ca37f4fbf0d82ee1cef352804e21c01090c87bead16e214",
-    "conf/docker_production_settings.txt": "f0f05db580c7346e2c9f616baa24efa3d974a5dccf3acb3b0eb341d549248bc4",
+    "conf/docker_production_settings.txt": "f1c3a715f0f5bf3b0e08e10f887123a231793860d6dc61f311be4b0962988124",
     "conf/docker_test_settings.txt": "bc18faded32706d50a3b6f8151b39e158418761e8595d19754932a27267ba054",
     "conf/keycloak/keycloak_production_settings.txt": "beade98f6b8dcf6f3f9302b9f55425dd554bdd0a841291c3270ee8f116206746",
     "conf/keycloak/keycloak_test_settings.txt": "7756c9efcd9fbde78a2dce0a9cd7cf41818d705a8c746acbbf6b74611769265e",
