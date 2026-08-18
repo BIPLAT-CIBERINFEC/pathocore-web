@@ -1,11 +1,32 @@
 # PathoCore Web
 
-Next.js frontend and deployment orchestrator for the PathoCore and MePRAM OMOP APIs.
+PathoCore Web is the user-facing portal and production deployment orchestrator
+for pathogen data workflows. A Next.js application presents the interface and
+authentication flow, PathoCore API manages the core application data, and the
+MePRAM OMOP API exposes the OMOP-backed use-case data. Apache publishes four
+separate DNS endpoints, while Keycloak provides their shared identity service.
+The two application databases and the Keycloak database are independent,
+persistent MySQL services.
 
-> Application developers: replace this short description with the domain
-> overview, architecture image, user-facing documentation link, and support
-> channel. The installation sections below are rendered by the deployment
-> standard and are ready to use unless explicitly marked for review.
+```mermaid
+flowchart TB
+    User[Browser / API client] --> Apache[Apache reverse proxy]
+
+    Apache -->|Frontend DNS| Web[Next.js frontend]
+    Apache -->|PathoCore API DNS| PathoAPI[PathoCore API]
+    Apache -->|MePRAM API DNS| MepramAPI[MePRAM OMOP API]
+    Apache -->|Identity DNS| Keycloak[Keycloak]
+
+    Web -->|Server-side API proxy| PathoAPI
+    Web -->|Server-side API proxy| MepramAPI
+    Web -->|OIDC| Keycloak
+    PathoAPI -->|Token validation / administration| Keycloak
+    MepramAPI -->|Token validation| Keycloak
+
+    PathoAPI --> PathoDB[(PathoCore MySQL)]
+    MepramAPI --> MepramDB[(MePRAM OMOP MySQL)]
+    Keycloak --> KeycloakDB[(Keycloak MySQL)]
+```
 
 - [Get the code (required)](#get-the-code-required)
 - [Choose your path](#choose-your-path)
@@ -182,12 +203,12 @@ nor this generated environment file is copied into image layers.
 | Asset | Production location | Backup/rebuild policy |
 |---|---|---|
 | `pathocore_web` Next.js image | Immutable container image | Rebuild from recorded revision |
-| `pathocore_api` database | External production database | Database backup before migration |
+| `pathocore_api` database | `pathocore_api_db_data` named volume, mounted by `pathocore_api_db` | Logical dump before migration; volume is persistent state |
 | `pathocore_api` documents | `pathocore_api_documents` named volume | Volume backup |
 | `pathocore_api` static | `pathocore_api_static` named volume | Replaceable through collectstatic |
 | `pathocore_api` logs | Host bind configured by `HOST_LOG_PATH` in `pathocore_api_production_settings.txt` | Retain/rotate per institutional log policy |
 | `pathocore_api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `pathocore_api_production_settings.txt` | Protected configuration backup |
-| `mepram_omop_api` database | External production database | Database backup before migration |
+| `mepram_omop_api` database | `mepram_omop_api_db_data` named volume, mounted by `mepram_omop_api_db` | Logical dump before migration; volume is persistent state |
 | `mepram_omop_api` documents | `mepram_omop_api_documents` named volume | Volume backup |
 | `mepram_omop_api` static | `mepram_omop_api_static` named volume | Replaceable through collectstatic |
 | `mepram_omop_api` logs | Host bind configured by `HOST_LOG_PATH` in `mepram_omop_api_production_settings.txt` | Retain/rotate per institutional log policy |
@@ -327,40 +348,32 @@ and review of the version-specific guide.
 
 ### Database creation, users and grants
 
-Production databases are externally managed unless the application documents a
-different supported topology. Create a dedicated schema and least-privilege
-account, verify connectivity from the application container, and keep DBA
-commands and credentials outside this repository.
-
-Connect as an authorized database administrator without putting the password
-on the command line:
+Production runs one private MySQL service per API. Configure the protected
+settings with distinct database names, application users, application
+passwords, and root passwords. The database hosts and ports are fixed by the
+Compose network:
 
 ```bash
-DB_HOST='CHANGE_ME'
+DB_HOST='pathocore_api_db'       # PathoCore API settings
+DB_HOST='mepram_omop_api_db'    # MePRAM OMOP API settings
 DB_PORT='3306'
-DB_ADMIN='CHANGE_ME'
 DB_NAME='CHANGE_ME'
 DB_USER='CHANGE_ME'
-mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_ADMIN" --password
+DB_PASSWORD='CHANGE_ME'
+DB_ROOT_PASSWORD='CHANGE_ME'
 ```
 
-Create the application database and account. Replace every angle-bracket value;
-restrict the account host further than `%` when the network topology permits.
-
-```sql
-CREATE DATABASE `<db-name>`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER '<db-user>'@'%' IDENTIFIED BY '<strong-generated-password>';
-GRANT ALL PRIVILEGES ON `<db-name>`.* TO '<db-user>'@'%';
-FLUSH PRIVILEGES;
-```
-
-Verify the same endpoint and least-privilege credentials configured for the
-application:
+MySQL initializes each empty named volume from those values. Changing them
+later does not rewrite accounts in an existing database. Verify connectivity
+through each API container rather than publishing database ports publicly:
 
 ```bash
-mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password \
-  --database="$DB_NAME" --execute='SELECT 1;'
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T pathocore_api_db sh -c \
+  'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1"'
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T mepram_omop_api_db sh -c \
+  'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1"'
 ```
 
 ### Backups
@@ -372,10 +385,6 @@ settings files, and backup identifiers.
 ```bash
 BACKUP_DIR="/srv/containers/backup/pathocore-web/$(date +%Y%m%d_%H%M%S)"
 DOCUMENTS_VOLUME='CHANGE_ME'
-DB_HOST='CHANGE_ME'
-DB_PORT='3306'
-DB_NAME='CHANGE_ME'
-DB_USER='CHANGE_ME'
 mkdir -p "$BACKUP_DIR"
 git rev-parse HEAD > "$BACKUP_DIR/git-revision.txt"
 cp .env.production.file "$BACKUP_DIR/"
@@ -386,9 +395,14 @@ cp deployment/settings/apache_production_settings.txt "$BACKUP_DIR/"
 cp deployment/settings/keycloak_production_settings.txt "$BACKUP_DIR/"
 chmod -R go-rwx "$BACKUP_DIR"
 
-mysqldump --single-transaction --routines --triggers \
-  --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password \
-  "$DB_NAME" > "$BACKUP_DIR/database.sql"
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T pathocore_api_db sh -c \
+  'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  > "$BACKUP_DIR/pathocore-api-database.sql"
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T mepram_omop_api_db sh -c \
+  'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  > "$BACKUP_DIR/mepram-omop-api-database.sql"
 
 podman volume ls | grep 'pathocore-web'
 podman volume export "$DOCUMENTS_VOLUME" > "$BACKUP_DIR/documents.tar"
@@ -434,13 +448,7 @@ Full restore when schema or persistent-file formats are incompatible:
 ```bash
 BACKUP_DIR='/srv/containers/backup/pathocore-web/CHANGE_ME'
 DOCUMENTS_VOLUME='CHANGE_ME'
-DB_HOST='CHANGE_ME'
-DB_PORT='3306'
-DB_NAME='CHANGE_ME'
-DB_USER='CHANGE_ME'
 podman compose --env-file .env.production.file -f docker-compose.prod.yml down
-mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password \
-  "$DB_NAME" < "$BACKUP_DIR/database.sql"
 podman volume import "$DOCUMENTS_VOLUME" "$BACKUP_DIR/documents.tar"
 tar -C /srv/containers/bind -xzf "$BACKUP_DIR/bind-mounts.tar.gz"
 install -d -m 0700 deployment/settings
@@ -451,11 +459,25 @@ install -m 0600 "$BACKUP_DIR/apache_production_settings.txt" deployment/settings
 install -m 0600 "$BACKUP_DIR/keycloak_production_settings.txt" deployment/settings/keycloak_production_settings.txt
 bash container_install.sh --action fix-permissions --engine podman \
   --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
-# Arrancar solo la base de datos, esperar readiness y restaurar su dump logico.
-podman compose --env-file .env.production.file -f docker-compose.prod.yml up -d keycloak_db
-until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T keycloak_db sh -c \
-  'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
+# Start only the databases and wait for all three to accept connections.
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  up -d pathocore_api_db mepram_omop_api_db keycloak_db
+for service in pathocore_api_db mepram_omop_api_db keycloak_db; do
+  until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+    exec -T "$service" sh -c \
+    'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
+  podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+    exec -T "$service" sh -c \
+    'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
+done
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T pathocore_api_db sh -c \
+  'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  < "$BACKUP_DIR/pathocore-api-database.sql"
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T mepram_omop_api_db sh -c \
+  'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  < "$BACKUP_DIR/mepram-omop-api-database.sql"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   exec -T keycloak_db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
@@ -466,6 +488,10 @@ Then deploy the revision recorded in `git-revision.txt`, start the deployment,
 and run the smoke test before reopening service. For Docker volume restoration,
 reverse the temporary-container archive command by mounting the empty target
 volume at `/data` and extracting `/backup/documents.tar` there.
+
+The schema recreation above is intentionally destructive and belongs only in a
+declared full restore after the current state has been preserved. Normal
+application-only rollback must retain the existing database volumes.
 
 ### What to do if something fails
 

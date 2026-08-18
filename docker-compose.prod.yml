@@ -56,6 +56,9 @@ services:
         APP_REPO_PATH: ${PATHOCORE_API_REPO_PATH:?PATHOCORE_API_REPO_PATH is required}
         APP_INSTALL_PATH: ${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}
     restart: unless-stopped
+    depends_on:
+      pathocore_api_db:
+        condition: service_healthy
     user: "${PATHOCORE_API_APP_UID:?PATHOCORE_API_APP_UID is required}:${PATHOCORE_API_APP_GID:?PATHOCORE_API_APP_GID is required}"
     environment:
       APP_MODE: prod
@@ -127,6 +130,9 @@ services:
         APP_REPO_PATH: ${MEPRAM_OMOP_API_REPO_PATH:?MEPRAM_OMOP_API_REPO_PATH is required}
         APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
     restart: unless-stopped
+    depends_on:
+      mepram_omop_api_db:
+        condition: service_healthy
     user: "${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}:${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}"
     environment:
       APP_MODE: prod
@@ -163,6 +169,46 @@ services:
       - "host.docker.internal:host-gateway"
     networks: [deployment_net]
   # END BU-ISCIII SERVICE: mepram_omop_api
+  pathocore_api_db:
+    image: docker.io/library/mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
+      MYSQL_USER: ${PATHOCORE_API_DB_USER:?PATHOCORE_API_DB_USER is required}
+      MYSQL_PASSWORD: ${PATHOCORE_API_DB_PASSWORD:?PATHOCORE_API_DB_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${PATHOCORE_API_DB_ROOT_PASSWORD:?PATHOCORE_API_DB_ROOT_PASSWORD is required}
+    expose: ["3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - pathocore_api_db_data:/var/lib/mysql
+    networks: [deployment_net]
+
+  mepram_omop_api_db:
+    image: docker.io/library/mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
+      MYSQL_USER: ${MEPRAM_OMOP_API_DB_USER:?MEPRAM_OMOP_API_DB_USER is required}
+      MYSQL_PASSWORD: ${MEPRAM_OMOP_API_DB_PASSWORD:?MEPRAM_OMOP_API_DB_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${MEPRAM_OMOP_API_DB_ROOT_PASSWORD:?MEPRAM_OMOP_API_DB_ROOT_PASSWORD is required}
+    expose: ["3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - mepram_omop_api_db_data:/var/lib/mysql
+    networks: [deployment_net]
+
   # BEGIN BU-ISCIII ADDON: apache
   apache:
     image: registry.access.redhat.com/ubi9/httpd-24:latest
@@ -280,4 +326,6 @@ volumes:
   pathocore_api_static:
   mepram_omop_api_documents:
   mepram_omop_api_static:
+  pathocore_api_db_data:
+  mepram_omop_api_db_data:
   keycloak_db_data:

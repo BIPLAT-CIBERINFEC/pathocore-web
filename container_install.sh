@@ -17,7 +17,7 @@ APPLICATION_NAME="PathoCore Web"
 # ============================================================================
 install_services=(mepram_omop_api pathocore_api pathocore_web)
 addon_build_services=()
-permission_services=(mepram_omop_api pathocore_api pathocore_web apache keycloak_db keycloak)
+permission_services=(mepram_omop_api pathocore_api pathocore_web pathocore_api_db mepram_omop_api_db apache keycloak_db keycloak)
 configured_services=(mepram_omop_api pathocore_api pathocore_web apache keycloak)
 
 default_service_install_conf() {
@@ -308,13 +308,13 @@ prepare_running_container_mount_permissions() {
             local -a keycloak_running_mount_permission_spec=()
             apply_container_directory_permission_spec "$container_id" "${keycloak_running_mount_permission_spec[@]}"
             ;;
-        keycloak_db)
-            # The persistent MySQL volume must remain owned by the UID/GID used
-            # by the database image, including after restoring or moving data.
-            local -a keycloak_db_running_mount_permission_spec=(
+        pathocore_api_db|mepram_omop_api_db|keycloak_db)
+            # Persistent MySQL volumes must remain owned by the UID/GID used by
+            # the database image, including after restoring or moving data.
+            local -a mysql_running_mount_permission_spec=(
                 "/var/lib/mysql|999:999|u+rwX,g+rwX,o-rwx"
             )
-            apply_container_directory_permission_spec "$container_id" "${keycloak_db_running_mount_permission_spec[@]}"
+            apply_container_directory_permission_spec "$container_id" "${mysql_running_mount_permission_spec[@]}"
             ;;
         *) return 0 ;;
     esac

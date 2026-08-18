@@ -80,12 +80,12 @@ Persistencia declarada por el despliegue:
 | Activo | Ubicacion de produccion | Requisito de recuperacion |
 |---|---|---|
 | `pathocore_web` Next.js image | Immutable container image | Rebuild from recorded revision |
-| `pathocore_api` database | External production database | Database backup before migration |
+| `pathocore_api` database | `pathocore_api_db_data` named volume, mounted by `pathocore_api_db` | Logical dump before migration; persistent volume recovery |
 | `pathocore_api` documents | `pathocore_api_documents` named volume | Volume backup |
 | `pathocore_api` static | `pathocore_api_static` named volume | Replaceable through collectstatic |
 | `pathocore_api` logs | Host bind configured by `HOST_LOG_PATH` in `pathocore_api_production_settings.txt` | Retain/rotate per institutional log policy |
 | `pathocore_api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `pathocore_api_production_settings.txt` | Protected configuration backup |
-| `mepram_omop_api` database | External production database | Database backup before migration |
+| `mepram_omop_api` database | `mepram_omop_api_db_data` named volume, mounted by `mepram_omop_api_db` | Logical dump before migration; persistent volume recovery |
 | `mepram_omop_api` documents | `mepram_omop_api_documents` named volume | Volume backup |
 | `mepram_omop_api` static | `mepram_omop_api_static` named volume | Replaceable through collectstatic |
 | `mepram_omop_api` logs | Host bind configured by `HOST_LOG_PATH` in `mepram_omop_api_production_settings.txt` | Retain/rotate per institutional log policy |
@@ -222,12 +222,17 @@ cp deployment/settings/keycloak_production_settings.txt "$BACKUP_DIR/"
 chmod -R go-rwx "$BACKUP_DIR"
 ```
 
-Exportar la base de datos externa desde un punto coherente:
+Crear dumps logicos consistentes de las dos bases de datos de aplicacion:
 
 ```bash
-mysqldump --single-transaction --routines --triggers \
-  --host=<db-host> --port=<db-port> --user=<db-user> --password \
-  <db-name> > "$BACKUP_DIR/database.sql"
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T pathocore_api_db sh -c \
+  'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  > "$BACKUP_DIR/pathocore-api-database.sql"
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T mepram_omop_api_db sh -c \
+  'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  > "$BACKUP_DIR/mepram-omop-api-database.sql"
 ```
 
 Localizar y exportar cada volumen no reconstruible declarado en la tabla:
@@ -322,8 +327,6 @@ Si no son compatibles, detener escrituras y restaurar el punto completo:
 
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml down
-mysql --host=<db-host> --port=<db-port> --user=<db-user> --password \
-  <db-name> < "$BACKUP_DIR/database.sql"
 podman volume import <volumen-documents> "$BACKUP_DIR/documents.tar"
 podman volume import <volumen-static> "$BACKUP_DIR/static.tar"
 tar -C /srv/containers/bind -xzf "$BACKUP_DIR/bind-mounts.tar.gz"
@@ -335,11 +338,25 @@ install -m 0600 "$BACKUP_DIR/apache_production_settings.txt" deployment/settings
 install -m 0600 "$BACKUP_DIR/keycloak_production_settings.txt" deployment/settings/keycloak_production_settings.txt
 bash container_install.sh --action fix-permissions --engine podman \
   --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
-# Arrancar solo la base de datos, esperar readiness y restaurar su dump logico.
-podman compose --env-file .env.production.file -f docker-compose.prod.yml up -d keycloak_db
-until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T keycloak_db sh -c \
-  'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
+# Arrancar solo las bases de datos y esperar readiness antes de restaurar.
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  up -d pathocore_api_db mepram_omop_api_db keycloak_db
+for service in pathocore_api_db mepram_omop_api_db keycloak_db; do
+  until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+    exec -T "$service" sh -c \
+    'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
+  podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+    exec -T "$service" sh -c \
+    'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
+done
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T pathocore_api_db sh -c \
+  'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  < "$BACKUP_DIR/pathocore-api-database.sql"
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T mepram_omop_api_db sh -c \
+  'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  < "$BACKUP_DIR/mepram-omop-api-database.sql"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   exec -T keycloak_db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
@@ -352,6 +369,11 @@ anotada en `git-revision.txt`. `fix-permissions` regenera
 add-on. Arrancar y validar antes de reabrir el servicio. Los volumenes deben
 existir y estar vacios antes de `podman volume import`; recrearlos con Compose
 cuando sea necesario.
+
+La recreacion de esquemas del bloque anterior es destructiva y solo se ejecuta
+durante una restauracion completa declarada, despues de preservar el estado
+actual. Un rollback compatible de solo aplicacion conserva los tres volumenes
+de base de datos sin reinicializarlos.
 
 ## Reparar permisos
 
