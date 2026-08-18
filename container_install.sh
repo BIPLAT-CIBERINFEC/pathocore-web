@@ -1,331 +1,581 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PATHOCORE_WEB_VERSION="1.0.0"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "$script_dir/deployment/lib/container/common.sh"
+# shellcheck disable=SC1091
+source "$script_dir/deployment/lib/container/django.sh"
 
-usage() {
-cat << 'EOF'
-This script installs the PathoCore Web test stack and can load the two local API databases.
+APP_VERSION="0.1.0"
+APPLICATION_NAME="PathoCore Web"
 
-Usage: $0 [--env_file] [--compose_file] [--pathocore_api_sql] [--mepram_omop_sql] [--engine] [--test]
+# ============================================================================
+# GENERATED SERVICE/ADD-ON CUSTOMIZATION
+# Regenerate these callbacks from the descriptor; keep application-neutral
+# lifecycle mechanics below unchanged.
+# ============================================================================
+install_services=(pathocore_web pathocore_api mepram_omop_api)
+addon_build_services=()
+permission_services=(pathocore_web pathocore_api mepram_omop_api apache keycloak_db keycloak)
+configured_services=(pathocore_web pathocore_api mepram_omop_api apache keycloak)
 
-Options:
-    --env_file              Env file used by compose. Required for production. In test mode, defaults to .env if present, otherwise .env.example
-    --compose_file          Compose file to use. Default with --test: docker-compose.test.yml
-    --pathocore_api_sql     Path to PathoCore API MySQL seed dump (.sql or .sql.gz)
-    --mepram_omop_sql       Path to MePRAM OMOP dashboard.sql imported through Django
-    --skip_pathocore_api_sql
-                            Skip PathoCore API seed import even if --pathocore_api_sql is provided
-    --skip_mepram_omop_sql  Skip MePRAM OMOP SQL import even if --mepram_omop_sql is provided
-    --engine                Container engine to use: docker (default) or podman
-    --test                  Use the test compose file
-
-Examples:
-    Install the full local test stack without loading data:
-    bash $0 --test
-
-    Install the full stack and load both API databases:
-    bash $0 --test \
-      --pathocore_api_sql ../pathocore_api_testing_seed.sql.gz \
-      --mepram_omop_sql ../dashboard.sql
-
-EOF
-}
-
-reset=true
-for arg in "$@"; do
-    if [ -n "${reset:-}" ]; then
-        unset reset
-        set --
-    fi
-    case "$arg" in
-        --env_file)              set -- "$@" -f ;;
-        --compose_file)          set -- "$@" -c ;;
-        --pathocore_api_sql)     set -- "$@" -p ;;
-        --mepram_omop_sql)       set -- "$@" -m ;;
-        --skip_pathocore_api_sql) set -- "$@" -P ;;
-        --skip_mepram_omop_sql)  set -- "$@" -M ;;
-        --engine)                set -- "$@" -e ;;
-        --test)                  set -- "$@" -t ;;
-        --help)                  set -- "$@" -h ;;
-        --version)               set -- "$@" -v ;;
-        *)                       set -- "$@" "$arg" ;;
+default_service_install_conf() {
+    case "$1" in
+        pathocore_web) [ "$mode" = test ] && echo conf/docker_test_settings.txt || echo conf/docker_production_settings.txt ;;
+        pathocore_api) [ "$mode" = test ] && echo ../pathocore-api/conf/docker_test_settings.txt || echo ../pathocore-api/conf/docker_production_settings.txt ;;
+        mepram_omop_api) [ "$mode" = test ] && echo ../mepram-omop-api/conf/docker_test_settings.txt || echo ../mepram-omop-api/conf/docker_production_settings.txt ;;
+        apache) [ "$mode" = test ] && echo conf/apache/apache_test_settings.txt || echo conf/apache/apache_production_settings.txt ;;
+        keycloak) [ "$mode" = test ] && echo conf/keycloak/keycloak_test_settings.txt || echo conf/keycloak/keycloak_production_settings.txt ;;
+        *) return 1 ;;
     esac
-done
-
-compose_file=""
-env_file=""
-pathocore_api_sql=""
-mepram_omop_sql=""
-skip_pathocore_api_sql=false
-skip_mepram_omop_sql=false
-mode="production"
-engine="docker"
-
-ENGINE_CMD=()
-COMPOSE_CMD=()
-
-while getopts ":f:c:p:m:e:PMthv" opt; do
-    case "$opt" in
-        f) env_file="$OPTARG" ;;
-        c) compose_file="$OPTARG" ;;
-        p) pathocore_api_sql="$OPTARG" ;;
-        m) mepram_omop_sql="$OPTARG" ;;
-        e)
-            engine="$OPTARG"
-            if [[ "$engine" != "docker" && "$engine" != "podman" ]]; then
-                echo "Invalid engine '$engine'. Use docker or podman."
-                exit 1
-            fi
-            ;;
-        P) skip_pathocore_api_sql=true ;;
-        M) skip_mepram_omop_sql=true ;;
-        t) mode="test" ;;
-        h) usage; exit 0 ;;
-        v) echo "$PATHOCORE_WEB_VERSION"; exit 0 ;;
-        \?) echo "Invalid option: -$OPTARG" >&2; usage; exit 1 ;;
-        :) echo "Option -$OPTARG requires an argument." >&2; exit 1 ;;
+}
+service_build_context_dir() {
+    case "$1" in
+        pathocore_web) echo . ;;
+        pathocore_api) echo ../pathocore-api ;;
+        mepram_omop_api) echo ../mepram-omop-api ;;
+        *) return 1 ;;
     esac
-done
-shift $((OPTIND - 1))
-
-if [ "$mode" = "test" ]; then
-    compose_file="${compose_file:-docker-compose.test.yml}"
-else
-    compose_file="${compose_file:-docker-compose.prod.yml}"
-fi
-
-if [ -z "$env_file" ]; then
-    if [ "$mode" = "production" ]; then
-        echo "Production deployments require --env_file with a non-committed settings file."
-        exit 1
-    fi
-
-    if [ -f ".env" ]; then
-        env_file=".env"
+}
+service_environment_prefix() {
+    local prefix
+    array_contains "$1" "${install_services[@]}" || return 1
+    prefix="${1^^}"
+    printf '%s\n' "${prefix//-/_}"
+}
+service_environment_value() {
+    local prefix variable
+    prefix="$(service_environment_prefix "$1")" || return 1
+    variable="${prefix}_$2"
+    if [ -n "${!variable:-}" ]; then
+        printf '%s\n' "${!variable}"
+    elif [ "$#" -ge 3 ]; then
+        printf '%s\n' "$3"
     else
-        env_file=".env.example"
-    fi
-fi
-
-if [ ! -f "$compose_file" ]; then
-    echo "Compose file '$compose_file' not found"
-    exit 1
-fi
-
-if [ ! -f "$env_file" ]; then
-    echo "Env file '$env_file' not found"
-    exit 1
-fi
-
-if [ -n "$pathocore_api_sql" ] && [ ! -f "$pathocore_api_sql" ]; then
-    echo "PathoCore API SQL file '$pathocore_api_sql' not found"
-    exit 1
-fi
-
-if [ -n "$mepram_omop_sql" ] && [ ! -f "$mepram_omop_sql" ]; then
-    echo "MePRAM OMOP SQL file '$mepram_omop_sql' not found"
-    exit 1
-fi
-
-set_engine() {
-    if [ "$engine" = "docker" ]; then
-        if ! command -v docker >/dev/null 2>&1; then
-            echo "docker not found. Install docker or use --engine podman."
-            exit 1
-        fi
-        ENGINE_CMD=("docker")
-        COMPOSE_CMD=("docker" "compose")
-    else
-        if ! command -v podman >/dev/null 2>&1; then
-            echo "podman not found. Install podman or use --engine docker."
-            exit 1
-        fi
-        ENGINE_CMD=("podman")
-        if command -v podman-compose >/dev/null 2>&1; then
-            COMPOSE_CMD=("podman-compose")
-        elif podman compose version >/dev/null 2>&1; then
-            COMPOSE_CMD=("podman" "compose")
-        else
-            echo "podman compose not available. Install podman-compose or use --engine docker."
-            exit 1
-        fi
+        die "$variable is required in the rendered service settings"
     fi
 }
-
-engine_exec() {
-    "${ENGINE_CMD[@]}" "$@"
+service_repo_path() {
+    service_environment_value "$1" REPO_PATH
+}
+service_install_path() {
+    service_environment_value "$1" INSTALL_PATH
+}
+service_readiness_path() {
+    case "$1" in
+        pathocore_web) echo /app/.next/BUILD_ID ;;
+        pathocore_api) echo "$(service_install_path "$1")/manage.py" ;;
+        mepram_omop_api) echo "$(service_install_path "$1")/manage.py" ;;
+        *) return 1 ;;
+    esac
+}
+service_image_name() {
+    case "$1" in
+        pathocore_web) echo pathocore-web:local ;;
+        pathocore_api) echo pathocore-api:local ;;
+        mepram_omop_api) echo mepram-omop-api:local ;;
+        *) return 1 ;;
+    esac
+}
+service_profile() {
+    case "$1" in
+        pathocore_web) echo nextjs ;;
+        pathocore_api) echo django ;;
+        mepram_omop_api) echo django ;;
+        *) return 1 ;;
+    esac
+}
+service_dockerfile() {
+    case "$1" in
+        pathocore_web) echo Dockerfile ;;
+        pathocore_api) echo Dockerfile ;;
+        mepram_omop_api) echo Dockerfile ;;
+        *) return 1 ;;
+    esac
+}
+service_container_install_conf() {
+    case "$1" in
+        pathocore_api) echo conf/.runtime_install_settings.txt ;;
+        mepram_omop_api) echo conf/.runtime_install_settings.txt ;;
+        *) return 1 ;;
+    esac
+}
+service_uid() {
+    service_environment_value "$1" APP_UID
+}
+service_gid() {
+    service_environment_value "$1" APP_GID
 }
 
-compose_exec() {
-    "${COMPOSE_CMD[@]}" --env-file "$env_file" -f "$compose_file" "$@"
+prepare_compose_environment() {
+    local -a settings_sources=(
+        "PATHOCORE_WEB|${install_conf_host_by_service[pathocore_web]}"
+        "PATHOCORE_API|${install_conf_host_by_service[pathocore_api]}"
+        "MEPRAM_OMOP_API|${install_conf_host_by_service[mepram_omop_api]}"
+        "|${install_conf_host_by_service[apache]}"
+        "|${install_conf_host_by_service[keycloak]}"
+    )
+    local -a deployment_values=(
+        "GIT_REVISION|$git_revision"
+        "PATHOCORE_WEB_IMAGE|pathocore-web:local"
+        "PATHOCORE_API_IMAGE|pathocore-api:local"
+        "MEPRAM_OMOP_API_IMAGE|mepram-omop-api:local"
+    )
+    compose_env_file="$script_dir/.env.${mode}.file"
+    write_compose_environment_file "$compose_env_file" settings_sources deployment_values
 }
 
-read_env_value() {
-    local key="$1"
-    local default_value="$2"
-    local value=""
+# Every project uses the generated interpolation file in both modes because it
+# combines service-specific settings sources with collision-safe prefixes.
+deployment_compose() {
+    compose_exec --env-file "$compose_env_file" "$@"
+}
+current_service_container() {
+    resolve_service_container "$1"
+}
 
-    value="$(grep -E "^[[:space:]]*${key}=" "$env_file" | tail -n 1 | cut -d= -f2- || true)"
-    value="${value%%#*}"
-    value="$(printf '%s' "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-    value="${value%\"}"
-    value="${value#\"}"
-    value="${value%\'}"
-    value="${value#\'}"
+print_service_summary() {
+    echo
+    echo "Running services and published ports:"
+    deployment_compose -f "$compose_file" ps
+}
 
-    if [ -z "$value" ]; then
-        printf '%s' "$default_value"
-    else
-        printf '%s' "$value"
+# Each Django service renders its own protected host settings bind. React
+# services and add-ons have no Django settings source.
+prepare_application_host_sources() {
+    local settings_output
+    if [ "$mode" = production ]; then
+        settings_output="$(service_environment_value pathocore_api DJANGO_SETTINGS_PATH)"
+        [ -n "$settings_output" ] || { echo "DJANGO_SETTINGS_PATH is required for pathocore_api" >&2; return 1; }
+        mkdir -p "$(dirname "$settings_output")"
+        prepare_django_settings_bind_mount ../pathocore-api/conf/template_settings.py "$settings_output" "${install_conf_host_by_service[pathocore_api]}"
     fi
-}
-
-service_container_id() {
-    compose_exec ps -q "$1" | head -n 1
-}
-
-service_exists() {
-    local service="$1"
-    local listed_service=""
-
-    while IFS= read -r listed_service; do
-        if [ "$listed_service" = "$service" ]; then
-            return 0
-        fi
-    done < <(compose_exec config --services 2>/dev/null)
-
-    return 1
-}
-
-wait_for_service() {
-    local service="$1"
-    local attempts="${2:-120}"
-    local container_id=""
-    local running=""
-    local health=""
-
-    if ! service_exists "$service"; then
-        echo "Service '$service' is not defined in $compose_file"
-        exit 1
+    if [ "$mode" = production ]; then
+        settings_output="$(service_environment_value mepram_omop_api DJANGO_SETTINGS_PATH)"
+        [ -n "$settings_output" ] || { echo "DJANGO_SETTINGS_PATH is required for mepram_omop_api" >&2; return 1; }
+        mkdir -p "$(dirname "$settings_output")"
+        prepare_django_settings_bind_mount ../mepram-omop-api/conf/template_settings.py "$settings_output" "${install_conf_host_by_service[mepram_omop_api]}"
     fi
+    # conf/apache contains the application-owned Apache sources. Render every
+    # deployment value only after the protected settings environment is loaded,
+    # then expose the completed files as Compose bind sources.
+    local apache_source_dir="$script_dir/conf/apache"
+    local apache_output_dir="$script_dir/deployment/apache"
+    local apache_conf_name apache_config_service apache_log_path
+    apache_config_service=pathocore_web
+    [ -d "$apache_source_dir" ] || {
+        echo "Apache source configuration directory not found: $apache_source_dir" >&2
+        return 1
+    }
+    mkdir -p "$apache_output_dir"
 
-    while [ "$attempts" -gt 0 ]; do
-        container_id="$(service_container_id "$service")"
-        if [ -n "$container_id" ]; then
-            running="$(engine_exec inspect -f '{{.State.Running}}' "$container_id" 2>/dev/null || true)"
-            health="$(engine_exec inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$container_id" 2>/dev/null || true)"
-            if [ "$running" = "true" ] && { [ "$health" = "healthy" ] || [ "$health" = "running" ]; }; then
-                return 0
-            fi
-        fi
-        attempts=$((attempts - 1))
-        sleep 2
+    export APACHE_SERVER_NAME="${APACHE_SERVER_NAME:?APACHE_SERVER_NAME is required}"
+    export APACHE_UPSTREAM_SERVICE="${APACHE_UPSTREAM_SERVICE:-$apache_config_service}"
+    export APACHE_UPSTREAM_PORT="${APACHE_UPSTREAM_PORT:-$(service_environment_value "$apache_config_service" APP_PORT)}"
+    # For the default route, INSTALL_PATH means the service selected by
+    # ADDONS.apache.CONFIG_SERVICE. Multi-service routes use their explicit
+    # API_INSTALL_PATH, WEB_INSTALL_PATH, etc. values instead.
+    export INSTALL_PATH="$(service_install_path "$apache_config_service")"
+    export APACHE_PROXY_TIMEOUT="${APACHE_PROXY_TIMEOUT:-$(service_environment_value "$apache_config_service" GUNICORN_TIMEOUT 120)}"
+    export APACHE_LOG_STEM="${APACHE_LOG_STEM:-$(normalize_apache_server_name "$APACHE_SERVER_NAME")}"
+
+    for apache_conf_name in 00-logs.conf 01-reverse-proxy.conf 02-server-status.conf; do
+        [ -f "$apache_source_dir/$apache_conf_name" ] || {
+            echo "Apache source configuration not found: $apache_source_dir/$apache_conf_name" >&2
+            return 1
+        }
+        render_environment_config_template \
+            "$apache_source_dir/$apache_conf_name" \
+            "$apache_output_dir/$apache_conf_name" 0644 || return 1
     done
 
-    echo "Service '$service' did not become ready."
-    if [ -n "$container_id" ]; then
-        engine_exec logs --tail 200 "$container_id" || true
+    # Production bind-mounts Apache logs from the host; tests use a named volume.
+    if [ "$mode" = production ]; then
+        apache_log_path="${APACHE_LOG_PATH:?APACHE_LOG_PATH is required}"
+        mkdir -p "$apache_log_path"
     fi
-    exit 1
+    # Keep repository-owned realm JSON immutable. Stage it into the deployment
+    # bind tree before Compose validates and starts the Keycloak container.
+    local keycloak_realm_source_path keycloak_import_path realm_source realm_target
+    keycloak_realm_source_path="${KEYCLOAK_REALM_SOURCE_PATH:?KEYCLOAK_REALM_SOURCE_PATH is required}"
+    keycloak_import_path="${KEYCLOAK_IMPORT_PATH:?KEYCLOAK_IMPORT_PATH is required}"
+    [[ "$keycloak_realm_source_path" == /* ]] || keycloak_realm_source_path="$script_dir/$keycloak_realm_source_path"
+    [[ "$keycloak_import_path" == /* ]] || keycloak_import_path="$script_dir/$keycloak_import_path"
+    compgen -G "$keycloak_realm_source_path/*.json" >/dev/null || {
+        echo "Keycloak realm source JSON not found in $keycloak_realm_source_path" >&2
+        return 1
+    }
+    mkdir -p "$keycloak_import_path"
+    for realm_source in "$keycloak_realm_source_path"/*.json; do
+        realm_target="$keycloak_import_path/$(basename "$realm_source")"
+        copy_with_podman_fallback "$realm_source" "$realm_target" || return 1
+    done
 }
 
-import_pathocore_api_sql() {
-    local sql_path="$1"
-    local db_user db_password db_name
-
-    db_user="$(read_env_value DB_USER pathocore)"
-    db_password="$(read_env_value DB_PASSWORD pathocore_password)"
-    db_name="$(read_env_value DB_NAME pathocore_api)"
-
-    echo "Importing PathoCore API SQL into service pathocore_db database '$db_name'"
-    if [[ "$sql_path" == *.gz ]]; then
-        gzip -dc "$sql_path" | compose_exec exec -T pathocore_db mysql -u"$db_user" -p"$db_password" "$db_name"
-    else
-        compose_exec exec -T pathocore_db mysql -u"$db_user" -p"$db_password" "$db_name" < "$sql_path"
-    fi
+# Apply the same permission workflow in test and production. Keep one
+# independently reviewable specification per application and selected add-on;
+# the shared helper skips paths that are not used by the active mode.
+prepare_host_bind_source_permissions() {
+    local log_path settings_path uid gid
+    log_path="$(service_environment_value pathocore_api HOST_LOG_PATH)"
+    settings_path="$(service_environment_value pathocore_api DJANGO_SETTINGS_PATH)"
+    [ -n "$log_path" ] || { echo "HOST_LOG_PATH is required for pathocore_api" >&2; return 1; }
+    [ -n "$settings_path" ] || { echo "DJANGO_SETTINGS_PATH is required for pathocore_api" >&2; return 1; }
+    uid="$(service_uid pathocore_api)"; gid="$(service_gid pathocore_api)"
+    local -a pathocore_api_host_bind_permission_spec=(
+        "$log_path|$uid:$gid|0775"
+        "$(dirname "$settings_path")|-|0755"
+        "$settings_path|$uid:$gid|0664"
+    )
+    apply_host_permission_spec "${pathocore_api_host_bind_permission_spec[@]}"
+    log_path="$(service_environment_value mepram_omop_api HOST_LOG_PATH)"
+    settings_path="$(service_environment_value mepram_omop_api DJANGO_SETTINGS_PATH)"
+    [ -n "$log_path" ] || { echo "HOST_LOG_PATH is required for mepram_omop_api" >&2; return 1; }
+    [ -n "$settings_path" ] || { echo "DJANGO_SETTINGS_PATH is required for mepram_omop_api" >&2; return 1; }
+    uid="$(service_uid mepram_omop_api)"; gid="$(service_gid mepram_omop_api)"
+    local -a mepram_omop_api_host_bind_permission_spec=(
+        "$log_path|$uid:$gid|0775"
+        "$(dirname "$settings_path")|-|0755"
+        "$settings_path|$uid:$gid|0664"
+    )
+    apply_host_permission_spec "${mepram_omop_api_host_bind_permission_spec[@]}"
+    # Generated proxy configuration is read-only in Apache. Its host files need
+    # traversal/read permissions, while the configured log source must be writable.
+    apache_log_path="${APACHE_LOG_PATH:?APACHE_LOG_PATH is required}"
+    local -a apache_host_bind_permission_spec=(
+        "$script_dir/deployment/apache|-|0755"
+        "$script_dir/deployment/apache/00-logs.conf|-|0644"
+        "$script_dir/deployment/apache/01-reverse-proxy.conf|-|0644"
+        "$script_dir/deployment/apache/02-server-status.conf|-|0644"
+        # registry.access.redhat.com/ubi9/httpd-24 runs as UID 1001 with GID 0.
+        # The shared helper applies these IDs directly for Docker and through
+        # podman unshare when the bind source belongs to a rootless userns.
+        "$apache_log_path|1001:0|0775"
+    )
+    apply_host_permission_spec "${apache_host_bind_permission_spec[@]}"
+    # Realm imports contain deployment configuration and may contain sensitive
+    # client data. Keep the directory traversable and every JSON file non-public.
+    local keycloak_import_path
+    keycloak_import_path="${KEYCLOAK_IMPORT_PATH:?KEYCLOAK_IMPORT_PATH is required}"
+    [[ "$keycloak_import_path" == /* ]] || keycloak_import_path="$script_dir/$keycloak_import_path"
+    local -a keycloak_host_bind_permission_spec=(
+        "$keycloak_import_path|-|0755"
+    )
+    for realm_file in "$keycloak_import_path"/*.json; do
+        keycloak_host_bind_permission_spec+=("$realm_file|1000:0|0640")
+    done
+    apply_host_permission_spec "${keycloak_host_bind_permission_spec[@]}"
 }
 
-ensure_pathocore_api_superuser() {
-    local username email password
-
-    username="$(read_env_value DJANGO_SUPERUSER_USERNAME admin)"
-    email="$(read_env_value DJANGO_SUPERUSER_EMAIL admin@example.org)"
-    password="$(read_env_value DJANGO_SUPERUSER_PASSWORD admin_pass)"
-
-    echo "Ensuring Django superuser '$username' after PathoCore API seed import"
-    compose_exec exec -T pathocore_api bash -lc \
-        "cd /opt/pathocore-api && virtualenv/bin/python manage.py ensure_default_superuser --username '$username' --email '$email' --password '$password'"
+# Keep a separate running-mount specification in every service/add-on case.
+prepare_running_container_mount_permissions() {
+    local service_name="$1" container_id="$2"
+    local install_path uid gid
+    case "$service_name" in
+        pathocore_web) return 0 ;; # immutable Next.js runtime
+        pathocore_api)
+            install_path="$(service_install_path "$service_name")"
+            uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
+            local -a pathocore_api_running_mount_permission_spec=(
+                "$install_path/logs|$uid:$gid|u+rwX,g+rwX"
+                "$install_path/documents|$uid:$gid|u+rwX,g+rwX"
+                "$install_path/static|$uid:$gid|u+rwX,g+rwX,o+rX"
+            )
+            apply_container_directory_permission_spec "$container_id" "${pathocore_api_running_mount_permission_spec[@]}"
+            prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
+            ;;
+        mepram_omop_api)
+            install_path="$(service_install_path "$service_name")"
+            uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
+            local -a mepram_omop_api_running_mount_permission_spec=(
+                "$install_path/logs|$uid:$gid|u+rwX,g+rwX"
+                "$install_path/documents|$uid:$gid|u+rwX,g+rwX"
+                "$install_path/static|$uid:$gid|u+rwX,g+rwX,o+rX"
+            )
+            apply_container_directory_permission_spec "$container_id" "${mepram_omop_api_running_mount_permission_spec[@]}"
+            prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
+            ;;
+        apache)
+            # Apache currently needs no ownership repair inside its running
+            # container. Keep an explicit add-on policy ready for future mounts.
+            local -a apache_running_mount_permission_spec=()
+            apply_container_directory_permission_spec "$container_id" "${apache_running_mount_permission_spec[@]}"
+            ;;
+        keycloak)
+            # Realm imports are read-only, so the Keycloak container currently
+            # has no writable mount requiring an in-container ownership repair.
+            local -a keycloak_running_mount_permission_spec=()
+            apply_container_directory_permission_spec "$container_id" "${keycloak_running_mount_permission_spec[@]}"
+            ;;
+        keycloak_db)
+            # The persistent MySQL volume must remain owned by the UID/GID used
+            # by the database image, including after restoring or moving data.
+            local -a keycloak_db_running_mount_permission_spec=(
+                "/var/lib/mysql|999:999|u+rwX,g+rwX,o-rwx"
+            )
+            apply_container_directory_permission_spec "$container_id" "${keycloak_db_running_mount_permission_spec[@]}"
+            ;;
+        *) return 0 ;;
+    esac
 }
 
-ensure_pathocore_api_seed_migrations() {
-    local db_user db_password db_name
-
-    db_user="$(read_env_value DB_USER pathocore)"
-    db_password="$(read_env_value DB_PASSWORD pathocore_password)"
-    db_name="$(read_env_value DB_NAME pathocore_api)"
-
-    echo "Ensuring PathoCore API seed migration state"
-    compose_exec exec -T pathocore_db mysql -u"$db_user" -p"$db_password" "$db_name" -e "
-        INSERT IGNORE INTO django_migrations (app, name, applied)
-        VALUES
-            ('core', '0009_alter_schema_user_name_nullable', NOW()),
-            ('core', '0010_remove_unused_metadata_models', NOW()),
-            ('core', '0011_access_request', NOW()),
-            ('core', '0012_access_request_revoked_status', NOW());
-    "
+bootstrap_service() {
+    local service_name="$1" container_id="$2" deployment_action="$3"
+    local repo_path runtime_conf uid gid status
+    local -a args
+    case "$service_name" in
+        pathocore_web) return 0 ;; # no runtime bootstrap
+        pathocore_api)
+            repo_path="$(service_repo_path "$service_name")"
+            # Fixed temporary in-container path; this is not operator configuration.
+            runtime_conf=conf/.runtime_install_settings.txt
+            [[ "$runtime_conf" == /* ]] || runtime_conf="$repo_path/$runtime_conf"
+            uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
+            stage_container_runtime_config "$container_id" "${install_conf_host_by_service[$service_name]}" "$runtime_conf" "$uid" "$gid"
+            args=(--bootstrap "$deployment_action" --git_revision "$git_revision" --conf "$runtime_conf" --skip_apache_restart)
+            [ "$load_tables" = false ] || args+=(--tables)
+            [ "$skip_tables" = false ] || args+=(--skip_tables)
+            for hook in "${migration_script_before[@]}"; do args+=(--script_before "$hook"); done
+            for hook in "${migration_script_after[@]}"; do args+=(--script_after "$hook"); done
+            status=0; engine_exec exec "$container_id" bash "$repo_path/install.sh" "${args[@]}" || status=$?
+            [ "$mode" = test ] || remove_container_runtime_config "$container_id" "$runtime_conf" || true
+            return "$status"
+            ;;
+        mepram_omop_api)
+            repo_path="$(service_repo_path "$service_name")"
+            # Fixed temporary in-container path; this is not operator configuration.
+            runtime_conf=conf/.runtime_install_settings.txt
+            [[ "$runtime_conf" == /* ]] || runtime_conf="$repo_path/$runtime_conf"
+            uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
+            stage_container_runtime_config "$container_id" "${install_conf_host_by_service[$service_name]}" "$runtime_conf" "$uid" "$gid"
+            args=(--bootstrap "$deployment_action" --git_revision "$git_revision" --conf "$runtime_conf" --skip_apache_restart)
+            [ "$load_tables" = false ] || args+=(--tables)
+            [ "$skip_tables" = false ] || args+=(--skip_tables)
+            for hook in "${migration_script_before[@]}"; do args+=(--script_before "$hook"); done
+            for hook in "${migration_script_after[@]}"; do args+=(--script_after "$hook"); done
+            status=0; engine_exec exec "$container_id" bash "$repo_path/install.sh" "${args[@]}" || status=$?
+            [ "$mode" = test ] || remove_container_runtime_config "$container_id" "$runtime_conf" || true
+            return "$status"
+            ;;
+        *) return 0 ;;
+    esac
 }
 
-import_mepram_omop_sql() {
-    local sql_path="$1"
-    local container_id=""
-    local container_path="/data/dashboard.sql"
-
-    container_id="$(service_container_id mepram_omop_api)"
-    if [ -z "$container_id" ]; then
-        echo "Unable to resolve container for service mepram_omop_api"
-        exit 1
-    fi
-
-    echo "Copying MePRAM OMOP SQL into service mepram_omop_api"
-    compose_exec exec -T mepram_omop_api mkdir -p /data
-    engine_exec cp "$sql_path" "${container_id}:${container_path}"
-
-    echo "Importing MePRAM OMOP SQL through Django management command"
-    compose_exec exec -T mepram_omop_api python manage.py import_dashboard_sql "$container_path" --truncate
+# Applications with disposable fixtures or demo files customize this callback
+# in their generated wrapper and set application_supports_test_data=true. Keep
+# application-specific fixture names, users/groups, downloads, and data-service
+# layout here so the complete data-loading workflow remains readable in one file.
+application_supports_test_data=false
+load_test_deployment_data() {
+    die "Test/demo data loading is not implemented for $APPLICATION_NAME"
 }
 
-set_engine
+action="install"; mode="production"; engine="docker"; git_revision="current"
+install_conf=""; compose_file=""; compose_env_file=""
+install_conf_map_entries=(); migration_script_before=(); migration_script_after=()
+demo_data=""; skip_demo_data=""; skip_test_data=""
+load_tables=false; skip_tables=false
 
-echo "Deploying PathoCore Web stack"
-echo "  compose: $compose_file"
-echo "  env:     $env_file"
-compose_exec build
-compose_exec up -d --remove-orphans
+usage() {
+    cat <<'EOF'
+Install, upgrade, or repair the application deployment.
 
-for service in keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web; do
-    echo "Waiting for service: $service"
-    wait_for_service "$service" 120
+Options:
+  --action install|upgrade|fix-permissions
+  --test
+  --engine docker|podman
+  --git_revision <branch|tag|commit|current>
+  --install_conf <path>              First application service only.
+  --install_conf_map <component,path>  Repeat for application and add-on overrides.
+  --compose_file <path>
+  --script_before <name[,args]>
+  --script_after <name[,args]>
+  --script <name[,args]>
+  --tables                          Load initial tables; opt-in on upgrades.
+  --skip_tables                     Skip initial tables on a fresh install.
+  --demo_data <path>                 Import application demo data on install.
+  --skip_demo_data
+  --skip_test_data
+  --help
+  --version
+EOF
+}
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+# 1. Parse the canonical outer-installer interface.
+while (($#)); do
+    case "$1" in
+        --action) action="${2:-}"; shift 2 ;;
+        --test) mode="test"; shift ;;
+        --engine) engine="${2:-}"; shift 2 ;;
+        --git_revision) git_revision="${2:-}"; shift 2 ;;
+        --install_conf) install_conf="${2:-}"; shift 2 ;;
+        --install_conf_map) install_conf_map_entries+=("${2:-}"); shift 2 ;;
+        --compose_file) compose_file="${2:-}"; shift 2 ;;
+        --script_before) migration_script_before+=("${2:-}"); shift 2 ;;
+        --script_after|--script) migration_script_after+=("${2:-}"); shift 2 ;;
+        --tables) load_tables=true; skip_tables=false; shift ;;
+        --skip_tables) skip_tables=true; load_tables=false; shift ;;
+        --demo_data) demo_data="${2:-}"; shift 2 ;;
+        --skip_demo_data) skip_demo_data=true; shift ;;
+        --skip_test_data) skip_test_data=true; shift ;;
+        --help) usage; exit 0 ;;
+        --version) echo "$APP_VERSION"; exit 0 ;;
+        *) die "Unknown option: $1" ;;
+    esac
 done
 
-if [ -n "$pathocore_api_sql" ] && [ "$skip_pathocore_api_sql" = false ]; then
-    import_pathocore_api_sql "$pathocore_api_sql"
-    ensure_pathocore_api_seed_migrations
-    ensure_pathocore_api_superuser
+# 2. Validate arguments before modifying deployment state.
+[[ "$action" =~ ^(install|upgrade|fix-permissions)$ ]] || die "Invalid action: $action"
+[[ "$engine" =~ ^(docker|podman)$ ]] || die "Invalid engine: $engine"
+if [ -n "$demo_data" ] && [ "$application_supports_test_data" != true ]; then
+    die "--demo_data is not implemented for $APPLICATION_NAME"
+fi
+if [ -n "$demo_data" ]; then
+    [ -f "$demo_data" ] || die "Demo-data file not found: $demo_data"
+    demo_data="$(cd "$(dirname "$demo_data")" && pwd)/$(basename "$demo_data")"
+fi
+# Test installs may use application defaults. Production remains strictly
+# opt-in, loads only an explicitly supplied demo file, and never enables test
+# fixtures alongside it.
+if [ "$mode" = test ] && [ "$action" = install ] \
+    && [ "$application_supports_test_data" = true ]; then
+    skip_demo_data="${skip_demo_data:-false}"
+    skip_test_data="${skip_test_data:-false}"
+elif [ "$action" = install ] && [ -n "$demo_data" ] \
+    && [ "$application_supports_test_data" = true ]; then
+    skip_demo_data="${skip_demo_data:-false}"
+    skip_test_data=true
 else
-    echo "Skipping PathoCore API SQL import"
+    skip_demo_data=true
+    skip_test_data=true
 fi
 
-if [ -n "$mepram_omop_sql" ] && [ "$skip_mepram_omop_sql" = false ]; then
-    import_mepram_omop_sql "$mepram_omop_sql"
-else
-    echo "Skipping MePRAM OMOP SQL import"
+# 3. Resolve one protected configuration source per configured component.
+cd "$script_dir"
+declare -A install_conf_host_by_service=()
+for service_name in "${configured_services[@]}"; do
+    install_conf_host_by_service["$service_name"]="$(default_service_install_conf "$service_name")"
+done
+if [ -n "$install_conf" ]; then install_conf_host_by_service["${install_services[0]}"]="$install_conf"; fi
+for mapping in "${install_conf_map_entries[@]}"; do
+    [[ "$mapping" == *,* ]] || die "Invalid --install_conf_map: $mapping"
+    service_name="${mapping%%,*}"; path="${mapping#*,}"
+    array_contains "$service_name" "${configured_services[@]}" || die "Unknown mapped component: $service_name"
+    install_conf_host_by_service["$service_name"]="$path"
+done
+for service_name in "${configured_services[@]}"; do
+    path="${install_conf_host_by_service[$service_name]}"
+    [[ "$path" = /* ]] || path="$script_dir/$path"
+    [ -f "$path" ] || die "Configuration for $service_name not found: $path"
+    if [ "$mode" = production ] \
+        && grep -Eq '^[A-Z0-9_]+=.*CHANGE_ME' "$path"; then
+        die "Production configuration for $service_name contains CHANGE_ME: $path"
+    fi
+    install_conf_host_by_service["$service_name"]="$(cd "$(dirname "$path")" && pwd)/$(basename "$path")"
+done
+
+# 4. Select the engine, prepare host sources and validate the final Compose model.
+set_engine "$engine"
+compose_file="${compose_file:-docker-compose.$([ "$mode" = test ] && echo test || echo prod).yml}"
+require_compose_file "$compose_file"
+prepare_compose_environment
+load_compose_environment_file "$compose_env_file"
+prepare_application_host_sources
+prepare_host_bind_source_permissions
+deployment_compose -f "$compose_file" config \
+    || die "Compose configuration validation failed: $compose_file"
+
+# 5. Dispatch permission-only repair without building or bootstrapping.
+if [ "$action" = fix-permissions ]; then
+    for service_name in "${permission_services[@]}"; do
+        container_id="$(current_service_container "$service_name" 2>/dev/null || true)"
+        [ -z "$container_id" ] || prepare_running_container_mount_permissions "$service_name" "$container_id"
+    done
+    echo "Permissions repaired without build or bootstrap."
+    exit 0
 fi
 
-echo "Installation completed"
-echo "Running services and published ports:"
-compose_exec ps
-echo "  Web:              http://127.0.0.1:$(read_env_value PATHOCORE_WEB_PORT 3000)"
-echo "  PathoCore API:    http://127.0.0.1:$(read_env_value PATHOCORE_API_PORT 8000)"
-echo "  MePRAM OMOP API:  http://127.0.0.1:$(read_env_value MEPRAM_OMOP_API_PORT 8100)"
-echo "  Keycloak:         http://127.0.0.1:$(read_env_value KEYCLOAK_PORT 8080)"
+# 6. Build application services in declared order. Production builds use the
+# engine directly: Django receives its settings as
+# an ephemeral build secret, while React receives only its public VITE value.
+# This avoids requiring Compose implementations to support build.secrets.
+for service_name in "${install_services[@]}"; do
+    if [ "$mode" = test ]; then
+        deployment_compose -f "$compose_file" build --no-cache "$service_name"
+        continue
+    fi
+    context="$(service_build_context_dir "$service_name")"
+    dockerfile="$(service_dockerfile "$service_name")"
+    profile="$(service_profile "$service_name")"
+    if [ "$profile" = django ]; then
+        engine_build --no-cache --file "$context/$dockerfile" \
+            --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
+            --build-arg GIT_REVISION="$git_revision" \
+            --build-arg INSTALL_CONF="$(service_container_install_conf "$service_name")" \
+            --build-arg USE_INSTALL_CONF_SECRET=true \
+            --build-arg RENDER_DJANGO_SETTINGS=false \
+            --build-arg APP_REPO_PATH="$(service_repo_path "$service_name")" \
+            --build-arg APP_INSTALL_PATH="$(service_install_path "$service_name")" \
+            --build-arg APP_PORT="$(service_environment_value "$service_name" APP_PORT)" \
+            --build-arg APP_UID="$(service_uid "$service_name")" \
+            --build-arg APP_GID="$(service_gid "$service_name")" \
+            --tag "$(service_image_name "$service_name")" "$context"
+    else
+        vite_api_url="$(service_environment_value "$service_name" VITE_API_BASE_URL)"
+        engine_build --no-cache --file "$context/$dockerfile" \
+            --build-arg GIT_REVISION="$git_revision" \
+            --build-arg VITE_API_BASE_URL="$vite_api_url" \
+            --tag "$(service_image_name "$service_name")" "$context"
+    fi
+done
+# Build add-on images through Compose so their declared build arguments and
+# add-on-owned Dockerfiles remain the single source of truth.
+for service_name in "${addon_build_services[@]}"; do
+    deployment_compose -f "$compose_file" build --no-cache "$service_name"
+done
+# 7. Recreate and start the complete topology from one Compose invocation so
+# freshly built images and the current configuration are deployed consistently.
+# Named volumes and bind-mounted persistent data are preserved.
+deployment_compose -f "$compose_file" up -d --force-recreate
+
+# 8. Wait for every application service readiness contract.
+for service_name in "${install_services[@]}"; do
+    container_id="$(current_service_container "$service_name")"
+    [ -n "$container_id" ] || die "Unable to resolve $service_name container"
+    ensure_service_running "$service_name" "$container_id" >/dev/null
+    readiness_path="$(service_readiness_path "$service_name")"
+    deadline=$((SECONDS + 120))
+    until engine_exec exec "$container_id" test -f "$readiness_path"; do
+        ((SECONDS < deadline)) || { engine_exec logs --tail 200 "$container_id"; die "$service_name readiness timeout"; }
+        sleep 2
+    done
+done
+
+# 9. Repair running mounts for applications and selected add-ons.
+for service_name in "${permission_services[@]}"; do
+    container_id="$(current_service_container "$service_name")"
+    prepare_running_container_mount_permissions "$service_name" "$container_id"
+done
+
+# 10. Bootstrap only application profiles that require runtime bootstrap.
+for service_name in "${install_services[@]}"; do
+    container_id="$(current_service_container "$service_name")"
+    bootstrap_service "$service_name" "$container_id" "$action" || die "$service_name bootstrap failed"
+done
+
+# 11. Load application-owned data for a fresh test install, or for an explicit
+# production --demo_data request. Production never imports data implicitly.
+if [ "$action" = install ] \
+    && [ "$application_supports_test_data" = true ] \
+    && { [ "$mode" = test ] || [ -n "$demo_data" ]; }; then
+    load_test_deployment_data
+fi
+
+# 12. Execute the common smoke dispatcher with generated profile checks.
+smoke_args=(--engine "$engine" --compose_file "$compose_file" --env_file "$compose_env_file")
+[ "$mode" = test ] && smoke_args+=(--test)
+bash "$script_dir/scripts/smoke_test.sh" "${smoke_args[@]}"
+echo "$action completed successfully for $APPLICATION_NAME."
+print_service_summary

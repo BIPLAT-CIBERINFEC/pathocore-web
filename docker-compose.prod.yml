@@ -1,253 +1,169 @@
 services:
-  pathocore_db:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: ${DB_NAME:-pathocore_api}
-      MYSQL_USER: ${DB_USER:-pathocore}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-pathocore_password}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change_me_root}
-    expose:
-      - "3306"
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
-    volumes:
-      - pathocore_db_data:/var/lib/mysql
-
-  keycloak_db:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: ${KEYCLOAK_DB_NAME:-keycloak}
-      MYSQL_USER: ${KEYCLOAK_DB_USER:-keycloak}
-      MYSQL_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
-      MYSQL_ROOT_PASSWORD: ${KEYCLOAK_DB_ROOT_PASSWORD:-change_me_root}
-    expose:
-      - "3306"
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
-    volumes:
-      - keycloak_db_data:/var/lib/mysql
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.6.1
-    command:
-      - start
-      - --import-realm
-    restart: unless-stopped
-    depends_on:
-      keycloak_db:
-        condition: service_healthy
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?KC_BOOTSTRAP_ADMIN_PASSWORD is required}
-      KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://keycloak_db:3306/${KEYCLOAK_DB_NAME:-keycloak}?useSSL=false&allowPublicKeyRetrieval=true
-      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
-      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
-      KC_HEALTH_ENABLED: "true"
-      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:?KEYCLOAK_PUBLIC_URL is required}
-      KC_HOSTNAME_STRICT: "true"
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY_HEADERS: xforwarded
-    expose:
-      - "8080"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8080'"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 90s
-    volumes:
-      - ./keycloak/tmp-import:/opt/keycloak/data/import:ro,z
-
-  pathocore_api:
-    build:
-      context: ../pathocore-api
-      args:
-        GIT_REVISION: ${PATHOCORE_API_GIT_REVISION:-main}
-        INSTALL_CONF: ${PATHOCORE_API_INSTALL_CONF:-conf/docker_production_settings.txt}
-    command: ["bash", "/usr/local/bin/pathocore-api-start.sh"]
-    restart: unless-stopped
-    depends_on:
-      pathocore_db:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
-    environment:
-      APP_INSTALL_PATH: /opt/pathocore-api
-      APP_REPO_PATH: /srv/pathocore-api
-      APP_PORT: 8000
-      DB_USER: ${DB_USER:-pathocore}
-      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-      DB_NAME: ${DB_NAME:-pathocore_api}
-      DB_HOST: pathocore_db
-      DB_PORT: 3306
-      LOCAL_SERVER_IP: ${LOCAL_SERVER_IP:-127.0.0.1}
-      DNS_URL: ${DNS_URL:?DNS_URL is required}
-      PATHOCORE_ENABLE_LEGACY_BASIC_AUTH: ${PATHOCORE_ENABLE_LEGACY_BASIC_AUTH:-false}
-      PATHOCORE_ENABLE_PUBLIC_READ_ENDPOINTS: ${PATHOCORE_ENABLE_PUBLIC_READ_ENDPOINTS:-true}
-      PUBLIC_API_THROTTLE_RATE: ${PUBLIC_API_THROTTLE_RATE:-500/hour}
-      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
-      PATHOCORE_CREATE_DEFAULT_SUPERUSER: ${PATHOCORE_CREATE_DEFAULT_SUPERUSER:-false}
-      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
-      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-}
-      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
-      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:?KEYCLOAK_ISSUER is required}
-      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL:-http://keycloak:8080/realms/ciberisciii_datahub/protocol/openid-connect/certs}
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}
-      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-pathocore-api}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-pathocore-web}
-      KEYCLOAK_JWKS_CACHE_TTL_SECONDS: ${KEYCLOAK_JWKS_CACHE_TTL_SECONDS:-300}
-      KEYCLOAK_JWKS_TIMEOUT_SECONDS: ${KEYCLOAK_JWKS_TIMEOUT_SECONDS:-5}
-      KEYCLOAK_ADMIN_BASE_URL: ${KEYCLOAK_ADMIN_BASE_URL:?KEYCLOAK_ADMIN_BASE_URL is required}
-      KEYCLOAK_ADMIN_TOKEN_REALM: ${KEYCLOAK_ADMIN_TOKEN_REALM:-master}
-      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-admin-cli}
-      KEYCLOAK_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-}
-      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
-      KEYCLOAK_ADMIN_REQUEST_TIMEOUT_SECONDS: ${KEYCLOAK_ADMIN_REQUEST_TIMEOUT_SECONDS:-10}
-      KEYCLOAK_ADMIN_SEND_ACTION_EMAILS: ${KEYCLOAK_ADMIN_SEND_ACTION_EMAILS:-true}
-      KEYCLOAK_ADMIN_ACTION_EMAIL_REDIRECT_URI: ${KEYCLOAK_ADMIN_ACTION_EMAIL_REDIRECT_URI:-}
-      PATHOCORE_ACCESS_REQUEST_ADMIN_EMAILS: ${PATHOCORE_ACCESS_REQUEST_ADMIN_EMAILS:-}
-      EMAIL_HOST: ${EMAIL_HOST:-}
-      EMAIL_PORT: ${EMAIL_PORT:-587}
-      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
-      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
-      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
-      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-no-reply@pathocore.local}
-      DATABROWSER_CACHE_SCHEDULER_ENABLED: ${DATABROWSER_CACHE_SCHEDULER_ENABLED:-true}
-      DATABROWSER_CACHE_REFRESH_WEEKDAY: ${DATABROWSER_CACHE_REFRESH_WEEKDAY:-4}
-      DATABROWSER_CACHE_REFRESH_TIME: ${DATABROWSER_CACHE_REFRESH_TIME:-12:00}
-      DATABROWSER_CACHE_REFRESH_ON_START: ${DATABROWSER_CACHE_REFRESH_ON_START:-false}
-      LOAD_INITIAL_TABLES: ${LOAD_INITIAL_TABLES:-false}
-      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
-      GUNICORN_THREADS: ${GUNICORN_THREADS:-2}
-      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
-      GUNICORN_KEEPALIVE: ${GUNICORN_KEEPALIVE:-5}
-    expose:
-      - "8000"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8000'"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 180s
-    volumes:
-      - ./docker/pathocore-api-start.sh:/usr/local/bin/pathocore-api-start.sh:ro,z
-      - pathocore_api_documents:/opt/pathocore-api/documents:z
-      - ${PATHOCORE_HOST_LOG_DIR:-/var/log/local/pathocore-api/apps}:/opt/pathocore-api/logs:z
-      - pathocore_api_static:/opt/pathocore-api/static:z
-
-  mepram_omop_db:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: ${MEPRAM_DB_NAME:-mepram_omop_api}
-      MYSQL_USER: ${MEPRAM_DB_USER:-mepram}
-      MYSQL_PASSWORD: ${MEPRAM_DB_PASSWORD:-mepram_password}
-      MYSQL_ROOT_PASSWORD: ${MEPRAM_DB_ROOT_PASSWORD:-change_me_root}
-    expose:
-      - "3306"
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
-    volumes:
-      - mepram_omop_db_data:/var/lib/mysql
-
-  mepram_omop_api:
-    build:
-      context: ../mepram-omop-api
-    command: ["bash", "/usr/local/bin/mepram-omop-api-start.sh"]
-    restart: unless-stopped
-    depends_on:
-      mepram_omop_db:
-        condition: service_healthy
-    environment:
-      APP_INSTALL_PATH: /srv/mepram-omop-api
-      MEPRAM_API_DEBUG: ${MEPRAM_API_DEBUG:-false}
-      MEPRAM_API_ALLOWED_HOSTS: ${MEPRAM_API_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
-      MEPRAM_DB_HOST: mepram_omop_db
-      MEPRAM_DB_PORT: 3306
-      MEPRAM_DB_NAME: ${MEPRAM_DB_NAME:-mepram_omop_api}
-      MEPRAM_DB_USER: ${MEPRAM_DB_USER:-mepram}
-      MEPRAM_DB_PASSWORD: ${MEPRAM_DB_PASSWORD:-mepram_password}
-      MEPRAM_DASHBOARD_SCHEMA: ${MEPRAM_DASHBOARD_SCHEMA:-mepram_omop_api}
-      MEPRAM_CORS_ALLOWED_ORIGINS: ${MEPRAM_CORS_ALLOWED_ORIGINS:-http://127.0.0.1:3000,http://localhost:3000}
-      MEPRAM_DOCS_REQUIRE_STAFF: ${MEPRAM_DOCS_REQUIRE_STAFF:-true}
-      MEPRAM_CREATE_DEFAULT_SUPERUSER: ${MEPRAM_CREATE_DEFAULT_SUPERUSER:-true}
-      DJANGO_SUPERUSER_USERNAME: ${MEPRAM_DJANGO_SUPERUSER_USERNAME:-${DJANGO_SUPERUSER_USERNAME:-admin}}
-      DJANGO_SUPERUSER_EMAIL: ${MEPRAM_DJANGO_SUPERUSER_EMAIL:-${DJANGO_SUPERUSER_EMAIL:-admin@example.org}}
-      DJANGO_SUPERUSER_PASSWORD: ${MEPRAM_DJANGO_SUPERUSER_PASSWORD:-${DJANGO_SUPERUSER_PASSWORD:-admin_pass}}
-      PUBLIC_API_THROTTLE_RATE: ${MEPRAM_PUBLIC_API_THROTTLE_RATE:-500/hour}
-      GUNICORN_WORKERS: ${MEPRAM_GUNICORN_WORKERS:-2}
-      GUNICORN_THREADS: ${MEPRAM_GUNICORN_THREADS:-2}
-      GUNICORN_TIMEOUT: ${MEPRAM_GUNICORN_TIMEOUT:-120}
-    expose:
-      - "8000"
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "python - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=5).read()\nPY",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 90s
-    volumes:
-      - ./docker/mepram-omop-api-start.sh:/usr/local/bin/mepram-omop-api-start.sh:ro,z
-      - mepram_omop_api_data:/data:z
-
+  # BEGIN BU-ISCIII SERVICE: pathocore_web (nextjs)
   pathocore_web:
+    image: "${PATHOCORE_WEB_IMAGE:-pathocore-web:local}"
     build:
-      context: .
-      target: prod
+      context: "."
+      dockerfile: "Dockerfile"
       args:
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api/pathocore/v1}
-        NEXT_PUBLIC_MEPRAM_API_BASE_URL: ${NEXT_PUBLIC_MEPRAM_API_BASE_URL:-/api/omop/v1}
-        NEXT_PUBLIC_KEYCLOAK_URL: ${NEXT_PUBLIC_KEYCLOAK_URL:?NEXT_PUBLIC_KEYCLOAK_URL is required}
-        NEXT_PUBLIC_KEYCLOAK_REALM: ${NEXT_PUBLIC_KEYCLOAK_REALM:-ciberisciii_datahub}
-        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: ${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID:-pathocore-web}
-        NEXT_PUBLIC_USE_CASE_DATA_MODE: ${NEXT_PUBLIC_USE_CASE_DATA_MODE:-live}
-        NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL: ${NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL:-}
-        AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+        GIT_REVISION: ${GIT_REVISION:-current}
+        NEXT_PUBLIC_API_BASE_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_API_BASE_URL:?PATHOCORE_WEB_NEXT_PUBLIC_API_BASE_URL is required}
+        NEXT_PUBLIC_MEPRAM_API_BASE_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_MEPRAM_API_BASE_URL:?PATHOCORE_WEB_NEXT_PUBLIC_MEPRAM_API_BASE_URL is required}
+        NEXT_PUBLIC_KEYCLOAK_URL: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_URL:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_URL is required}
+        NEXT_PUBLIC_KEYCLOAK_REALM: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM is required}
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: ${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_CLIENT_ID:?PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_CLIENT_ID is required}
+        NEXT_PUBLIC_USE_CASE_DATA_MODE: ${PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_DATA_MODE:?PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_DATA_MODE is required}
+        NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL: ${PATHOCORE_WEB_NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL:-}
     restart: unless-stopped
-    depends_on:
-      pathocore_api:
-        condition: service_healthy
-      mepram_omop_api:
-        condition: service_healthy
-    expose:
-      - "3000"
+    user: "${PATHOCORE_WEB_APP_UID:?PATHOCORE_WEB_APP_UID is required}:${PATHOCORE_WEB_APP_GID:?PATHOCORE_WEB_APP_GID is required}"
     environment:
-      PATHOCORE_API_PROXY_TARGET: ${PATHOCORE_API_PROXY_TARGET:-http://pathocore_api:8000}
-      MEPRAM_OMOP_API_PROXY_TARGET: ${MEPRAM_OMOP_API_PROXY_TARGET:-http://mepram_omop_api:8000}
-      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
-      AUTH_URL: ${AUTH_URL:?AUTH_URL is required}
-      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-${AUTH_URL}}
+      APP_PORT: ${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}
+      HOSTNAME: 0.0.0.0
+      AUTH_SECRET: ${PATHOCORE_WEB_AUTH_SECRET:?PATHOCORE_WEB_AUTH_SECRET is required}
+      AUTH_URL: ${PATHOCORE_WEB_AUTH_URL:?PATHOCORE_WEB_AUTH_URL is required}
+      AUTH_TRUST_HOST: ${PATHOCORE_WEB_AUTH_TRUST_HOST:?PATHOCORE_WEB_AUTH_TRUST_HOST is required}
+      NEXTAUTH_URL: ${PATHOCORE_WEB_NEXTAUTH_URL:?PATHOCORE_WEB_NEXTAUTH_URL is required}
+      PATHOCORE_API_PROXY_TARGET: ${PATHOCORE_WEB_PATHOCORE_API_PROXY_TARGET:?PATHOCORE_WEB_PATHOCORE_API_PROXY_TARGET is required}
+      MEPRAM_OMOP_API_PROXY_TARGET: ${PATHOCORE_WEB_MEPRAM_OMOP_API_PROXY_TARGET:?PATHOCORE_WEB_MEPRAM_OMOP_API_PROXY_TARGET is required}
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /app/.next/cache:size=64m,uid=${PATHOCORE_WEB_APP_UID:?PATHOCORE_WEB_APP_UID is required},gid=${PATHOCORE_WEB_APP_GID:?PATHOCORE_WEB_APP_GID is required},mode=0750
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:' + process.env.APP_PORT + '/health/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))\""]
       interval: 10s
       timeout: 5s
-      retries: 30
-      start_period: 30s
-
+      retries: 12
+    ports:
+      - "127.0.0.1:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}"
+    networks: [deployment_net]
+  # END BU-ISCIII SERVICE: pathocore_web
+  # BEGIN BU-ISCIII SERVICE: pathocore_api (django)
+  pathocore_api:
+    image: "${PATHOCORE_API_IMAGE:-pathocore-api:local}"
+    build:
+      context: "../pathocore-api"
+      dockerfile: "Dockerfile"
+      args:
+        GIT_REVISION: ${GIT_REVISION:-current}
+        # Fixed internal path used only while install.sh reads the build secret.
+        INSTALL_CONF: "conf/.runtime_install_settings.txt"
+        USE_INSTALL_CONF_SECRET: "true"
+        RENDER_DJANGO_SETTINGS: "false"
+        APP_UID: ${PATHOCORE_API_APP_UID:?PATHOCORE_API_APP_UID is required}
+        APP_GID: ${PATHOCORE_API_APP_GID:?PATHOCORE_API_APP_GID is required}
+        APP_PORT: ${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}
+        APP_REPO_PATH: ${PATHOCORE_API_REPO_PATH:?PATHOCORE_API_REPO_PATH is required}
+        APP_INSTALL_PATH: ${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}
+    restart: unless-stopped
+    user: "${PATHOCORE_API_APP_UID:?PATHOCORE_API_APP_UID is required}:${PATHOCORE_API_APP_GID:?PATHOCORE_API_APP_GID is required}"
+    environment:
+      APP_MODE: prod
+      INSTALL_PATH: ${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}
+      APP_INSTALL_PATH: ${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}
+      APP_PORT: ${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}
+      PROJECT_MODULE: "conf"
+      DB_HOST: ${PATHOCORE_API_DB_HOST:?PATHOCORE_API_DB_HOST is required}
+      DB_PORT: ${PATHOCORE_API_DB_PORT:?PATHOCORE_API_DB_PORT is required}
+      DB_NAME: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
+      DB_USER: ${PATHOCORE_API_DB_USER:?PATHOCORE_API_DB_USER is required}
+      DB_PASSWORD: ${PATHOCORE_API_DB_PASSWORD:?PATHOCORE_API_DB_PASSWORD is required}
+      DJANGO_SECRET_KEY: ${PATHOCORE_API_DJANGO_SECRET_KEY:?PATHOCORE_API_DJANGO_SECRET_KEY is required}
+      DJANGO_ALLOWED_HOSTS: ${PATHOCORE_API_DJANGO_ALLOWED_HOSTS:?PATHOCORE_API_DJANGO_ALLOWED_HOSTS is required}
+      API_CORS_ALLOWED_ORIGINS: ${PATHOCORE_API_API_CORS_ALLOWED_ORIGINS:-}
+      API_THROTTLE_RATE: ${PATHOCORE_API_API_THROTTLE_RATE:-500/hour}
+      API_DOCS_REQUIRE_STAFF: ${PATHOCORE_API_API_DOCS_REQUIRE_STAFF:-true}
+      OIDC_AUTH_REQUIRED: ${PATHOCORE_API_OIDC_AUTH_REQUIRED:?PATHOCORE_API_OIDC_AUTH_REQUIRED is required}
+      OIDC_ISSUER: ${PATHOCORE_API_OIDC_ISSUER:?PATHOCORE_API_OIDC_ISSUER is required}
+      OIDC_JWKS_URL: ${PATHOCORE_API_OIDC_JWKS_URL:?PATHOCORE_API_OIDC_JWKS_URL is required}
+      OIDC_AUDIENCE: ${PATHOCORE_API_OIDC_AUDIENCE:?PATHOCORE_API_OIDC_AUDIENCE is required}
+      OIDC_CLIENT_ID: ${PATHOCORE_API_OIDC_CLIENT_ID:?PATHOCORE_API_OIDC_CLIENT_ID is required}
+      OIDC_JWKS_CACHE_TTL_SECONDS: ${PATHOCORE_API_OIDC_JWKS_CACHE_TTL_SECONDS:-300}
+      OIDC_JWKS_TIMEOUT_SECONDS: ${PATHOCORE_API_OIDC_JWKS_TIMEOUT_SECONDS:-5}
+      KEYCLOAK_ADMIN_API_BASE_URL: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_BASE_URL:?PATHOCORE_API_KEYCLOAK_ADMIN_API_BASE_URL is required}
+      KEYCLOAK_ADMIN_API_REALM: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_REALM:?PATHOCORE_API_KEYCLOAK_ADMIN_API_REALM is required}
+      KEYCLOAK_ADMIN_API_TOKEN_REALM: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_TOKEN_REALM:-master}
+      KEYCLOAK_ADMIN_API_CLIENT_ID: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_CLIENT_ID:-admin-cli}
+      KEYCLOAK_ADMIN_API_CLIENT_SECRET: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_CLIENT_SECRET:-}
+      KEYCLOAK_ADMIN_API_USERNAME: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_USERNAME:-}
+      KEYCLOAK_ADMIN_API_PASSWORD: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_PASSWORD:-}
+      KEYCLOAK_ADMIN_API_TIMEOUT_SECONDS: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_TIMEOUT_SECONDS:-10}
+      KEYCLOAK_ADMIN_API_SEND_ACTION_EMAILS: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_SEND_ACTION_EMAILS:-true}
+      KEYCLOAK_ADMIN_API_ACTION_EMAIL_REDIRECT_URI: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_ACTION_EMAIL_REDIRECT_URI:-}
+    volumes:
+      - pathocore_api_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:z
+      - ${PATHOCORE_API_HOST_LOG_PATH:?PATHOCORE_API_HOST_LOG_PATH is required}:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/logs:Z
+      - ${PATHOCORE_API_DJANGO_SETTINGS_PATH:?PATHOCORE_API_DJANGO_SETTINGS_PATH is required}:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/conf/settings.py:Z
+      - pathocore_api_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:z
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['APP_PORT'] + '/health/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "127.0.0.1:${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}:${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}"
+    # Docker Engine on Linux needs this explicit mapping. Podman also supports
+    # host-gateway and conventionally exposes host.docker.internal itself, so
+    # host-based dependencies can use one hostname with either engine.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks: [deployment_net]
+  # END BU-ISCIII SERVICE: pathocore_api
+  # BEGIN BU-ISCIII SERVICE: mepram_omop_api (django)
+  mepram_omop_api:
+    image: "${MEPRAM_OMOP_API_IMAGE:-mepram-omop-api:local}"
+    build:
+      context: "../mepram-omop-api"
+      dockerfile: "Dockerfile"
+      args:
+        GIT_REVISION: ${GIT_REVISION:-current}
+        # Fixed internal path used only while install.sh reads the build secret.
+        INSTALL_CONF: "conf/.runtime_install_settings.txt"
+        USE_INSTALL_CONF_SECRET: "true"
+        RENDER_DJANGO_SETTINGS: "false"
+        APP_UID: ${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}
+        APP_GID: ${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}
+        APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
+        APP_REPO_PATH: ${MEPRAM_OMOP_API_REPO_PATH:?MEPRAM_OMOP_API_REPO_PATH is required}
+        APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
+    restart: unless-stopped
+    user: "${MEPRAM_OMOP_API_APP_UID:?MEPRAM_OMOP_API_APP_UID is required}:${MEPRAM_OMOP_API_APP_GID:?MEPRAM_OMOP_API_APP_GID is required}"
+    environment:
+      APP_MODE: prod
+      INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
+      APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
+      APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
+      PROJECT_MODULE: "conf"
+      DB_HOST: ${MEPRAM_OMOP_API_DB_HOST:?MEPRAM_OMOP_API_DB_HOST is required}
+      DB_PORT: ${MEPRAM_OMOP_API_DB_PORT:?MEPRAM_OMOP_API_DB_PORT is required}
+      DB_NAME: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
+      DB_USER: ${MEPRAM_OMOP_API_DB_USER:?MEPRAM_OMOP_API_DB_USER is required}
+      DB_PASSWORD: ${MEPRAM_OMOP_API_DB_PASSWORD:?MEPRAM_OMOP_API_DB_PASSWORD is required}
+      DJANGO_SECRET_KEY: ${MEPRAM_OMOP_API_DJANGO_SECRET_KEY:?MEPRAM_OMOP_API_DJANGO_SECRET_KEY is required}
+      DJANGO_ALLOWED_HOSTS: ${MEPRAM_OMOP_API_DJANGO_ALLOWED_HOSTS:?MEPRAM_OMOP_API_DJANGO_ALLOWED_HOSTS is required}
+      API_CORS_ALLOWED_ORIGINS: ${MEPRAM_OMOP_API_API_CORS_ALLOWED_ORIGINS:-}
+      API_THROTTLE_RATE: ${MEPRAM_OMOP_API_API_THROTTLE_RATE:-500/hour}
+      API_DOCS_REQUIRE_STAFF: ${MEPRAM_OMOP_API_API_DOCS_REQUIRE_STAFF:-true}
+    volumes:
+      - mepram_omop_api_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
+      - ${MEPRAM_OMOP_API_HOST_LOG_PATH:?MEPRAM_OMOP_API_HOST_LOG_PATH is required}:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/logs:Z
+      - ${MEPRAM_OMOP_API_DJANGO_SETTINGS_PATH:?MEPRAM_OMOP_API_DJANGO_SETTINGS_PATH is required}:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/conf/settings.py:Z
+      - mepram_omop_api_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:z
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['APP_PORT'] + '/health/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "127.0.0.1:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}"
+    # Docker Engine on Linux needs this explicit mapping. Podman also supports
+    # host-gateway and conventionally exposes host.docker.internal itself, so
+    # host-based dependencies can use one hostname with either engine.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks: [deployment_net]
+  # END BU-ISCIII SERVICE: mepram_omop_api
+  # BEGIN BU-ISCIII ADDON: apache
   apache:
     image: registry.access.redhat.com/ubi9/httpd-24:latest
     restart: unless-stopped
@@ -260,15 +176,12 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
-    environment:
-      PATHOCORE_DATAHUB_SERVER_NAME: ${PATHOCORE_DATAHUB_SERVER_NAME:?PATHOCORE_DATAHUB_SERVER_NAME is required}
-      PATHOCORE_API_SERVER_NAME: ${PATHOCORE_API_SERVER_NAME:?PATHOCORE_API_SERVER_NAME is required}
-      PATHOCORE_KEYCLOAK_SERVER_NAME: ${PATHOCORE_KEYCLOAK_SERVER_NAME:?PATHOCORE_KEYCLOAK_SERVER_NAME is required}
-      MEPRAM_OMOP_API_SERVER_NAME: ${MEPRAM_OMOP_API_SERVER_NAME:?MEPRAM_OMOP_API_SERVER_NAME is required}
-      PATHOCORE_FORWARDED_PROTO: ${PATHOCORE_FORWARDED_PROTO:-https}
-      PATHOCORE_FORWARDED_PORT: ${PATHOCORE_FORWARDED_PORT:-443}
     ports:
-      - "${HTTP_BIND_HOST:-0.0.0.0}:${HTTP_PORT:-80}:8080"
+      # Public binding can be restricted to loopback when another host proxy
+      # terminates TLS before forwarding traffic to this container.
+      - "${APACHE_BIND_HOST:?APACHE_BIND_HOST is required}:${APACHE_PORT:?APACHE_PORT is required}:8080"
+    expose:
+      - "8080"
     healthcheck:
       test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8080'"]
       interval: 10s
@@ -276,16 +189,95 @@ services:
       retries: 30
       start_period: 30s
     volumes:
-      - ./conf/pathocore_apache_logs.conf:/etc/httpd/conf.d/pathocore-logs.conf:ro,z
-      - ./conf/pathocore_apache_reverse_proxy.conf:/etc/httpd/conf.d/pathocore-reverse-proxy.conf:ro,z
-      - pathocore_api_documents:/var/www/pathocore-api/documents:ro,z
-      - pathocore_api_static:/var/www/pathocore-api/static:ro,z
-      - ${PATHOCORE_HOST_APACHE_LOG_DIR:-/var/log/local/pathocore-web/apache}:/var/log/httpd:z
+      # REQUIRED runtime-rendered read-only configuration bind sources.
+      - ./deployment/apache/00-logs.conf:/etc/httpd/conf.d/00-logs.conf:ro,z
+      - ./deployment/apache/01-reverse-proxy.conf:/etc/httpd/conf.d/01-reverse-proxy.conf:ro,z
+      - ./deployment/apache/02-server-status.conf:/etc/httpd/conf.d/02-server-status.conf:ro,z
+      # REQUIRED persistent host log bind. Back it up/rotate per host policy.
+      - ${APACHE_LOG_PATH:?APACHE_LOG_PATH is required}:/var/log/httpd:z
+      # REQUIRED when container and host timezone must agree in log records.
+      - /etc/localtime:/etc/localtime:ro
+      - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
+      # GENERATED MULTI-APP MOUNTS: one read-only static/documents pair for
+      # every Django service. React assets remain inside the React image.
+      - pathocore_api_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:ro,z
+      - pathocore_api_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:ro,z
+      - mepram_omop_api_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:ro,z
+      - mepram_omop_api_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:ro,z
+      # OPTIONAL APP MOUNTS belong in ADDONS.apache.MOUNTS. Examples:
+      # - reports_data:/var/www/reports:ro,z
+      # - /srv/public-downloads:/var/www/downloads:ro,Z
+    networks: [deployment_net]
+  # END BU-ISCIII ADDON: apache
+  # BEGIN BU-ISCIII ADDON: keycloak
+  keycloak_db:
+    image: docker.io/library/mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${KEYCLOAK_DB_NAME:-keycloak}
+      MYSQL_USER: ${KEYCLOAK_DB_USER:-keycloak}
+      MYSQL_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${KEYCLOAK_DB_ROOT_PASSWORD:?KEYCLOAK_DB_ROOT_PASSWORD is required}
+    expose: ["3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      # REQUIRED persistent identity database. This is the primary Keycloak
+      # state and MUST be included in backup/restore procedures.
+      - keycloak_db_data:/var/lib/mysql
+    networks: [deployment_net]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.1
+    command: ["start", "--import-realm"]
+    restart: unless-stopped
+    depends_on:
+      keycloak_db:
+        condition: service_healthy
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://keycloak_db:3306/${KEYCLOAK_DB_NAME:-keycloak}?useSSL=false&allowPublicKeyRetrieval=true
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is required}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:?KEYCLOAK_PUBLIC_URL is required}
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+    expose: ["8080"]
+    ports:
+      # Loopback publishing supports direct diagnostics; Apache remains the
+      # normal public route. Remove only when another documented path exists.
+      - "127.0.0.1:${KEYCLOAK_PORT:-8081}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+    volumes:
+      # REQUIRED reproducible realm import bind. Keycloak imports it only when
+      # the realm is absent, normally on a fresh keycloak_db_data volume.
+      - ${KEYCLOAK_IMPORT_PATH:-./keycloak/tmp-import}:/opt/keycloak/data/import:ro,z
+      # OPTIONAL provider/theme mounts for multi-app deployments, when needed:
+      # - ${KEYCLOAK_PROVIDER_PATH}:/opt/keycloak/providers:ro,z
+      # - ${KEYCLOAK_THEME_PATH}:/opt/keycloak/themes/custom:ro,z
+    networks: [deployment_net]
+  # END BU-ISCIII ADDON: keycloak
+
+networks:
+  deployment_net:
 
 volumes:
-  keycloak_db_data:
   pathocore_api_documents:
   pathocore_api_static:
-  pathocore_db_data:
-  mepram_omop_api_data:
-  mepram_omop_db_data:
+  mepram_omop_api_documents:
+  mepram_omop_api_static:
+  keycloak_db_data:

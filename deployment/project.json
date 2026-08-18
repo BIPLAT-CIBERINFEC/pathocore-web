@@ -1,0 +1,48 @@
+{
+  "APP_NAME": "PathoCore Web",
+  "APP_SLUG": "pathocore-web",
+  "DESCRIPTION": "Next.js frontend and deployment orchestrator for the PathoCore and MePRAM OMOP APIs.",
+  "REPOSITORY_URL": "https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git",
+  "DEFAULT_BRANCH": "dev",
+  "PYTHON_VERSION": "3.12",
+  "TIMEZONE": "Europe/Madrid",
+  "SERVICES": {
+    "pathocore_web": {
+      "PROFILE": "nextjs",
+      "BUILD_CONTEXT": ".",
+      "DOCKERFILE": "Dockerfile",
+      "IMAGE": "pathocore-web:local",
+      "INSTALL_CONF": "conf/docker_production_settings.txt",
+      "TEST_INSTALL_CONF": "conf/docker_test_settings.txt"
+    },
+    "pathocore_api": {
+      "PROFILE": "django",
+      "BUILD_CONTEXT": "../pathocore-api",
+      "DOCKERFILE": "Dockerfile",
+      "IMAGE": "pathocore-api:local",
+      "INSTALL_CONF": "../pathocore-api/conf/docker_production_settings.txt",
+      "TEST_INSTALL_CONF": "../pathocore-api/conf/docker_test_settings.txt",
+      "PROJECT_MODULE": "conf",
+      "API": true
+    },
+    "mepram_omop_api": {
+      "PROFILE": "django",
+      "BUILD_CONTEXT": "../mepram-omop-api",
+      "DOCKERFILE": "Dockerfile",
+      "IMAGE": "mepram-omop-api:local",
+      "INSTALL_CONF": "../mepram-omop-api/conf/docker_production_settings.txt",
+      "TEST_INSTALL_CONF": "../mepram-omop-api/conf/docker_test_settings.txt",
+      "PROJECT_MODULE": "conf",
+      "API": true
+    }
+  },
+  "ADDONS": {
+    "apache": {
+      "CONFIG_SERVICE": "pathocore_web"
+    },
+    "keycloak": {
+      "CONFIG_SERVICE": "pathocore_api",
+      "ADMIN_ACCESS": true
+    }
+  }
+}
