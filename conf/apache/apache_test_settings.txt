@@ -13,6 +13,12 @@ APACHE_PORT='8081'
 # Host name handled by the local test VirtualHost.
 APACHE_SERVER_NAME='localhost'
 
+# Add these names to /etc/hosts, pointing to 127.0.0.1, to exercise all four
+# name-based VirtualHosts locally through the single Apache port.
+APACHE_PATHOCORE_API_SERVER_NAME='pathocore-api.localhost'
+APACHE_MEPRAM_OMOP_API_SERVER_NAME='mepram-omop-api.localhost'
+APACHE_KEYCLOAK_SERVER_NAME='keycloak.localhost'
+
 # Compose service receiving proxied requests. Leave empty to use the service
 # selected by ADDONS.apache.CONFIG_SERVICE (normally app for a single service).
 APACHE_UPSTREAM_SERVICE=''

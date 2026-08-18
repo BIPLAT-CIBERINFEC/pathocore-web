@@ -63,7 +63,7 @@ services:
       APP_INSTALL_PATH: ${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}
       APP_PORT: ${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}
       PROJECT_MODULE: "conf"
-      DB_HOST: conf_app_db
+      DB_HOST: pathocore_api_db
       DB_PORT: ${PATHOCORE_API_DB_PORT:?PATHOCORE_API_DB_PORT is required}
       DB_NAME: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
       DB_USER: ${PATHOCORE_API_DB_USER:?PATHOCORE_API_DB_USER is required}
@@ -91,7 +91,7 @@ services:
       KEYCLOAK_ADMIN_API_SEND_ACTION_EMAILS: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_SEND_ACTION_EMAILS:-false}
       KEYCLOAK_ADMIN_API_ACTION_EMAIL_REDIRECT_URI: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_ACTION_EMAIL_REDIRECT_URI:-}
     depends_on:
-      conf_app_db:
+      pathocore_api_db:
         condition: service_healthy
     volumes:
       - pathocore_api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:z
@@ -130,7 +130,7 @@ services:
       APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
       APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
       PROJECT_MODULE: "conf"
-      DB_HOST: conf_app_db
+      DB_HOST: mepram_omop_api_db
       DB_PORT: ${MEPRAM_OMOP_API_DB_PORT:?MEPRAM_OMOP_API_DB_PORT is required}
       DB_NAME: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
       DB_USER: ${MEPRAM_OMOP_API_DB_USER:?MEPRAM_OMOP_API_DB_USER is required}
@@ -141,7 +141,7 @@ services:
       API_THROTTLE_RATE: ${MEPRAM_OMOP_API_API_THROTTLE_RATE:-500/hour}
       API_DOCS_REQUIRE_STAFF: ${MEPRAM_OMOP_API_API_DOCS_REQUIRE_STAFF:-true}
     depends_on:
-      conf_app_db:
+      mepram_omop_api_db:
         condition: service_healthy
     volumes:
       - mepram_omop_api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
@@ -246,7 +246,7 @@ services:
       - ${KEYCLOAK_IMPORT_PATH:-./keycloak/tmp-import}:/opt/keycloak/data/import:ro,z
     networks: [deployment_net]
   # END BU-ISCIII ADDON: keycloak
-  conf_app_db:
+  pathocore_api_db:
     image: docker.io/library/mysql:8.0
     environment:
       MYSQL_DATABASE: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
@@ -260,7 +260,7 @@ services:
       retries: 20
     volumes: [pathocore_api_test_db:/var/lib/mysql]
     networks: [deployment_net]
-  conf_app_db:
+  mepram_omop_api_db:
     image: docker.io/library/mysql:8.0
     environment:
       MYSQL_DATABASE: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}

@@ -23,6 +23,12 @@ APACHE_PORT='8080'
 # Example: api.example.org
 APACHE_SERVER_NAME='CHANGE_ME_DNS_NAME'
 
+# Public DNS names for the remaining endpoints. They must resolve to this
+# Apache listener and match the public URLs configured in each application.
+APACHE_PATHOCORE_API_SERVER_NAME='CHANGE_ME_PATHOCORE_API_DNS_NAME'
+APACHE_MEPRAM_OMOP_API_SERVER_NAME='CHANGE_ME_MEPRAM_OMOP_API_DNS_NAME'
+APACHE_KEYCLOAK_SERVER_NAME='CHANGE_ME_KEYCLOAK_DNS_NAME'
+
 # Compose service receiving proxied requests. Leave empty to use the service
 # selected by ADDONS.apache.CONFIG_SERVICE (normally app for a single service).
 # Example override: app
