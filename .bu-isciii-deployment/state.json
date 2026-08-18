@@ -50,7 +50,7 @@
   "files": {
     ".dockerignore": "bd9c115511d6b9dae318e4b6a85ddb282e60a46fd89c6cdecccdc20c668eb0e9",
     ".gitignore": "de487336ed72efd6601b985eda1c83754d6ee33b1cb4ce9f8973411caae833ed",
-    "Dockerfile": "23785f729cf00d1671c60115cadf10251cc8628d1aa5bbfa6697e3422b332f40",
+    "Dockerfile": "ddbc3933068a7b1b1a0cfb64bf4a489c9d087f032e3d1148641f9d337bf86072",
     "LEAME.md": "cd85d7f67b507632d181652582559bb0e726068d332f57f2736ddeb36ae71dce",
     "README.md": "6337379c43a70148d5e4610000cdb8363ae4c9fce93541727819f0e888dc37af",
     "conf/INSTALL_SETTINGS.md": "831586a74cdbad6b00ad7cea1d2f2cd2fab407c9e3f4d963a2b2a854c16536e3",
@@ -64,10 +64,11 @@
     "conf/keycloak/keycloak_production_settings.txt": "beade98f6b8dcf6f3f9302b9f55425dd554bdd0a841291c3270ee8f116206746",
     "conf/keycloak/keycloak_test_settings.txt": "7756c9efcd9fbde78a2dce0a9cd7cf41818d705a8c746acbbf6b74611769265e",
     "container_install.sh": "a60dc043b6bf3e837e6d34300cb4afe0e1e7d9ae689493479b541f4ff398892c",
-    "docker-compose.prod.yml": "4a33567516c13533c1e80504d22c8b7607f29e794938691f63c2e988bd365126",
-    "docker-compose.test.yml": "8475248f18d5d3e29778db0b2ed5dad0b76d1c975dc779139767a1800921883f",
+    "docker-compose.prod.yml": "18afd29201eb0b6717bbb7314780e06350edd11fe10622c82ff3496e9e7826c9",
+    "docker-compose.test.yml": "8d836419bf1c6e2221ce9fa9f5113bf53f355050d018c98839547a4c2d848071",
     "scripts/container_start.sh": "7f85e924a9b28f22a307a7a1dc36e1ee7ee93a827de3b27d99047646fbbcfa08",
-    "scripts/smoke_test.sh": "f05efb3c3dd8dbfee0d39f0b6eb216e0acb82a67b5b92ccc858d924640c7e657"
+    "scripts/smoke_test.sh": "f05efb3c3dd8dbfee0d39f0b6eb216e0acb82a67b5b92ccc858d924640c7e657",
+    "src/pages/health.tsx": "a06dd776176715c23d5af1d2e2d3f4b86f36a8d0a449890de0b93ddcb9e0df24"
   },
   "source": "BU-ISCIII deployment standards",
   "standard_version": "0.1.0"
