@@ -18,7 +18,7 @@ APP_PORT='3000'
 ### Public browser build configuration (never put secrets in NEXT_PUBLIC_* values)
 # Browser-visible PathoCore API base URL. A same-origin path avoids CORS when
 # Next.js proxies API requests. Example: /api/v1
-NEXT_PUBLIC_API_BASE_URL='/api/v1'
+NEXT_PUBLIC_API_BASE_URL='/api/pathocore/v1'
 # Browser-visible MePRAM OMOP API base URL. Example: /api/omop/v1
 NEXT_PUBLIC_MEPRAM_API_BASE_URL='/api/omop/v1'
 # Public Keycloak origin reachable by users' browsers, without a realm path.
