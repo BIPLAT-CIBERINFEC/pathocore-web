@@ -13,12 +13,6 @@ APACHE_PORT='8081'
 # Host name handled by the local test VirtualHost.
 APACHE_SERVER_NAME='localhost'
 
-# Add these names to /etc/hosts, pointing to 127.0.0.1, to exercise all four
-# name-based VirtualHosts locally through the single Apache port.
-APACHE_PATHOCORE_API_SERVER_NAME='pathocore-api.localhost'
-APACHE_MEPRAM_OMOP_API_SERVER_NAME='mepram-omop-api.localhost'
-APACHE_KEYCLOAK_SERVER_NAME='keycloak.localhost'
-
 # Compose service receiving proxied requests. Leave empty to use the service
 # selected by ADDONS.apache.CONFIG_SERVICE (normally app for a single service).
 APACHE_UPSTREAM_SERVICE=''
@@ -47,12 +41,35 @@ APACHE_FORWARDED_PORT='8081'
 APACHE_LIMIT_REQUEST_BODY='52428800'
 
 # Extra test VirtualHosts follow the same explicit one-variable-set-per-vhost
-# contract as production; selecting another add-on does not create these.
-# APACHE_SECOND_SERVER_NAME='second.localhost'
-# APACHE_SECOND_UPSTREAM_SERVICE='CHANGE_ME_COMPOSE_SERVICE'
-# APACHE_SECOND_UPSTREAM_PORT='CHANGE_ME_INTERNAL_PORT'
-# APACHE_SECOND_PROXY_TIMEOUT='120'
-# APACHE_SECOND_LOG_STEM='second'
-# APACHE_SECOND_FORWARDED_PROTO='http'
-# APACHE_SECOND_FORWARDED_PORT='8081'
-# APACHE_SECOND_LIMIT_REQUEST_BODY='52428800'
+# contract as production; selecting another add-on does not create these. Add
+# the following names to /etc/hosts, pointing to 127.0.0.1.
+
+# PathoCore API VirtualHost.
+APACHE_PATHOCORE_API_SERVER_NAME='pathocore-api.localhost'
+APACHE_PATHOCORE_API_UPSTREAM_SERVICE='pathocore_api'
+APACHE_PATHOCORE_API_UPSTREAM_PORT='8301'
+APACHE_PATHOCORE_API_PROXY_TIMEOUT='120'
+APACHE_PATHOCORE_API_LOG_STEM='pathocore-api'
+APACHE_PATHOCORE_API_FORWARDED_PROTO='http'
+APACHE_PATHOCORE_API_FORWARDED_PORT='8081'
+APACHE_PATHOCORE_API_LIMIT_REQUEST_BODY='52428800'
+
+# MePRAM OMOP API VirtualHost.
+APACHE_MEPRAM_OMOP_API_SERVER_NAME='mepram-omop-api.localhost'
+APACHE_MEPRAM_OMOP_API_UPSTREAM_SERVICE='mepram_omop_api'
+APACHE_MEPRAM_OMOP_API_UPSTREAM_PORT='8202'
+APACHE_MEPRAM_OMOP_API_PROXY_TIMEOUT='120'
+APACHE_MEPRAM_OMOP_API_LOG_STEM='mepram-omop-api'
+APACHE_MEPRAM_OMOP_API_FORWARDED_PROTO='http'
+APACHE_MEPRAM_OMOP_API_FORWARDED_PORT='8081'
+APACHE_MEPRAM_OMOP_API_LIMIT_REQUEST_BODY='52428800'
+
+# Keycloak VirtualHost.
+APACHE_KEYCLOAK_SERVER_NAME='keycloak.localhost'
+APACHE_KEYCLOAK_UPSTREAM_SERVICE='keycloak'
+APACHE_KEYCLOAK_UPSTREAM_PORT='8080'
+APACHE_KEYCLOAK_PROXY_TIMEOUT='120'
+APACHE_KEYCLOAK_LOG_STEM='keycloak'
+APACHE_KEYCLOAK_FORWARDED_PROTO='http'
+APACHE_KEYCLOAK_FORWARDED_PORT='8081'
+APACHE_KEYCLOAK_LIMIT_REQUEST_BODY='52428800'
