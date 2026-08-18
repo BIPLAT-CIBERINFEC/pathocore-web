@@ -349,9 +349,8 @@ and review of the version-specific guide.
 ### Database creation, users and grants
 
 Production runs one private MySQL service per API. Configure the protected
-settings with distinct database names, application users, application
-passwords, and root passwords. The database hosts and ports are fixed by the
-Compose network:
+settings with distinct database names, application users, and application
+passwords. The database hosts and ports are fixed by the Compose network:
 
 ```bash
 DB_HOST='pathocore_api_db'       # PathoCore API settings
@@ -360,12 +359,13 @@ DB_PORT='3306'
 DB_NAME='CHANGE_ME'
 DB_USER='CHANGE_ME'
 DB_PASSWORD='CHANGE_ME'
-DB_ROOT_PASSWORD='CHANGE_ME'
 ```
 
 MySQL initializes each empty named volume from those values. Changing them
-later does not rewrite accounts in an existing database. Verify connectivity
-through each API container rather than publishing database ports publicly:
+later does not rewrite accounts in an existing database. The two application
+database containers generate random root passwords because root access is not
+part of either API's production contract. Verify connectivity through each API
+database container rather than publishing database ports publicly:
 
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
@@ -462,14 +462,20 @@ bash container_install.sh --action fix-permissions --engine podman \
 # Start only the databases and wait for all three to accept connections.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   up -d pathocore_api_db mepram_omop_api_db keycloak_db
-for service in pathocore_api_db mepram_omop_api_db keycloak_db; do
+for service in pathocore_api_db mepram_omop_api_db; do
   until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
     exec -T "$service" sh -c \
     'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
   podman compose --env-file .env.production.file -f docker-compose.prod.yml \
     exec -T "$service" sh -c \
-    'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
+    'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 done
+until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T keycloak_db sh -c \
+  'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T keycloak_db sh -c \
+  'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   exec -T pathocore_api_db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \

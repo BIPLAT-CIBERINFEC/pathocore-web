@@ -341,14 +341,20 @@ bash container_install.sh --action fix-permissions --engine podman \
 # Arrancar solo las bases de datos y esperar readiness antes de restaurar.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   up -d pathocore_api_db mepram_omop_api_db keycloak_db
-for service in pathocore_api_db mepram_omop_api_db keycloak_db; do
+for service in pathocore_api_db mepram_omop_api_db; do
   until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
     exec -T "$service" sh -c \
     'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
   podman compose --env-file .env.production.file -f docker-compose.prod.yml \
     exec -T "$service" sh -c \
-    'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
+    'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 done
+until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T keycloak_db sh -c \
+  'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
+podman compose --env-file .env.production.file -f docker-compose.prod.yml \
+  exec -T keycloak_db sh -c \
+  'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   exec -T pathocore_api_db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
