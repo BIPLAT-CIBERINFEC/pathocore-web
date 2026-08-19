@@ -14,10 +14,10 @@ KEYCLOAK_DB_ROOT_PASSWORD='root'
 KEYCLOAK_DB_PORT_HOST='6607'
 
 # Exact browser-facing URL for the disposable Keycloak service.
-# Example: http://127.0.0.1:8081
-KEYCLOAK_PUBLIC_URL='http://127.0.0.1:8081'
-# Host loopback port exposing Keycloak. Example: 8081
-KEYCLOAK_PORT='8081'
+# Example: http://0.0.0.0:8481
+KEYCLOAK_PUBLIC_URL='http://localhost:8481'
+# Host loopback port exposing Keycloak. Example: 8481
+KEYCLOAK_PORT='8481'
 # Disposable server-bootstrap administrator username. Example: admin
 KEYCLOAK_ADMIN='admin'
 # Disposable server-bootstrap administrator password. Example: admin

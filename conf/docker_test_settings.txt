@@ -8,19 +8,19 @@ APP_PORT='3000'
 ### Public browser build configuration
 NEXT_PUBLIC_API_BASE_URL='/api/pathocore/v1'
 NEXT_PUBLIC_MEPRAM_API_BASE_URL='/api/omop/v1'
-NEXT_PUBLIC_KEYCLOAK_URL='http://127.0.0.1:8080'
-NEXT_PUBLIC_KEYCLOAK_REALM='test'
-NEXT_PUBLIC_KEYCLOAK_CLIENT_ID='web'
+NEXT_PUBLIC_KEYCLOAK_URL='http://localhost:8481'
+NEXT_PUBLIC_KEYCLOAK_REALM='ciberisciii_datahub'
+NEXT_PUBLIC_KEYCLOAK_CLIENT_ID='pathocore-web'
 NEXT_PUBLIC_USE_CASE_DATA_MODE='live'
 NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL=''
 
 ### Server-only runtime configuration
-PATHOCORE_API_PROXY_TARGET='http://pathocore_api:8401'
-MEPRAM_OMOP_API_PROXY_TARGET='http://mepram_omop_api:8000'
+PATHOCORE_API_PROXY_TARGET='http://pathocore_api:8301'
+MEPRAM_OMOP_API_PROXY_TARGET='http://mepram_omop_api:8202'
 AUTH_SECRET='test-only-change-me'
-AUTH_URL='http://127.0.0.1:3000'
+AUTH_URL='http://localhost:8480'
 AUTH_TRUST_HOST='true'
-NEXTAUTH_URL='http://127.0.0.1:3000'
+NEXTAUTH_URL='http://localhost:8480'
 
 ### Selected infrastructure add-ons
 # Infrastructure add-ons use files below conf/<addon>/.
