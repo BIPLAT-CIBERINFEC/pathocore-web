@@ -9,17 +9,20 @@
     "admin"
   ],
   "smtp": {
-    "host": "smtp.example.org",
-    "port": 587,
-    "from": "no-reply@pathocore.example.org",
+    "host": "smtp_relay",
+    "port": 25,
+    "from": "CHANGE_ME_FROM_EMAIL",
     "from_display_name": "PathoCore",
-    "reply_to": "support@pathocore.example.org",
-    "reply_to_display_name": "PathoCore Support",
-    "auth": true,
-    "user": "smtp-user",
-    "password": "change-me",
+    "reply_to": "CHANGE_ME_REPLY_TO_EMAIL",
+    "reply_to_display_name": "BIPLAT - PathoCore Support",
+    "envelope_from": "CHANGE_ME_FROM_EMAIL",
+    "auth": false,
     "ssl": false,
-    "starttls": true
+    "starttls": false,
+    "allow_utf8": true,
+    "connection_timeout": 10000,
+    "timeout": 10000,
+    "write_timeout": 10000
   },
   "shared_client_scope": {
     "name": "pathocore-common",

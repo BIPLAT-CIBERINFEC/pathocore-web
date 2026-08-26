@@ -275,6 +275,16 @@ def build_smtp_server(config):
         "ssl": str(bool(smtp_config.get("ssl", False))).lower(),
         "starttls": str(bool(smtp_config.get("starttls", False))).lower(),
     }
+    if smtp_config.get("envelope_from"):
+        smtp_server["envelopeFrom"] = smtp_config["envelope_from"]
+    if "allow_utf8" in smtp_config:
+        smtp_server["allowUtf8"] = str(bool(smtp_config["allow_utf8"])).lower()
+    if "connection_timeout" in smtp_config:
+        smtp_server["connectionTimeout"] = str(smtp_config["connection_timeout"])
+    if "timeout" in smtp_config:
+        smtp_server["timeout"] = str(smtp_config["timeout"])
+    if "write_timeout" in smtp_config:
+        smtp_server["writeTimeout"] = str(smtp_config["write_timeout"])
 
     if smtp_config.get("user"):
         smtp_server["user"] = smtp_config["user"]

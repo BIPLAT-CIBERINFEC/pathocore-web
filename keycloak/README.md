@@ -119,9 +119,22 @@ KEYCLOAK_ADMIN_SEND_ACTION_EMAILS=true
 ```
 
 For production, configure the SMTP block in
-`keycloak/config/realm-config.prod.json` before rendering the realm import. Use
-a real sender address and authenticated SMTP credentials. Keep the production
-config file out of git if it contains secrets.
+`keycloak/config/realm-config.prod.json` before rendering the realm import. The
+recommended deployment pattern is to send from Keycloak to the internal
+`smtp_relay` Compose service:
+
+```text
+SMTP host: smtp_relay
+SMTP port: 25
+SSL: false
+StartTLS: false
+Authentication: false
+```
+
+The `smtp_relay` service is responsible for forwarding to the institutional
+relay. Use real `from`, `reply_to`, and `envelope_from` addresses. Keep the
+production config file out of git if it contains secrets or deployment-specific
+addresses.
 
 Keycloak only imports the realm on fresh startup. If the realm already exists,
 changing the import JSON is not enough. Recreate the Keycloak data volume for a

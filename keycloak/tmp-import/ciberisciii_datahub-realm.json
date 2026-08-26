@@ -405,7 +405,12 @@
     "replyToDisplayName": "PathoCore Support",
     "auth": "false",
     "ssl": "false",
-    "starttls": "false"
+    "starttls": "false",
+    "envelopeFrom": "no-reply@pathocore.local",
+    "allowUtf8": "true",
+    "connectionTimeout": "10000",
+    "timeout": "10000",
+    "writeTimeout": "10000"
   },
   "ssoSessionIdleTimeout": 28800,
   "ssoSessionMaxLifespan": 86400,
