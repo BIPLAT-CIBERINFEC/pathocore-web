@@ -276,8 +276,13 @@ requires a stricter Postfix TLS policy. The default is `may`, which lets Postfix
 use STARTTLS when the upstream relay offers it.
 Advanced Postfix identity and network settings also have Compose defaults and
 usually do not need to be set in `production.env`.
-The relay uses IPv4 by default to avoid deferred delivery when an institutional
-SMTP relay has no usable IPv6/AAAA record.
+The relay uses Postfix's default `all` network protocol mode so it can use the
+records returned by the institutional resolver. Override
+`SMTP_RELAY_INET_PROTOCOLS=ipv4` only when the relay has stable IPv4 DNS records
+and the deployment network cannot route IPv6.
+The container also makes the Docker resolver files available to the Postfix
+delivery chroot, so the relay host can be resolved without host-level Postfix
+configuration.
 
 For a fresh Keycloak database, the production installer also writes these email
 settings into the realm import. Existing Keycloak realms are not overwritten by

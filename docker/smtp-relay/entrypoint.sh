@@ -10,11 +10,18 @@ export SMTP_RELAY_MYORIGIN="${SMTP_RELAY_MYORIGIN:-localhost}"
 export SMTP_RELAY_MYDESTINATION="${SMTP_RELAY_MYDESTINATION:-localhost}"
 export SMTP_RELAY_MYNETWORKS="${SMTP_RELAY_MYNETWORKS:-127.0.0.0/8 172.16.0.0/12 [::1]/128}"
 export SMTP_RELAY_INET_INTERFACES="${SMTP_RELAY_INET_INTERFACES:-all}"
-export SMTP_RELAY_INET_PROTOCOLS="${SMTP_RELAY_INET_PROTOCOLS:-ipv4}"
+export SMTP_RELAY_INET_PROTOCOLS="${SMTP_RELAY_INET_PROTOCOLS:-all}"
 export SMTP_RELAY_TLS_CA_FILE="${SMTP_RELAY_TLS_CA_FILE:-/etc/ssl/certs/ca-certificates.crt}"
 
 envsubst '$SMTP_RELAY_HOST $SMTP_RELAY_PORT $SMTP_RELAY_TLS_SECURITY_LEVEL $SMTP_RELAY_MYHOSTNAME $SMTP_RELAY_MYORIGIN $SMTP_RELAY_MYDESTINATION $SMTP_RELAY_MYNETWORKS $SMTP_RELAY_INET_INTERFACES $SMTP_RELAY_INET_PROTOCOLS $SMTP_RELAY_TLS_CA_FILE' \
     < /etc/postfix/main.cf.template > /etc/postfix/main.cf
+
+# Postfix runs the smtp delivery process chrooted on Debian. Keep DNS resolver
+# files available inside the chroot so the external relay host can be resolved.
+mkdir -p /var/spool/postfix/etc
+cp /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
+cp /etc/hosts /var/spool/postfix/etc/hosts
+cp /etc/services /var/spool/postfix/etc/services
 
 postfix check
 
