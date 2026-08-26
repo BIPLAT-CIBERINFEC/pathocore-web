@@ -8,7 +8,7 @@ myorigin = ${SMTP_RELAY_MYORIGIN}
 mydestination = ${SMTP_RELAY_MYDESTINATION}
 
 inet_interfaces = ${SMTP_RELAY_INET_INTERFACES}
-inet_protocols = all
+inet_protocols = ${SMTP_RELAY_INET_PROTOCOLS}
 mynetworks = ${SMTP_RELAY_MYNETWORKS}
 
 relayhost = [${SMTP_RELAY_HOST}]:${SMTP_RELAY_PORT}
