@@ -234,6 +234,53 @@ prepare_apache_bind_mounts() {
         "$apache_conf_path/pathocore_apache_logs.conf"
 }
 
+prepare_keycloak_import() {
+    local config_src="keycloak/config/realm-config.prod.example.json"
+    local tmp_config=""
+    local public_web_url default_from_email reply_to_email
+
+    if [ "$mode" != "production" ]; then
+        return 0
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "python3 is required to render the production Keycloak realm import."
+        exit 1
+    fi
+
+    if [ -f "keycloak/config/realm-config.prod.json" ]; then
+        echo "Rendering Keycloak realm import from keycloak/config/realm-config.prod.json"
+        python3 keycloak/scripts/render_realm.py \
+            --config "keycloak/config/realm-config.prod.json" \
+            --output-dir "keycloak/tmp-import"
+        return 0
+    fi
+
+    public_web_url="$(read_env_value AUTH_URL "")"
+    default_from_email="$(read_env_value DEFAULT_FROM_EMAIL "")"
+    reply_to_email="$default_from_email"
+
+    if [ -z "$public_web_url" ] || [ -z "$default_from_email" ]; then
+        echo "Production Keycloak realm import requires AUTH_URL and DEFAULT_FROM_EMAIL."
+        exit 1
+    fi
+
+    public_web_url="${public_web_url%/}"
+    tmp_config="$(mktemp)"
+    sed \
+        -e "s|https://pathocore.example.org/auth/callback|$(sed_replacement_escape "$public_web_url/auth/callback")|g" \
+        -e "s|https://pathocore.example.org|$(sed_replacement_escape "$public_web_url")|g" \
+        -e "s|CHANGE_ME_FROM_EMAIL|$(sed_replacement_escape "$default_from_email")|g" \
+        -e "s|CHANGE_ME_REPLY_TO_EMAIL|$(sed_replacement_escape "$reply_to_email")|g" \
+        "$config_src" > "$tmp_config"
+
+    echo "Rendering Keycloak realm import into keycloak/tmp-import"
+    python3 keycloak/scripts/render_realm.py \
+        --config "$tmp_config" \
+        --output-dir "keycloak/tmp-import"
+    rm -f "$tmp_config"
+}
+
 service_container_id() {
     if [ "$engine" = "docker" ]; then
         compose_exec ps -q "$1" | head -n 1
@@ -358,12 +405,15 @@ echo "Deploying PathoCore Web stack"
 echo "  compose: $compose_file"
 echo "  env:     $env_file"
 prepare_apache_bind_mounts
+prepare_keycloak_import
 compose_exec build
 compose_exec up -d --remove-orphans
 
-for service in keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web; do
-    echo "Waiting for service: $service"
-    wait_for_service "$service" 120
+for service in smtp_relay keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web; do
+    if service_exists "$service"; then
+        echo "Waiting for service: $service"
+        wait_for_service "$service" 120
+    fi
 done
 
 if [ -n "$pathocore_api_sql" ] && [ "$skip_pathocore_api_sql" = false ]; then

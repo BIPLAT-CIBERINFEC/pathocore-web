@@ -24,12 +24,14 @@ This is equivalent to:
 python scripts/render_realm.py --profile test
 ```
 
-For production, copy and edit the example. Keep the real production file out of
-git because it may contain deployment-specific URLs or future secrets:
+For production, `container_install.sh` renders the realm import automatically
+from `config/realm-config.prod.example.json` and the production environment
+file. If a deployment needs custom users, clients or groups, copy and edit the
+example. Keep the real production file out of git because it may contain
+deployment-specific URLs or future secrets:
 
 ```bash
 cp config/realm-config.prod.example.json config/realm-config.prod.json
-python scripts/render_realm.py --config config/realm-config.prod.json
 ```
 
 Production redirect URIs and web origins must be exact HTTPS URLs. Do not use
@@ -138,7 +140,7 @@ addresses.
 
 Keycloak only imports the realm on fresh startup. If the realm already exists,
 changing the import JSON is not enough. Recreate the Keycloak data volume for a
-clean test import:
+clean test import or update SMTP from the Keycloak admin console:
 
 ```bash
 python keycloak/scripts/render_realm.py --profile test
@@ -148,6 +150,11 @@ docker compose --env-file .env -f docker-compose.test.yml up -d
 
 For an already running local realm, configure SMTP from the admin console under
 Realm settings > Email, or use a fresh import as shown above.
+
+The bootstrap admin created from `KC_BOOTSTRAP_ADMIN_USERNAME` and
+`KC_BOOTSTRAP_ADMIN_PASSWORD` belongs to the Keycloak `master` realm. Its email,
+first name and last name are not populated by the realm import; set them from
+the admin console if the built-in Keycloak test email action needs a recipient.
 
 ## Example users
 
