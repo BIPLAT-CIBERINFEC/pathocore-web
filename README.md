@@ -276,6 +276,8 @@ requires a stricter Postfix TLS policy. The default is `may`, which lets Postfix
 use STARTTLS when the upstream relay offers it.
 Advanced Postfix identity and network settings also have Compose defaults and
 usually do not need to be set in `production.env`.
+The relay uses IPv4 by default to avoid deferred delivery when an institutional
+SMTP relay has no usable IPv6/AAAA record.
 
 For a fresh Keycloak database, the production installer also writes these email
 settings into the realm import. Existing Keycloak realms are not overwritten by
