@@ -197,6 +197,10 @@ These are not full URLs. They are hostnames used by Apache `ServerName`.
 starting the production compose stack. The Apache container mounts those
 rendered files, so it never receives unexpanded placeholders.
 
+The same production install flow renders the Keycloak realm import before
+startup, using the public web URL and email sender configured in the production
+environment file.
+
 ### Derived MePRAM OMOP API Settings
 
 In production, the orchestrator derives these MePRAM OMOP API settings from the
@@ -272,6 +276,11 @@ requires a stricter Postfix TLS policy. The default is `may`, which lets Postfix
 use STARTTLS when the upstream relay offers it.
 Advanced Postfix identity and network settings also have Compose defaults and
 usually do not need to be set in `production.env`.
+
+For a fresh Keycloak database, the production installer also writes these email
+settings into the realm import. Existing Keycloak realms are not overwritten by
+`--import-realm`; update Realm settings > Email manually or recreate the
+Keycloak database volume during a clean test.
 
 ## Production Apache Reverse Proxy
 
