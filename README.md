@@ -246,6 +246,33 @@ These must be changed for any shared or production deployment:
 | `DJANGO_SUPERUSER_PASSWORD` | Optional PathoCore API superuser password. |
 | `MEPRAM_DJANGO_SUPERUSER_PASSWORD` | Optional MePRAM OMOP API superuser password. |
 
+### Email
+
+For production deployments, the recommended pattern is to run Postfix as an
+internal Compose service:
+
+```text
+pathocore_api -> smtp_relay:25 -> institutional SMTP relay
+keycloak      -> smtp_relay:25 -> institutional SMTP relay
+```
+
+With this setup, Django and Keycloak connect to the internal relay without
+authentication or TLS. The `smtp_relay` service handles the external SMTP relay
+policy:
+
+```env
+SMTP_RELAY_HOST=smtp.<domain>
+SMTP_RELAY_PORT=25
+DEFAULT_FROM_EMAIL=no-reply@<domain>
+KEYCLOAK_ADMIN_SEND_ACTION_EMAILS=true
+```
+
+`SMTP_RELAY_TLS_SECURITY_LEVEL` can be overridden when the institutional relay
+requires a stricter Postfix TLS policy. The default is `may`, which lets Postfix
+use STARTTLS when the upstream relay offers it.
+Advanced Postfix identity and network settings also have Compose defaults and
+usually do not need to be set in `production.env`.
+
 ## Production Apache Reverse Proxy
 
 Production runs Apache as a Docker Compose service in the same network as the

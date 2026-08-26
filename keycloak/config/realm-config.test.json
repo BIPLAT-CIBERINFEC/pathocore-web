@@ -16,9 +16,14 @@
     "from_display_name": "PathoCore",
     "reply_to": "support@pathocore.local",
     "reply_to_display_name": "PathoCore Support",
+    "envelope_from": "no-reply@pathocore.local",
     "auth": false,
     "ssl": false,
-    "starttls": false
+    "starttls": false,
+    "allow_utf8": true,
+    "connection_timeout": 10000,
+    "timeout": 10000,
+    "write_timeout": 10000
   },
   "group_root": "use-cases",
   "global_groups": [
