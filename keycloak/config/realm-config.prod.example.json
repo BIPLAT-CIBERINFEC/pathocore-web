@@ -9,8 +9,8 @@
     "admin"
   ],
   "smtp": {
-    "host": "smtp_relay",
-    "port": 25,
+    "host": "CHANGE_ME_SMTP_HOST",
+    "port": "CHANGE_ME_SMTP_PORT",
     "from": "CHANGE_ME_FROM_EMAIL",
     "from_display_name": "PathoCore",
     "reply_to": "CHANGE_ME_REPLY_TO_EMAIL",

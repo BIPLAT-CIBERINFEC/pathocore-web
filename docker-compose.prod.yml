@@ -39,33 +39,6 @@ services:
     volumes:
       - keycloak_db_data:/var/lib/mysql
 
-  smtp_relay:
-    build:
-      context: .
-      dockerfile: docker/smtp-relay/Dockerfile
-    restart: unless-stopped
-    environment:
-      SMTP_RELAY_HOST: ${SMTP_RELAY_HOST:?SMTP_RELAY_HOST is required}
-      SMTP_RELAY_PORT: ${SMTP_RELAY_PORT:-25}
-      SMTP_RELAY_TLS_SECURITY_LEVEL: ${SMTP_RELAY_TLS_SECURITY_LEVEL:-may}
-      SMTP_RELAY_MYHOSTNAME: ${SMTP_RELAY_MYHOSTNAME:-pathocore-smtp-relay}
-      SMTP_RELAY_MYORIGIN: ${SMTP_RELAY_MYORIGIN:-localhost}
-      SMTP_RELAY_MYDESTINATION: ${SMTP_RELAY_MYDESTINATION:-localhost}
-      SMTP_RELAY_MYNETWORKS: ${SMTP_RELAY_MYNETWORKS:-127.0.0.0/8 172.16.0.0/12 [::1]/128}
-      SMTP_RELAY_INET_INTERFACES: ${SMTP_RELAY_INET_INTERFACES:-all}
-      SMTP_RELAY_INET_PROTOCOLS: ${SMTP_RELAY_INET_PROTOCOLS:-all}
-      SMTP_RELAY_TLS_CA_FILE: ${SMTP_RELAY_TLS_CA_FILE:-/etc/ssl/certs/ca-certificates.crt}
-    expose:
-      - "25"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/25'"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 15s
-    volumes:
-      - smtp_relay_queue:/var/spool/postfix
-
   keycloak:
     image: quay.io/keycloak/keycloak:26.6.1
     command:
@@ -74,8 +47,6 @@ services:
     restart: unless-stopped
     depends_on:
       keycloak_db:
-        condition: service_healthy
-      smtp_relay:
         condition: service_healthy
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
@@ -91,6 +62,8 @@ services:
       KC_PROXY_HEADERS: xforwarded
     expose:
       - "8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8080'"]
       interval: 10s
@@ -112,8 +85,6 @@ services:
       pathocore_db:
         condition: service_healthy
       keycloak:
-        condition: service_healthy
-      smtp_relay:
         condition: service_healthy
     environment:
       APP_INSTALL_PATH: /opt/pathocore-api
@@ -152,12 +123,14 @@ services:
       KEYCLOAK_ADMIN_SEND_ACTION_EMAILS: ${KEYCLOAK_ADMIN_SEND_ACTION_EMAILS:-true}
       KEYCLOAK_ADMIN_ACTION_EMAIL_REDIRECT_URI: ${KEYCLOAK_ADMIN_ACTION_EMAIL_REDIRECT_URI:-}
       PATHOCORE_ACCESS_REQUEST_ADMIN_EMAILS: ${PATHOCORE_ACCESS_REQUEST_ADMIN_EMAILS:-}
-      EMAIL_HOST: ${EMAIL_HOST:-smtp_relay}
+      EMAIL_HOST: ${EMAIL_HOST:-host.docker.internal}
       EMAIL_PORT: ${EMAIL_PORT:-25}
       EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-false}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-no-reply@pathocore.local}
+      ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:-}
       DATABROWSER_CACHE_SCHEDULER_ENABLED: ${DATABROWSER_CACHE_SCHEDULER_ENABLED:-true}
       DATABROWSER_CACHE_REFRESH_WEEKDAY: ${DATABROWSER_CACHE_REFRESH_WEEKDAY:-4}
       DATABROWSER_CACHE_REFRESH_TIME: ${DATABROWSER_CACHE_REFRESH_TIME:-12:00}
@@ -169,6 +142,8 @@ services:
       GUNICORN_KEEPALIVE: ${GUNICORN_KEEPALIVE:-5}
     expose:
       - "8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8000'"]
       interval: 10s
@@ -317,7 +292,6 @@ services:
 
 volumes:
   keycloak_db_data:
-  smtp_relay_queue:
   pathocore_api_documents:
   pathocore_api_static:
   pathocore_db_data:
