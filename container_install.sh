@@ -237,7 +237,7 @@ prepare_apache_bind_mounts() {
 prepare_keycloak_import() {
     local config_src="keycloak/config/realm-config.prod.example.json"
     local tmp_config=""
-    local public_web_url default_from_email reply_to_email
+    local public_web_url default_from_email reply_to_email smtp_host smtp_port
 
     if [ "$mode" != "production" ]; then
         return 0
@@ -259,9 +259,11 @@ prepare_keycloak_import() {
     public_web_url="$(read_env_value AUTH_URL "")"
     default_from_email="$(read_env_value DEFAULT_FROM_EMAIL "")"
     reply_to_email="$default_from_email"
+    smtp_host="$(read_env_value EMAIL_HOST "")"
+    smtp_port="$(read_env_value EMAIL_PORT 25)"
 
-    if [ -z "$public_web_url" ] || [ -z "$default_from_email" ]; then
-        echo "Production Keycloak realm import requires AUTH_URL and DEFAULT_FROM_EMAIL."
+    if [ -z "$public_web_url" ] || [ -z "$default_from_email" ] || [ -z "$smtp_host" ]; then
+        echo "Production Keycloak realm import requires AUTH_URL, DEFAULT_FROM_EMAIL and EMAIL_HOST."
         exit 1
     fi
 
@@ -270,6 +272,8 @@ prepare_keycloak_import() {
     sed \
         -e "s|https://pathocore.example.org/auth/callback|$(sed_replacement_escape "$public_web_url/auth/callback")|g" \
         -e "s|https://pathocore.example.org|$(sed_replacement_escape "$public_web_url")|g" \
+        -e "s|CHANGE_ME_SMTP_HOST|$(sed_replacement_escape "$smtp_host")|g" \
+        -e "s|CHANGE_ME_SMTP_PORT|$(sed_replacement_escape "$smtp_port")|g" \
         -e "s|CHANGE_ME_FROM_EMAIL|$(sed_replacement_escape "$default_from_email")|g" \
         -e "s|CHANGE_ME_REPLY_TO_EMAIL|$(sed_replacement_escape "$reply_to_email")|g" \
         "$config_src" > "$tmp_config"
@@ -409,7 +413,7 @@ prepare_keycloak_import
 compose_exec build
 compose_exec up -d --remove-orphans
 
-for service in smtp_relay keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web; do
+for service in keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web; do
     if service_exists "$service"; then
         echo "Waiting for service: $service"
         wait_for_service "$service" 120

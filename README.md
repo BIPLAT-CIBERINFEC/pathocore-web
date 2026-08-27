@@ -252,42 +252,52 @@ These must be changed for any shared or production deployment:
 
 ### Email
 
-For production deployments, the recommended pattern is to run Postfix as an
-internal Compose service:
+For production deployments, outgoing mail is external infrastructure and is not
+installed by this orchestrator. Configure the email variables according to the
+SMTP endpoint that the containers can reach. That endpoint can be a Postfix
+relay on the VM, a relay container managed outside this repository, or an
+institutional SMTP service:
 
 ```text
-pathocore_api -> smtp_relay:25 -> institutional SMTP relay
-keycloak      -> smtp_relay:25 -> institutional SMTP relay
+pathocore_api -> configured SMTP endpoint
+keycloak      -> configured SMTP endpoint
 ```
 
-With this setup, Django and Keycloak connect to the internal relay without
-authentication or TLS. The `smtp_relay` service handles the external SMTP relay
-policy:
+Set these values in the production environment file:
 
 ```env
-SMTP_RELAY_HOST=smtp.<domain>
-SMTP_RELAY_PORT=25
+EMAIL_HOST=<smtp-host-reachable-from-containers>
+EMAIL_PORT=25
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_USE_TLS=false
 DEFAULT_FROM_EMAIL=no-reply@<domain>
+ALLOWED_EMAIL_DOMAINS=
 KEYCLOAK_ADMIN_SEND_ACTION_EMAILS=true
 ```
 
-`SMTP_RELAY_TLS_SECURITY_LEVEL` can be overridden when the institutional relay
-requires a stricter Postfix TLS policy. The default is `may`, which lets Postfix
-use STARTTLS when the upstream relay offers it.
-Advanced Postfix identity and network settings also have Compose defaults and
-usually do not need to be set in `production.env`.
-The relay uses Postfix's default `all` network protocol mode so it can use the
-records returned by the institutional resolver. Override
-`SMTP_RELAY_INET_PROTOCOLS=ipv4` only when the relay has stable IPv4 DNS records
-and the deployment network cannot route IPv6.
-The container also makes the Docker resolver files available to the Postfix
-delivery chroot, so the relay host can be resolved without host-level Postfix
-configuration.
+Common examples for `EMAIL_HOST` are `host.docker.internal` for a relay running
+on the VM host, a Compose service name for a relay container managed elsewhere,
+or the DNS name of the institutional SMTP service. Leave
+`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD` empty when the relay authorizes by IP.
+Use `EMAIL_USE_TLS=true` only when Django connects directly to an SMTP service
+that requires STARTTLS; keep it `false` when an intermediate relay handles the
+upstream TLS policy.
 
-For a fresh Keycloak database, the production installer also writes these email
-settings into the realm import. Existing Keycloak realms are not overwritten by
-`--import-realm`; update Realm settings > Email manually or recreate the
-Keycloak database volume during a clean test.
+To test PathoCore API email delivery from the orchestrated stack, run the API
+management command inside the container:
+
+```bash
+docker compose --env-file .env -f docker-compose.test.yml exec pathocore_api \
+  bash -lc 'cd /opt/pathocore-api && source virtualenv/bin/activate && python manage.py send_test_email user@example.org'
+```
+
+For a fresh Keycloak database, the production installer also writes
+`EMAIL_HOST`, `EMAIL_PORT` and `DEFAULT_FROM_EMAIL` into the realm import.
+Existing Keycloak realms are not overwritten by `--import-realm`; update Realm
+settings > Email manually or recreate the Keycloak database volume during a
+clean test.
 
 ## Production Apache Reverse Proxy
 
