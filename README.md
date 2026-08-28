@@ -408,7 +408,7 @@ podman volume ls | grep 'pathocore-web'
 podman volume export "$DOCUMENTS_VOLUME" > "$BACKUP_DIR/documents.tar"
 # Dump logico obligatorio del estado autoritativo de Keycloak.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T keycloak_db sh -c \
+  exec -T pathocore-web-keycloak-db sh -c \
   'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   > "$BACKUP_DIR/keycloak-database.sql"
 tar -C /srv/containers/bind -czf "$BACKUP_DIR/bind-mounts.tar.gz" pathocore-web
@@ -471,10 +471,10 @@ for service in pathocore_api_db mepram_omop_api_db; do
     'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 done
 until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T keycloak_db sh -c \
+  exec -T pathocore-web-keycloak-db sh -c \
   'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T keycloak_db sh -c \
+  exec -T pathocore-web-keycloak-db sh -c \
   'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   exec -T pathocore_api_db sh -c \
@@ -485,7 +485,7 @@ podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   < "$BACKUP_DIR/mepram-omop-api-database.sql"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T keycloak_db sh -c \
+  exec -T pathocore-web-keycloak-db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   < "$BACKUP_DIR/keycloak-database.sql"
 ```
@@ -572,9 +572,9 @@ diagnostic last resort and must use the same backup and release procedure.
 
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  logs --tail 200 apache
+  logs --tail 200 pathocore-web-apache
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec apache httpd -t
+  exec pathocore-web-apache httpd -t
 
 APACHE_PORT='CHANGE_ME'
 SERVER_STATUS_SERVER_NAME='localhost'
@@ -601,7 +601,7 @@ sudo mv /var/log/local/pathocore-web/apache/modsec_debug.log \
   /var/log/local/pathocore-web/apache/modsec_debug.log.blocked
 bash container_install.sh --action fix-permissions --engine podman \
   --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
-podman compose --env-file .env.production.file -f docker-compose.prod.yml restart apache
+podman compose --env-file .env.production.file -f docker-compose.prod.yml restart pathocore-web-apache
 ```
 
 #### Keycloak realm bind

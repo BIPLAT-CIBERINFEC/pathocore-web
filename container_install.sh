@@ -17,7 +17,7 @@ APPLICATION_NAME="PathoCore Web"
 # ============================================================================
 install_services=(mepram_omop_api pathocore_api pathocore_web)
 addon_build_services=()
-permission_services=(mepram_omop_api pathocore_api pathocore_web pathocore_api_db mepram_omop_api_db apache keycloak_db keycloak)
+permission_services=(mepram_omop_api pathocore_api pathocore_web pathocore_api_db mepram_omop_api_db pathocore-web-apache pathocore-web-keycloak-db pathocore-web-keycloak)
 configured_services=(mepram_omop_api pathocore_api pathocore_web apache keycloak)
 
 default_service_install_conf() {
@@ -296,19 +296,19 @@ prepare_running_container_mount_permissions() {
             prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
             ;;
         pathocore_web) return 0 ;; # immutable Next.js runtime
-        apache)
+        pathocore-web-apache)
             # Apache currently needs no ownership repair inside its running
             # container. Keep an explicit add-on policy ready for future mounts.
             local -a apache_running_mount_permission_spec=()
             apply_container_directory_permission_spec "$container_id" "${apache_running_mount_permission_spec[@]}"
             ;;
-        keycloak)
+        pathocore-web-keycloak)
             # Realm imports are read-only, so the Keycloak container currently
             # has no writable mount requiring an in-container ownership repair.
             local -a keycloak_running_mount_permission_spec=()
             apply_container_directory_permission_spec "$container_id" "${keycloak_running_mount_permission_spec[@]}"
             ;;
-        pathocore_api_db|mepram_omop_api_db|keycloak_db)
+        pathocore_api_db|mepram_omop_api_db|pathocore-web-keycloak-db)
             # Persistent MySQL volumes must remain owned by the UID/GID used by
             # the database image, including after restoring or moving data.
             local -a mysql_running_mount_permission_spec=(

@@ -91,7 +91,7 @@ services:
       OIDC_CLIENT_ID: ${PATHOCORE_API_OIDC_CLIENT_ID:-}
       OIDC_JWKS_CACHE_TTL_SECONDS: ${PATHOCORE_API_OIDC_JWKS_CACHE_TTL_SECONDS:-300}
       OIDC_JWKS_TIMEOUT_SECONDS: ${PATHOCORE_API_OIDC_JWKS_TIMEOUT_SECONDS:-5}
-      KEYCLOAK_ADMIN_API_BASE_URL: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_BASE_URL:-http://keycloak:8080}
+      KEYCLOAK_ADMIN_API_BASE_URL: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_BASE_URL:-http://pathocore-web-keycloak:8080}
       KEYCLOAK_ADMIN_API_REALM: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_REALM:-test}
       KEYCLOAK_ADMIN_API_TOKEN_REALM: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_TOKEN_REALM:-master}
       KEYCLOAK_ADMIN_API_CLIENT_ID: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_CLIENT_ID:-admin-cli}
@@ -156,7 +156,7 @@ services:
     networks: [deployment_net]
   # END BU-ISCIII SERVICE: pathocore_web
   # BEGIN BU-ISCIII ADDON: apache
-  apache:
+  pathocore-web-apache:
     image: registry.access.redhat.com/ubi9/httpd-24:latest
     restart: unless-stopped
     depends_on:
@@ -166,7 +166,7 @@ services:
         condition: service_healthy
       pathocore_web:
         condition: service_healthy
-      keycloak:
+      pathocore-web-keycloak:
         condition: service_healthy
     ports:
       - "${APACHE_BIND_HOST:?APACHE_BIND_HOST is required}:${APACHE_PORT:?APACHE_PORT is required}:8080"
@@ -192,7 +192,7 @@ services:
     networks: [deployment_net]
   # END BU-ISCIII ADDON: apache
   # BEGIN BU-ISCIII ADDON: keycloak
-  keycloak_db:
+  pathocore-web-keycloak-db:
     image: docker.io/library/mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     restart: unless-stopped
@@ -214,18 +214,18 @@ services:
       - keycloak_db_data:/var/lib/mysql
     networks: [deployment_net]
 
-  keycloak:
+  pathocore-web-keycloak:
     image: quay.io/keycloak/keycloak:26.6.1
     command: ["start-dev", "--import-realm"]
     restart: unless-stopped
     depends_on:
-      keycloak_db:
+      pathocore-web-keycloak-db:
         condition: service_healthy
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://keycloak_db:3306/${KEYCLOAK_DB_NAME:-keycloak}?useSSL=false&allowPublicKeyRetrieval=true
+      KC_DB_URL: jdbc:mysql://pathocore-web-keycloak-db:3306/${KEYCLOAK_DB_NAME:-keycloak}?useSSL=false&allowPublicKeyRetrieval=true
       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
       KC_HEALTH_ENABLED: "true"
