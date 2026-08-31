@@ -72,6 +72,7 @@ services:
       start_period: 90s
     volumes:
       - ./keycloak/tmp-import:/opt/keycloak/data/import:ro,z
+      - ./keycloak/themes:/opt/keycloak/themes:ro,z
 
   pathocore_api:
     build:

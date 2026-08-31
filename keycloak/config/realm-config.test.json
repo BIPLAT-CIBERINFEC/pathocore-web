@@ -6,8 +6,19 @@
     "clientSessionIdleTimeout": 28800,
     "clientSessionMaxLifespan": 86400,
     "accessTokenLifespan": 900,
+    "actionTokenGeneratedByAdminLifespan": 86400,
+    "actionTokenGeneratedByUserLifespan": 7200,
     "revokeRefreshToken": true,
     "refreshTokenMaxReuse": 0
+  },
+  "login": {
+    "registrationAllowed": false,
+    "resetPasswordAllowed": true,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "editUsernameAllowed": false,
+    "rememberMe": false,
+    "verifyEmail": false
   },
   "smtp": {
     "host": "mailpit",
@@ -24,6 +35,9 @@
     "connection_timeout": 10000,
     "timeout": 10000,
     "write_timeout": 10000
+  },
+  "theme": {
+    "email": "pathocore"
   },
   "group_root": "use-cases",
   "global_groups": [

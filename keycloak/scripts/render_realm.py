@@ -10,12 +10,23 @@ IMPORT_DIR = BASE_DIR / "tmp-import"
 
 BUILTIN_DEFAULT_CLIENT_SCOPES = ["profile", "email", "roles"]
 WEB_DEFAULT_CLIENT_SCOPES = BUILTIN_DEFAULT_CLIENT_SCOPES + ["web-origins"]
+REALM_LOGIN_FIELDS = [
+    "registrationAllowed",
+    "resetPasswordAllowed",
+    "loginWithEmailAllowed",
+    "duplicateEmailsAllowed",
+    "editUsernameAllowed",
+    "rememberMe",
+    "verifyEmail",
+]
 REALM_SESSION_FIELDS = [
     "ssoSessionIdleTimeout",
     "ssoSessionMaxLifespan",
     "clientSessionIdleTimeout",
     "clientSessionMaxLifespan",
     "accessTokenLifespan",
+    "actionTokenGeneratedByAdminLifespan",
+    "actionTokenGeneratedByUserLifespan",
     "revokeRefreshToken",
     "refreshTokenMaxReuse",
 ]
@@ -301,7 +312,6 @@ def render_realm(config):
     realm = {
         "realm": config["realm"],
         "enabled": True,
-        "registrationAllowed": False,
         "groups": build_group_tree(config),
         "clientScopes": client_scopes,
         "users": [build_user(user_config) for user_config in config.get("users", [])],
@@ -313,6 +323,14 @@ def render_realm(config):
     smtp_server = build_smtp_server(config)
     if smtp_server:
         realm["smtpServer"] = smtp_server
+    theme_config = config.get("theme", {})
+    if theme_config.get("email"):
+        realm["emailTheme"] = theme_config["email"]
+
+    login_config = config.get("login", {})
+    for field in REALM_LOGIN_FIELDS:
+        if field in login_config:
+            realm[field] = login_config[field]
 
     session_config = config.get("session", {})
     for field in REALM_SESSION_FIELDS:

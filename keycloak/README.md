@@ -113,6 +113,14 @@ Sender: no-reply@pathocore.local
 When `pathocore-api` approves an access request, it calls Keycloak
 `execute-actions-email` with `UPDATE_PASSWORD` and `VERIFY_EMAIL`. In the test
 stack, the user email is captured in Mailpit instead of being sent externally.
+Those account setup emails use the bundled `pathocore` email theme mounted from
+`keycloak/themes/pathocore`.
+
+The realm config sets admin-generated action links to 24 hours and
+user-generated action links, such as standalone email verification links, to 2
+hours.
+Password reset is enabled, so the login page exposes Keycloak's
+`Forgot password?` flow.
 
 The API must have action emails enabled:
 
@@ -150,6 +158,20 @@ docker compose --env-file .env -f docker-compose.test.yml up -d
 
 For an already running local realm, configure SMTP from the admin console under
 Realm settings > Email, or use a fresh import as shown above.
+If only the email theme changed, keep the existing data volume and update the
+realm with:
+
+```bash
+docker compose --env-file .env -f docker-compose.test.yml up -d --force-recreate --no-deps keycloak
+docker exec pathocore-keycloak-1 /opt/keycloak/bin/kcadm.sh config credentials \
+  --server http://127.0.0.1:8080 --realm master --user admin --password admin
+docker exec pathocore-keycloak-1 /opt/keycloak/bin/kcadm.sh update \
+  realms/ciberisciii_datahub \
+  -s emailTheme=pathocore \
+  -s actionTokenGeneratedByAdminLifespan=86400 \
+  -s actionTokenGeneratedByUserLifespan=7200 \
+  -s resetPasswordAllowed=true
+```
 
 The bootstrap admin created from `KC_BOOTSTRAP_ADMIN_USERNAME` and
 `KC_BOOTSTRAP_ADMIN_PASSWORD` belongs to the Keycloak `master` realm. Its email,

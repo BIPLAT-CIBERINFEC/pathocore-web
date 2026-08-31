@@ -1,5 +1,18 @@
 {
   "realm": "ciberisciii_datahub",
+  "session": {
+    "actionTokenGeneratedByAdminLifespan": 86400,
+    "actionTokenGeneratedByUserLifespan": 7200
+  },
+  "login": {
+    "registrationAllowed": false,
+    "resetPasswordAllowed": true,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "editUsernameAllowed": false,
+    "rememberMe": false,
+    "verifyEmail": false
+  },
   "group_root": "use-cases",
   "global_groups": [
     "superusers"
@@ -23,6 +36,9 @@
     "connection_timeout": 10000,
     "timeout": 10000,
     "write_timeout": 10000
+  },
+  "theme": {
+    "email": "pathocore"
   },
   "shared_client_scope": {
     "name": "pathocore-common",
