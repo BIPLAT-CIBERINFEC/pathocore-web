@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#27](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/27) Expose OMOP proxy origin settings
 - [#30](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/30) Pass PathoCore API CSRF trusted origins from the orchestrator
 - [#34](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/34) Add the PathoCore Keycloak email theme and account recovery realm settings.
+- [#35](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/35) Add an optional Apache reverse-proxy profile for local and shared development testing.
 
 ### `Fixed`
 
