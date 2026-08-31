@@ -340,8 +340,13 @@ service_exists() {
 
 compose_profile_enabled() {
     local profile="$1"
+    local profiles="${COMPOSE_PROFILES:-}"
 
-    case ",${COMPOSE_PROFILES:-}," in
+    if [ -z "$profiles" ]; then
+        profiles="$(read_env_value COMPOSE_PROFILES "")"
+    fi
+
+    case ",$profiles," in
         *,"$profile",*) return 0 ;;
         *) return 1 ;;
     esac
