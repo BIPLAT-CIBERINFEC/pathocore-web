@@ -192,13 +192,32 @@ render_apache_config() {
     local pathocore_datahub_server_name pathocore_api_server_name
     local pathocore_keycloak_server_name mepram_omop_api_server_name
     local pathocore_forwarded_proto pathocore_forwarded_port
+    local default_datahub_server_name default_api_server_name
+    local default_keycloak_server_name default_omop_server_name
+    local default_forwarded_proto default_forwarded_port
 
-    pathocore_datahub_server_name="$(read_env_value PATHOCORE_DATAHUB_SERVER_NAME "")"
-    pathocore_api_server_name="$(read_env_value PATHOCORE_API_SERVER_NAME "")"
-    pathocore_keycloak_server_name="$(read_env_value PATHOCORE_KEYCLOAK_SERVER_NAME "")"
-    mepram_omop_api_server_name="$(read_env_value MEPRAM_OMOP_API_SERVER_NAME "")"
-    pathocore_forwarded_proto="$(read_env_value PATHOCORE_FORWARDED_PROTO https)"
-    pathocore_forwarded_port="$(read_env_value PATHOCORE_FORWARDED_PORT 443)"
+    if [ "$mode" = "production" ]; then
+        default_datahub_server_name=""
+        default_api_server_name=""
+        default_keycloak_server_name=""
+        default_omop_server_name=""
+        default_forwarded_proto="https"
+        default_forwarded_port="443"
+    else
+        default_datahub_server_name="localhost"
+        default_api_server_name="pathocore-api.localhost"
+        default_keycloak_server_name="keycloak.localhost"
+        default_omop_server_name="mepram-omop-api.localhost"
+        default_forwarded_proto="http"
+        default_forwarded_port="$(read_env_value HTTP_PORT 8083)"
+    fi
+
+    pathocore_datahub_server_name="$(read_env_value PATHOCORE_DATAHUB_SERVER_NAME "$default_datahub_server_name")"
+    pathocore_api_server_name="$(read_env_value PATHOCORE_API_SERVER_NAME "$default_api_server_name")"
+    pathocore_keycloak_server_name="$(read_env_value PATHOCORE_KEYCLOAK_SERVER_NAME "$default_keycloak_server_name")"
+    mepram_omop_api_server_name="$(read_env_value MEPRAM_OMOP_API_SERVER_NAME "$default_omop_server_name")"
+    pathocore_forwarded_proto="$(read_env_value PATHOCORE_FORWARDED_PROTO "$default_forwarded_proto")"
+    pathocore_forwarded_port="$(read_env_value PATHOCORE_FORWARDED_PORT "$default_forwarded_port")"
 
     tmp_file="$(mktemp)"
     sed \
@@ -218,11 +237,12 @@ render_apache_config() {
 prepare_apache_bind_mounts() {
     local apache_conf_path=""
 
-    if [ "$mode" != "production" ]; then
-        return 0
+    if [ "$mode" = "production" ]; then
+        apache_conf_path="$(read_env_value PATHOCORE_HOST_APACHE_CONF_DIR /srv/containers/bind/pathocore-web/apache_conf)"
+    else
+        apache_conf_path=".runtime/apache_conf"
     fi
 
-    apache_conf_path="$(read_env_value PATHOCORE_HOST_APACHE_CONF_DIR /srv/containers/bind/pathocore-web/apache_conf)"
     mkdir -p "$apache_conf_path"
 
     echo "Rendering Apache configuration into $apache_conf_path"
@@ -238,14 +258,26 @@ prepare_keycloak_import() {
     local config_src="keycloak/config/realm-config.prod.example.json"
     local tmp_config=""
     local public_web_url default_from_email reply_to_email smtp_host smtp_port
-
-    if [ "$mode" != "production" ]; then
-        return 0
-    fi
+    local extra_redirect_uris extra_web_origins
 
     if ! command -v python3 >/dev/null 2>&1; then
-        echo "python3 is required to render the production Keycloak realm import."
+        echo "python3 is required to render the Keycloak realm import."
         exit 1
+    fi
+
+    if [ "$mode" != "production" ]; then
+        public_web_url="$(read_env_value AUTH_URL "")"
+        extra_redirect_uris="$(read_env_value KEYCLOAK_WEB_EXTRA_REDIRECT_URIS "")"
+        extra_web_origins="$(read_env_value KEYCLOAK_WEB_EXTRA_WEB_ORIGINS "")"
+
+        echo "Rendering test Keycloak realm import into keycloak/tmp-import"
+        AUTH_URL="$public_web_url" \
+        KEYCLOAK_WEB_EXTRA_REDIRECT_URIS="$extra_redirect_uris" \
+        KEYCLOAK_WEB_EXTRA_WEB_ORIGINS="$extra_web_origins" \
+        python3 keycloak/scripts/render_realm.py \
+            --profile "test" \
+            --output-dir "keycloak/tmp-import"
+        return 0
     fi
 
     if [ -f "keycloak/config/realm-config.prod.json" ]; then
@@ -304,6 +336,15 @@ service_exists() {
     done < <(compose_exec config --services 2>/dev/null)
 
     return 1
+}
+
+compose_profile_enabled() {
+    local profile="$1"
+
+    case ",${COMPOSE_PROFILES:-}," in
+        *,"$profile",*) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 wait_for_service() {
@@ -413,7 +454,12 @@ prepare_keycloak_import
 compose_exec build
 compose_exec up -d --remove-orphans
 
-for service in keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web; do
+services_to_wait=(keycloak_db keycloak pathocore_db pathocore_api mepram_omop_db mepram_omop_api pathocore_web)
+if compose_profile_enabled proxy; then
+    services_to_wait+=(apache)
+fi
+
+for service in "${services_to_wait[@]}"; do
     if service_exists "$service"; then
         echo "Waiting for service: $service"
         wait_for_service "$service" 120
@@ -441,3 +487,6 @@ echo "  Web:              http://127.0.0.1:$(read_env_value PATHOCORE_WEB_PORT 3
 echo "  PathoCore API:    http://127.0.0.1:$(read_env_value PATHOCORE_API_PORT 8000)"
 echo "  MePRAM OMOP API:  http://127.0.0.1:$(read_env_value MEPRAM_OMOP_API_PORT 8100)"
 echo "  Keycloak:         http://127.0.0.1:$(read_env_value KEYCLOAK_PORT 8080)"
+if compose_profile_enabled proxy; then
+    echo "  Apache proxy:     http://127.0.0.1:$(read_env_value HTTP_PORT 8083)"
+fi

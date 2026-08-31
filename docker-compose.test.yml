@@ -255,6 +255,34 @@ services:
       retries: 30
       start_period: 180s
 
+  apache:
+    image: registry.access.redhat.com/ubi9/httpd-24:latest
+    restart: unless-stopped
+    profiles: ["proxy"]
+    depends_on:
+      pathocore_web:
+        condition: service_healthy
+      pathocore_api:
+        condition: service_healthy
+      mepram_omop_api:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    ports:
+      - "${HTTP_BIND_HOST:-0.0.0.0}:${HTTP_PORT:-8083}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - ./.runtime/apache_conf/pathocore_apache_logs.conf:/etc/httpd/conf.d/pathocore-logs.conf:ro,z
+      - ./.runtime/apache_conf/pathocore_apache_reverse_proxy.conf:/etc/httpd/conf.d/pathocore-reverse-proxy.conf:ro,z
+      - pathocore_api_documents:/var/www/pathocore-api/documents:ro,z
+      - pathocore_api_static:/var/www/pathocore-api/static:ro,z
+      - apache_test_logs:/var/log/httpd:z
+
   adminer:
     image: adminer
     restart: unless-stopped
@@ -280,3 +308,4 @@ volumes:
   pathocore_api_logs:
   pathocore_api_static:
   pathocore_db_data:
+  apache_test_logs:
