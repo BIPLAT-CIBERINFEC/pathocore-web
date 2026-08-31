@@ -53,6 +53,7 @@ keycloak/config/realm-config.prod.json
 # Python / generated helper caches
 __pycache__/
 *.py[cod]
+.runtime/
 
 # OS files
 .DS_Store

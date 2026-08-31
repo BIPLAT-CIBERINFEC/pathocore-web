@@ -92,8 +92,67 @@ Mailpit:          http://127.0.0.1:8025
 Adminer:          http://127.0.0.1:8085
 ```
 
-The testing stack does not run Apache. It exposes application services directly
-for local development.
+The testing stack does not run Apache by default. It exposes application
+services directly for local development.
+
+To reproduce reverse-proxy behavior locally or in a shared development VM,
+enable the optional Apache profile:
+
+```bash
+COMPOSE_PROFILES=proxy bash container_install.sh --test
+```
+
+Apache listens on `HTTP_PORT` and routes requests by `Host` header using the
+same reverse-proxy template as production. The default local hosts are:
+
+```env
+HTTP_PORT=8083
+PATHOCORE_DATAHUB_SERVER_NAME=localhost
+PATHOCORE_API_SERVER_NAME=pathocore-api.localhost
+PATHOCORE_KEYCLOAK_SERVER_NAME=keycloak.localhost
+MEPRAM_OMOP_API_SERVER_NAME=mepram-omop-api.localhost
+PATHOCORE_FORWARDED_PROTO=http
+PATHOCORE_FORWARDED_PORT=8083
+```
+
+Example proxy checks:
+
+```bash
+curl -I http://localhost:8083/
+curl -I -H "Host: pathocore-api.localhost" http://127.0.0.1:8083/v1/databrowser/overview-summary
+curl -I -H "Host: mepram-omop-api.localhost" http://127.0.0.1:8083/v1/health
+curl -I -H "Host: keycloak.localhost" http://127.0.0.1:8083/realms/ciberisciii_datahub
+```
+
+For a shared development VM reached through public DNS names, keep using the
+test stack with the Apache profile and set the public URLs in `.env` before
+running the installer. The installer renders Apache and Keycloak from those
+values; Keycloak also receives `AUTH_URL/auth/callback` in the
+`pathocore-web` client redirect allow-list:
+
+```env
+KEYCLOAK_PUBLIC_URL=https://dev-keycloak.example.org
+KEYCLOAK_ISSUER=https://dev-keycloak.example.org/realms/ciberisciii_datahub
+NEXT_PUBLIC_KEYCLOAK_URL=https://dev-keycloak.example.org
+AUTH_URL=https://dev-datahub.example.org
+HTTP_PORT=80
+PATHOCORE_FORWARDED_PROTO=https
+PATHOCORE_FORWARDED_PORT=443
+PATHOCORE_DATAHUB_SERVER_NAME=dev-datahub.example.org
+PATHOCORE_API_SERVER_NAME=dev-pathocore-api.example.org
+PATHOCORE_KEYCLOAK_SERVER_NAME=dev-keycloak.example.org
+MEPRAM_OMOP_API_SERVER_NAME=dev-omop-api.example.org
+PATHOCORE_API_DNS_URL=dev-pathocore-api.example.org
+PATHOCORE_API_CSRF_TRUSTED_ORIGINS=https://dev-pathocore-api.example.org
+MEPRAM_API_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,dev-omop-api.example.org
+MEPRAM_CORS_ALLOWED_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,https://dev-datahub.example.org
+MEPRAM_CSRF_TRUSTED_ORIGINS=https://dev-omop-api.example.org
+```
+
+If Keycloak already has a persisted database, changing `.env` and re-rendering
+the import JSON is not enough. Recreate the Keycloak volume for a clean
+development import, or update the client redirect URIs from the Keycloak admin
+console.
 
 ## Frontend API Routes
 
@@ -340,6 +399,16 @@ Testing and production realm templates live under `keycloak/`.
 Render the testing realm before a clean Keycloak import:
 
 ```bash
+python keycloak/scripts/render_realm.py --profile test
+```
+
+When testing with shared development DNS, export `.env` first so the renderer
+can add the DNS callback URL:
+
+```bash
+set -a
+. .env
+set +a
 python keycloak/scripts/render_realm.py --profile test
 ```
 

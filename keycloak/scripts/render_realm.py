@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config"
@@ -65,6 +67,47 @@ def resolve_config_path(args):
 
 def load_config(config_path):
     return json.loads(config_path.read_text())
+
+
+def csv_env(name):
+    return [value.strip() for value in os.environ.get(name, "").split(",") if value.strip()]
+
+
+def append_unique(values, extra_values):
+    for value in extra_values:
+        if value not in values:
+            values.append(value)
+
+
+def public_origin(url):
+    parsed = urlsplit(url)
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def apply_env_overrides(config):
+    public_web_url = os.environ.get("AUTH_URL", "").strip().rstrip("/")
+    extra_redirect_uris = csv_env("KEYCLOAK_WEB_EXTRA_REDIRECT_URIS")
+    extra_web_origins = csv_env("KEYCLOAK_WEB_EXTRA_WEB_ORIGINS")
+
+    if public_web_url:
+        extra_redirect_uris.append(f"{public_web_url}/auth/callback")
+        origin = public_origin(public_web_url)
+        if origin:
+            extra_web_origins.append(origin)
+
+    if not extra_redirect_uris and not extra_web_origins:
+        return
+
+    web_client_id = os.environ.get("NEXT_PUBLIC_KEYCLOAK_CLIENT_ID", "pathocore-web")
+    for client in config.get("clients", []):
+        if client.get("client_id") != web_client_id:
+            continue
+        client.setdefault("redirect_uris", [])
+        client.setdefault("web_origins", [])
+        append_unique(client["redirect_uris"], extra_redirect_uris)
+        append_unique(client["web_origins"], extra_web_origins)
 
 
 def build_group_tree(config):
@@ -344,6 +387,7 @@ def main():
     config_path = resolve_config_path(args)
     output_dir = Path(args.output_dir)
     config = load_config(config_path)
+    apply_env_overrides(config)
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{config['realm']}-realm.json"
     output_path.write_text(json.dumps(render_realm(config), indent=2) + "\n")
