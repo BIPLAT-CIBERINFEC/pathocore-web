@@ -1,7 +1,6 @@
 {
   "realm": "ciberisciii_datahub",
   "enabled": true,
-  "registrationAllowed": false,
   "groups": [
     {
       "name": "superusers"
@@ -412,11 +411,21 @@
     "timeout": "10000",
     "writeTimeout": "10000"
   },
+  "emailTheme": "pathocore",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": false,
   "ssoSessionIdleTimeout": 28800,
   "ssoSessionMaxLifespan": 86400,
   "clientSessionIdleTimeout": 28800,
   "clientSessionMaxLifespan": 86400,
   "accessTokenLifespan": 900,
+  "actionTokenGeneratedByAdminLifespan": 86400,
+  "actionTokenGeneratedByUserLifespan": 7200,
   "revokeRefreshToken": true,
   "refreshTokenMaxReuse": 0
 }
