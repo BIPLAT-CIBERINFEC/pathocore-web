@@ -131,6 +131,47 @@ prepare_compose_environment() {
 deployment_compose() {
     compose_exec --env-file "$compose_env_file" "$@"
 }
+write_runtime_config_override() {
+    local output_path="$1"
+    local key="$2"
+    local value="$3"
+    local quoted_value
+    quoted_value="$(compose_environment_quote "$value")" || return 1
+    printf '%s=%s\n' "$key" "$quoted_value" >> "$output_path"
+}
+prepare_orchestrated_runtime_config() {
+    local service_name="$1"
+    local source_path="${install_conf_host_by_service[$service_name]}"
+    local output_dir output_path realm keycloak_public_url
+
+    [ "$mode" = test ] || {
+        printf '%s\n' "$source_path"
+        return 0
+    }
+
+    output_dir="$script_dir/deployment/settings"
+    output_path="$output_dir/${service_name}_${mode}_runtime_settings.txt"
+    mkdir -p "$output_dir"
+    cp "$source_path" "$output_path"
+    chmod 0600 "$output_path"
+
+    case "$service_name" in
+        mepram_omop_api)
+            write_runtime_config_override "$output_path" DB_HOST mepram_omop_api_db
+            ;;
+        pathocore_api)
+            realm="${PATHOCORE_WEB_NEXT_PUBLIC_KEYCLOAK_REALM:-ciberisciii_datahub}"
+            keycloak_public_url="${KEYCLOAK_PUBLIC_URL:-http://localhost:8481}"
+            write_runtime_config_override "$output_path" DB_HOST pathocore_api_db
+            write_runtime_config_override "$output_path" OIDC_ISSUER "$keycloak_public_url/realms/$realm"
+            write_runtime_config_override "$output_path" OIDC_JWKS_URL "http://pathocore-web-keycloak:8080/realms/$realm/protocol/openid-connect/certs"
+            write_runtime_config_override "$output_path" KEYCLOAK_ADMIN_API_BASE_URL "http://pathocore-web-keycloak:8080"
+            write_runtime_config_override "$output_path" KEYCLOAK_ADMIN_API_REALM "$realm"
+            ;;
+    esac
+
+    printf '%s\n' "$output_path"
+}
 current_service_container() {
     resolve_service_container "$1"
 }
@@ -322,7 +363,7 @@ prepare_running_container_mount_permissions() {
 
 bootstrap_service() {
     local service_name="$1" container_id="$2" deployment_action="$3"
-    local repo_path runtime_conf uid gid status
+    local repo_path runtime_conf runtime_host_conf uid gid status
     local -a args
     case "$service_name" in
         mepram_omop_api)
@@ -331,7 +372,8 @@ bootstrap_service() {
             runtime_conf=conf/.runtime_install_settings.txt
             [[ "$runtime_conf" == /* ]] || runtime_conf="$repo_path/$runtime_conf"
             uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
-            stage_container_runtime_config "$container_id" "${install_conf_host_by_service[$service_name]}" "$runtime_conf" "$uid" "$gid"
+            runtime_host_conf="$(prepare_orchestrated_runtime_config "$service_name")"
+            stage_container_runtime_config "$container_id" "$runtime_host_conf" "$runtime_conf" "$uid" "$gid"
             args=(--bootstrap "$deployment_action" --git_revision "$git_revision" --conf "$runtime_conf" --skip_apache_restart)
             [ "$load_tables" = false ] || args+=(--tables)
             [ "$skip_tables" = false ] || args+=(--skip_tables)
@@ -347,7 +389,8 @@ bootstrap_service() {
             runtime_conf=conf/.runtime_install_settings.txt
             [[ "$runtime_conf" == /* ]] || runtime_conf="$repo_path/$runtime_conf"
             uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
-            stage_container_runtime_config "$container_id" "${install_conf_host_by_service[$service_name]}" "$runtime_conf" "$uid" "$gid"
+            runtime_host_conf="$(prepare_orchestrated_runtime_config "$service_name")"
+            stage_container_runtime_config "$container_id" "$runtime_host_conf" "$runtime_conf" "$uid" "$gid"
             args=(--bootstrap "$deployment_action" --git_revision "$git_revision" --conf "$runtime_conf" --skip_apache_restart)
             [ "$load_tables" = false ] || args+=(--tables)
             [ "$skip_tables" = false ] || args+=(--skip_tables)
@@ -440,7 +483,7 @@ load_test_deployment_data() {
             ;;
         *) status=1; echo "Demo-data loading is unsupported for $service_name" >&2 ;;
     esac
-    engine_exec exec "$container_id" rm -f "$container_data" || true
+    engine_exec exec -u 0 "$container_id" rm -f "$container_data" || true
     [ "$status" -eq 0 ] || die "$service_name demo-data import failed"
 }
 

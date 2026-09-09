@@ -63,7 +63,7 @@
     "conf/docker_test_settings.txt": "bc18faded32706d50a3b6f8151b39e158418761e8595d19754932a27267ba054",
     "conf/keycloak/keycloak_production_settings.txt": "beade98f6b8dcf6f3f9302b9f55425dd554bdd0a841291c3270ee8f116206746",
     "conf/keycloak/keycloak_test_settings.txt": "7756c9efcd9fbde78a2dce0a9cd7cf41818d705a8c746acbbf6b74611769265e",
-    "container_install.sh": "86677eb2e5738e257cc08e10670a673c37d6663bfb5f18422874c21703a3e44c",
+    "container_install.sh": "85e44ca95e4639a189840c715f2657d84e702f81f3bed7bdeea6012183925b6e",
     "docker-compose.prod.yml": "4919cb51c2cd27d87cb329ffa1c3813e10122383bca8ab8097c91ace09192894",
     "docker-compose.test.yml": "c62f33e2223088d98ee856f94e3fad1ee37a6ec81e64c5c88ae9054d06e700a9",
     "scripts/container_start.sh": "7f85e924a9b28f22a307a7a1dc36e1ee7ee93a827de3b27d99047646fbbcfa08",
