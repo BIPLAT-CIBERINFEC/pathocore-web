@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- Align local/test Keycloak service references with the scoped orchestrator service name.
+
 ### `Dependencies`
 
 ### `Deprecated`
