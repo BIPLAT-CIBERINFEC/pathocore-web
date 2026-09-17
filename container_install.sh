@@ -15,16 +15,16 @@ APPLICATION_NAME="PathoCore Web"
 # Regenerate these callbacks from the descriptor; keep application-neutral
 # lifecycle mechanics below unchanged.
 # ============================================================================
-install_services=(mepram_omop_api pathocore_api pathocore_web)
+install_services=(mepram-omop-api pathocore-api pathocore-web)
 addon_build_services=()
-permission_services=(mepram_omop_api pathocore_api pathocore_web pathocore_api_db mepram_omop_api_db pathocore-web-apache pathocore-web-keycloak-db pathocore-web-keycloak)
-configured_services=(mepram_omop_api pathocore_api pathocore_web apache keycloak)
+permission_services=(mepram-omop-api pathocore-api pathocore-web pathocore-api-db mepram-omop-api-db pathocore-web-apache pathocore-web-keycloak-db pathocore-web-keycloak)
+configured_services=(mepram-omop-api pathocore-api pathocore-web apache keycloak)
 
 default_service_install_conf() {
     case "$1" in
-        mepram_omop_api) [ "$mode" = test ] && echo ../mepram-omop-api/conf/docker_test_settings.txt || echo ../mepram-omop-api/conf/docker_production_settings.txt ;;
-        pathocore_api) [ "$mode" = test ] && echo ../pathocore-api/conf/docker_test_settings.txt || echo ../pathocore-api/conf/docker_production_settings.txt ;;
-        pathocore_web) [ "$mode" = test ] && echo conf/docker_test_settings.txt || echo conf/docker_production_settings.txt ;;
+        mepram-omop-api) [ "$mode" = test ] && echo ../mepram-omop-api/conf/docker_test_settings.txt || echo ../mepram-omop-api/conf/docker_production_settings.txt ;;
+        pathocore-api) [ "$mode" = test ] && echo ../pathocore-api/conf/docker_test_settings.txt || echo ../pathocore-api/conf/docker_production_settings.txt ;;
+        pathocore-web) [ "$mode" = test ] && echo conf/docker_test_settings.txt || echo conf/docker_production_settings.txt ;;
         apache) [ "$mode" = test ] && echo conf/apache/apache_test_settings.txt || echo conf/apache/apache_production_settings.txt ;;
         keycloak) [ "$mode" = test ] && echo conf/keycloak/keycloak_test_settings.txt || echo conf/keycloak/keycloak_production_settings.txt ;;
         *) return 1 ;;
@@ -32,9 +32,9 @@ default_service_install_conf() {
 }
 service_build_context_dir() {
     case "$1" in
-        mepram_omop_api) echo ../mepram-omop-api ;;
-        pathocore_api) echo ../pathocore-api ;;
-        pathocore_web) echo . ;;
+        mepram-omop-api) echo ../mepram-omop-api ;;
+        pathocore-api) echo ../pathocore-api ;;
+        pathocore-web) echo . ;;
         *) return 1 ;;
     esac
 }
@@ -64,40 +64,40 @@ service_install_path() {
 }
 service_readiness_path() {
     case "$1" in
-        mepram_omop_api) echo "$(service_install_path "$1")/manage.py" ;;
-        pathocore_api) echo "$(service_install_path "$1")/manage.py" ;;
-        pathocore_web) echo /app/.next/BUILD_ID ;;
+        mepram-omop-api) echo "$(service_install_path "$1")/manage.py" ;;
+        pathocore-api) echo "$(service_install_path "$1")/manage.py" ;;
+        pathocore-web) echo /app/.next/BUILD_ID ;;
         *) return 1 ;;
     esac
 }
 service_image_name() {
     case "$1" in
-        mepram_omop_api) echo mepram-omop-api:local ;;
-        pathocore_api) echo pathocore-api:local ;;
-        pathocore_web) echo pathocore-web:local ;;
+        mepram-omop-api) echo mepram-omop-api:local ;;
+        pathocore-api) echo pathocore-api:local ;;
+        pathocore-web) echo pathocore-web:local ;;
         *) return 1 ;;
     esac
 }
 service_profile() {
     case "$1" in
-        mepram_omop_api) echo django ;;
-        pathocore_api) echo django ;;
-        pathocore_web) echo nextjs ;;
+        mepram-omop-api) echo django ;;
+        pathocore-api) echo django ;;
+        pathocore-web) echo nextjs ;;
         *) return 1 ;;
     esac
 }
 service_dockerfile() {
     case "$1" in
-        mepram_omop_api) echo Dockerfile ;;
-        pathocore_api) echo Dockerfile ;;
-        pathocore_web) echo Dockerfile ;;
+        mepram-omop-api) echo Dockerfile ;;
+        pathocore-api) echo Dockerfile ;;
+        pathocore-web) echo Dockerfile ;;
         *) return 1 ;;
     esac
 }
 service_container_install_conf() {
     case "$1" in
-        mepram_omop_api) echo conf/.runtime_install_settings.txt ;;
-        pathocore_api) echo conf/.runtime_install_settings.txt ;;
+        mepram-omop-api) echo conf/.runtime_install_settings.txt ;;
+        pathocore-api) echo conf/.runtime_install_settings.txt ;;
         *) return 1 ;;
     esac
 }
@@ -110,9 +110,9 @@ service_gid() {
 
 prepare_compose_environment() {
     local -a settings_sources=(
-        "MEPRAM_OMOP_API|${install_conf_host_by_service[mepram_omop_api]}"
-        "PATHOCORE_API|${install_conf_host_by_service[pathocore_api]}"
-        "PATHOCORE_WEB|${install_conf_host_by_service[pathocore_web]}"
+        "MEPRAM_OMOP_API|${install_conf_host_by_service[mepram-omop-api]}"
+        "PATHOCORE_API|${install_conf_host_by_service[pathocore-api]}"
+        "PATHOCORE_WEB|${install_conf_host_by_service[pathocore-web]}"
         "|${install_conf_host_by_service[apache]}"
         "|${install_conf_host_by_service[keycloak]}"
     )
@@ -146,16 +146,16 @@ print_service_summary() {
 prepare_application_host_sources() {
     local settings_output
     if [ "$mode" = production ]; then
-        settings_output="$(service_environment_value mepram_omop_api DJANGO_SETTINGS_PATH)"
-        [ -n "$settings_output" ] || { echo "DJANGO_SETTINGS_PATH is required for mepram_omop_api" >&2; return 1; }
+        settings_output="$(service_environment_value mepram-omop-api DJANGO_SETTINGS_PATH)"
+        [ -n "$settings_output" ] || { echo "DJANGO_SETTINGS_PATH is required for mepram-omop-api" >&2; return 1; }
         mkdir -p "$(dirname "$settings_output")"
-        prepare_django_settings_bind_mount ../mepram-omop-api/conf/template_settings.py "$settings_output" "${install_conf_host_by_service[mepram_omop_api]}"
+        prepare_django_settings_bind_mount ../mepram-omop-api/conf/template_settings.py "$settings_output" "${install_conf_host_by_service[mepram-omop-api]}"
     fi
     if [ "$mode" = production ]; then
-        settings_output="$(service_environment_value pathocore_api DJANGO_SETTINGS_PATH)"
-        [ -n "$settings_output" ] || { echo "DJANGO_SETTINGS_PATH is required for pathocore_api" >&2; return 1; }
+        settings_output="$(service_environment_value pathocore-api DJANGO_SETTINGS_PATH)"
+        [ -n "$settings_output" ] || { echo "DJANGO_SETTINGS_PATH is required for pathocore-api" >&2; return 1; }
         mkdir -p "$(dirname "$settings_output")"
-        prepare_django_settings_bind_mount ../pathocore-api/conf/template_settings.py "$settings_output" "${install_conf_host_by_service[pathocore_api]}"
+        prepare_django_settings_bind_mount ../pathocore-api/conf/template_settings.py "$settings_output" "${install_conf_host_by_service[pathocore-api]}"
     fi
     # conf/apache contains the application-owned Apache sources. Render every
     # deployment value only after the protected settings environment is loaded,
@@ -163,7 +163,7 @@ prepare_application_host_sources() {
     local apache_source_dir="$script_dir/conf/apache"
     local apache_output_dir="$script_dir/deployment/apache"
     local apache_conf_name apache_config_service apache_log_path
-    apache_config_service=pathocore_web
+    apache_config_service=pathocore-web
     [ -d "$apache_source_dir" ] || {
         echo "Apache source configuration directory not found: $apache_source_dir" >&2
         return 1
@@ -218,22 +218,22 @@ prepare_application_host_sources() {
 # the shared helper skips paths that are not used by the active mode.
 prepare_host_bind_source_permissions() {
     local log_path settings_path uid gid
-    log_path="$(service_environment_value mepram_omop_api HOST_LOG_PATH)"
-    settings_path="$(service_environment_value mepram_omop_api DJANGO_SETTINGS_PATH)"
-    [ -n "$log_path" ] || { echo "HOST_LOG_PATH is required for mepram_omop_api" >&2; return 1; }
-    [ -n "$settings_path" ] || { echo "DJANGO_SETTINGS_PATH is required for mepram_omop_api" >&2; return 1; }
-    uid="$(service_uid mepram_omop_api)"; gid="$(service_gid mepram_omop_api)"
+    log_path="$(service_environment_value mepram-omop-api HOST_LOG_PATH)"
+    settings_path="$(service_environment_value mepram-omop-api DJANGO_SETTINGS_PATH)"
+    [ -n "$log_path" ] || { echo "HOST_LOG_PATH is required for mepram-omop-api" >&2; return 1; }
+    [ -n "$settings_path" ] || { echo "DJANGO_SETTINGS_PATH is required for mepram-omop-api" >&2; return 1; }
+    uid="$(service_uid mepram-omop-api)"; gid="$(service_gid mepram-omop-api)"
     local -a mepram_omop_api_host_bind_permission_spec=(
         "$log_path|$uid:$gid|0775"
         "$(dirname "$settings_path")|-|0755"
         "$settings_path|$uid:$gid|0664"
     )
     apply_host_permission_spec "${mepram_omop_api_host_bind_permission_spec[@]}"
-    log_path="$(service_environment_value pathocore_api HOST_LOG_PATH)"
-    settings_path="$(service_environment_value pathocore_api DJANGO_SETTINGS_PATH)"
-    [ -n "$log_path" ] || { echo "HOST_LOG_PATH is required for pathocore_api" >&2; return 1; }
-    [ -n "$settings_path" ] || { echo "DJANGO_SETTINGS_PATH is required for pathocore_api" >&2; return 1; }
-    uid="$(service_uid pathocore_api)"; gid="$(service_gid pathocore_api)"
+    log_path="$(service_environment_value pathocore-api HOST_LOG_PATH)"
+    settings_path="$(service_environment_value pathocore-api DJANGO_SETTINGS_PATH)"
+    [ -n "$log_path" ] || { echo "HOST_LOG_PATH is required for pathocore-api" >&2; return 1; }
+    [ -n "$settings_path" ] || { echo "DJANGO_SETTINGS_PATH is required for pathocore-api" >&2; return 1; }
+    uid="$(service_uid pathocore-api)"; gid="$(service_gid pathocore-api)"
     local -a pathocore_api_host_bind_permission_spec=(
         "$log_path|$uid:$gid|0775"
         "$(dirname "$settings_path")|-|0755"
@@ -273,7 +273,7 @@ prepare_running_container_mount_permissions() {
     local service_name="$1" container_id="$2"
     local install_path uid gid
     case "$service_name" in
-        mepram_omop_api)
+        mepram-omop-api)
             install_path="$(service_install_path "$service_name")"
             uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
             local -a mepram_omop_api_running_mount_permission_spec=(
@@ -284,7 +284,7 @@ prepare_running_container_mount_permissions() {
             apply_container_directory_permission_spec "$container_id" "${mepram_omop_api_running_mount_permission_spec[@]}"
             prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
             ;;
-        pathocore_api)
+        pathocore-api)
             install_path="$(service_install_path "$service_name")"
             uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
             local -a pathocore_api_running_mount_permission_spec=(
@@ -295,7 +295,7 @@ prepare_running_container_mount_permissions() {
             apply_container_directory_permission_spec "$container_id" "${pathocore_api_running_mount_permission_spec[@]}"
             prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
             ;;
-        pathocore_web) return 0 ;; # immutable Next.js runtime
+        pathocore-web) return 0 ;; # immutable Next.js runtime
         pathocore-web-apache)
             # Apache currently needs no ownership repair inside its running
             # container. Keep an explicit add-on policy ready for future mounts.
@@ -308,7 +308,7 @@ prepare_running_container_mount_permissions() {
             local -a keycloak_running_mount_permission_spec=()
             apply_container_directory_permission_spec "$container_id" "${keycloak_running_mount_permission_spec[@]}"
             ;;
-        pathocore_api_db|mepram_omop_api_db|pathocore-web-keycloak-db)
+        pathocore-api-db|mepram-omop-api-db|pathocore-web-keycloak-db)
             # Persistent MySQL volumes must remain owned by the UID/GID used by
             # the database image, including after restoring or moving data.
             local -a mysql_running_mount_permission_spec=(
@@ -325,7 +325,7 @@ bootstrap_service() {
     local repo_path runtime_conf uid gid status
     local -a args
     case "$service_name" in
-        mepram_omop_api)
+        mepram-omop-api)
             repo_path="$(service_repo_path "$service_name")"
             # Fixed temporary in-container path; this is not operator configuration.
             runtime_conf=conf/.runtime_install_settings.txt
@@ -341,7 +341,7 @@ bootstrap_service() {
             [ "$mode" = test ] || remove_container_runtime_config "$container_id" "$runtime_conf" || true
             return "$status"
             ;;
-        pathocore_api)
+        pathocore-api)
             repo_path="$(service_repo_path "$service_name")"
             # Fixed temporary in-container path; this is not operator configuration.
             runtime_conf=conf/.runtime_install_settings.txt
@@ -357,7 +357,7 @@ bootstrap_service() {
             [ "$mode" = test ] || remove_container_runtime_config "$container_id" "$runtime_conf" || true
             return "$status"
             ;;
-        pathocore_web) return 0 ;; # no runtime bootstrap
+        pathocore-web) return 0 ;; # no runtime bootstrap
         *) return 0 ;;
     esac
 }
@@ -365,7 +365,7 @@ bootstrap_service() {
 build_production_service() {
     local service_name="$1" context="$2" dockerfile="$3"
     case "$service_name" in
-        mepram_omop_api)
+        mepram-omop-api)
             engine_build --no-cache --file "$context/$dockerfile" \
                 --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
                 --build-arg GIT_REVISION="$git_revision" \
@@ -379,7 +379,7 @@ build_production_service() {
                 --build-arg APP_GID="$(service_gid "$service_name")" \
                 --tag "$(service_image_name "$service_name")" "$context"
             ;;
-        pathocore_api)
+        pathocore-api)
             engine_build --no-cache --file "$context/$dockerfile" \
                 --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
                 --build-arg GIT_REVISION="$git_revision" \
@@ -393,7 +393,7 @@ build_production_service() {
                 --build-arg APP_GID="$(service_gid "$service_name")" \
                 --tag "$(service_image_name "$service_name")" "$context"
             ;;
-        pathocore_web)
+        pathocore-web)
             engine_build --no-cache --file "$context/$dockerfile" \
                 --build-arg GIT_REVISION="$git_revision" \
                 --build-arg NEXT_PUBLIC_API_BASE_URL="$(service_environment_value "$service_name" NEXT_PUBLIC_API_BASE_URL)" \
@@ -428,12 +428,12 @@ load_test_deployment_data() {
     engine_exec cp "$data_path" "$container_id:$container_data"
 
     case "$service_name" in
-        pathocore_api)
+        pathocore-api)
             engine_exec exec -w "$install_path" "$container_id" \
                 "$install_path/virtualenv/bin/python" manage.py \
                 import_sql_seed "$container_data" || status=$?
             ;;
-        mepram_omop_api)
+        mepram-omop-api)
             engine_exec exec -w "$install_path" "$container_id" \
                 "$install_path/virtualenv/bin/python" manage.py \
                 import_dashboard_sql "$container_data" --truncate || status=$?

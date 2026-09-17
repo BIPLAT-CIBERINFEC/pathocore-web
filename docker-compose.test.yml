@@ -1,6 +1,6 @@
 services:
-  # BEGIN BU-ISCIII SERVICE: mepram_omop_api (django)
-  mepram_omop_api:
+  # BEGIN BU-ISCIII SERVICE: mepram-omop-api (django)
+  mepram-omop-api:
     image: "${MEPRAM_OMOP_API_IMAGE:-mepram-omop-api:local}"
     build:
       context: "../mepram-omop-api"
@@ -24,7 +24,7 @@ services:
       APP_INSTALL_PATH: ${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}
       APP_PORT: ${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}
       PROJECT_MODULE: "conf"
-      DB_HOST: mepram_omop_api_db
+      DB_HOST: mepram-omop-api-db
       DB_PORT: ${MEPRAM_OMOP_API_DB_PORT:?MEPRAM_OMOP_API_DB_PORT is required}
       DB_NAME: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
       DB_USER: ${MEPRAM_OMOP_API_DB_USER:?MEPRAM_OMOP_API_DB_USER is required}
@@ -35,11 +35,11 @@ services:
       API_THROTTLE_RATE: ${MEPRAM_OMOP_API_API_THROTTLE_RATE:-500/hour}
       API_DOCS_REQUIRE_STAFF: ${MEPRAM_OMOP_API_API_DOCS_REQUIRE_STAFF:-true}
     depends_on:
-      mepram_omop_api_db:
+      mepram-omop-api-db:
         condition: service_healthy
     volumes:
-      - mepram_omop_api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
-      - mepram_omop_api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:z
+      - mepram-omop-api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
+      - mepram-omop-api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:z
     healthcheck:
       test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['APP_PORT'] + '/health/', timeout=3)"]
       interval: 10s
@@ -48,9 +48,9 @@ services:
     ports:
       - "0.0.0.0:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}:${MEPRAM_OMOP_API_APP_PORT:?MEPRAM_OMOP_API_APP_PORT is required}"
     networks: [deployment_net]
-  # END BU-ISCIII SERVICE: mepram_omop_api
-  # BEGIN BU-ISCIII SERVICE: pathocore_api (django)
-  pathocore_api:
+  # END BU-ISCIII SERVICE: mepram-omop-api
+  # BEGIN BU-ISCIII SERVICE: pathocore-api (django)
+  pathocore-api:
     image: "${PATHOCORE_API_IMAGE:-pathocore-api:local}"
     build:
       context: "../pathocore-api"
@@ -74,7 +74,7 @@ services:
       APP_INSTALL_PATH: ${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}
       APP_PORT: ${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}
       PROJECT_MODULE: "conf"
-      DB_HOST: pathocore_api_db
+      DB_HOST: pathocore-api-db
       DB_PORT: ${PATHOCORE_API_DB_PORT:?PATHOCORE_API_DB_PORT is required}
       DB_NAME: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
       DB_USER: ${PATHOCORE_API_DB_USER:?PATHOCORE_API_DB_USER is required}
@@ -102,11 +102,11 @@ services:
       KEYCLOAK_ADMIN_API_SEND_ACTION_EMAILS: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_SEND_ACTION_EMAILS:-false}
       KEYCLOAK_ADMIN_API_ACTION_EMAIL_REDIRECT_URI: ${PATHOCORE_API_KEYCLOAK_ADMIN_API_ACTION_EMAIL_REDIRECT_URI:-}
     depends_on:
-      pathocore_api_db:
+      pathocore-api-db:
         condition: service_healthy
     volumes:
-      - pathocore_api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:z
-      - pathocore_api_test_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:z
+      - pathocore-api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:z
+      - pathocore-api_test_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:z
     healthcheck:
       test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['APP_PORT'] + '/health/', timeout=3)"]
       interval: 10s
@@ -115,9 +115,9 @@ services:
     ports:
       - "0.0.0.0:${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}:${PATHOCORE_API_APP_PORT:?PATHOCORE_API_APP_PORT is required}"
     networks: [deployment_net]
-  # END BU-ISCIII SERVICE: pathocore_api
-  # BEGIN BU-ISCIII SERVICE: pathocore_web (nextjs)
-  pathocore_web:
+  # END BU-ISCIII SERVICE: pathocore-api
+  # BEGIN BU-ISCIII SERVICE: pathocore-web (nextjs)
+  pathocore-web:
     image: "${PATHOCORE_WEB_IMAGE:-pathocore-web:local}"
     build:
       context: "."
@@ -154,17 +154,17 @@ services:
     ports:
       - "0.0.0.0:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}:${PATHOCORE_WEB_APP_PORT:?PATHOCORE_WEB_APP_PORT is required}"
     networks: [deployment_net]
-  # END BU-ISCIII SERVICE: pathocore_web
+  # END BU-ISCIII SERVICE: pathocore-web
   # BEGIN BU-ISCIII ADDON: apache
   pathocore-web-apache:
     image: registry.access.redhat.com/ubi9/httpd-24:latest
     restart: unless-stopped
     depends_on:
-      mepram_omop_api:
+      mepram-omop-api:
         condition: service_healthy
-      pathocore_api:
+      pathocore-api:
         condition: service_healthy
-      pathocore_web:
+      pathocore-web:
         condition: service_healthy
       pathocore-web-keycloak:
         condition: service_healthy
@@ -184,10 +184,10 @@ services:
       # Disposable log volume avoids writing test logs into production paths.
       - apache_test_logs:/var/log/httpd:z
       # GENERATED MULTI-APP MOUNTS: disposable test static/document volumes.
-      - mepram_omop_api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:ro,z
-      - mepram_omop_api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:ro,z
-      - pathocore_api_test_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:ro,z
-      - pathocore_api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:ro,z
+      - mepram-omop-api_test_static:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/static:ro,z
+      - mepram-omop-api_test_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:ro,z
+      - pathocore-api_test_static:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/static:ro,z
+      - pathocore-api_test_documents:${PATHOCORE_API_INSTALL_PATH:?PATHOCORE_API_INSTALL_PATH is required}/documents:ro,z
       # OPTIONAL APP MOUNTS belong in ADDONS.apache.MOUNTS.
     networks: [deployment_net]
   # END BU-ISCIII ADDON: apache
@@ -246,7 +246,7 @@ services:
       - ${KEYCLOAK_IMPORT_PATH:-./keycloak/tmp-import}:/opt/keycloak/data/import:ro,z
     networks: [deployment_net]
   # END BU-ISCIII ADDON: keycloak
-  mepram_omop_api_db:
+  mepram-omop-api-db:
     image: docker.io/library/mysql:8.0
     environment:
       MYSQL_DATABASE: ${MEPRAM_OMOP_API_DB_NAME:?MEPRAM_OMOP_API_DB_NAME is required}
@@ -258,9 +258,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-    volumes: [mepram_omop_api_test_db:/var/lib/mysql]
+    volumes: [mepram-omop-api_test_db:/var/lib/mysql]
     networks: [deployment_net]
-  pathocore_api_db:
+  pathocore-api-db:
     image: docker.io/library/mysql:8.0
     environment:
       MYSQL_DATABASE: ${PATHOCORE_API_DB_NAME:?PATHOCORE_API_DB_NAME is required}
@@ -272,18 +272,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-    volumes: [pathocore_api_test_db:/var/lib/mysql]
+    volumes: [pathocore-api_test_db:/var/lib/mysql]
     networks: [deployment_net]
 
 networks:
   deployment_net:
 
 volumes:
-  mepram_omop_api_test_db:
-  mepram_omop_api_test_documents:
-  mepram_omop_api_test_static:
-  pathocore_api_test_db:
-  pathocore_api_test_documents:
-  pathocore_api_test_static:
+  mepram-omop-api_test_db:
+  mepram-omop-api_test_documents:
+  mepram-omop-api_test_static:
+  pathocore-api_test_db:
+  pathocore-api_test_documents:
+  pathocore-api_test_static:
   apache_test_logs:
   keycloak_db_data:

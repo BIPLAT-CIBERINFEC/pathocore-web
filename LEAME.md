@@ -79,17 +79,17 @@ Persistencia declarada por el despliegue:
 
 | Activo | Ubicacion de produccion | Requisito de recuperacion |
 |---|---|---|
-| `pathocore_web` Next.js image | Immutable container image | Rebuild from recorded revision |
-| `pathocore_api` database | `pathocore_api_db_data` named volume, mounted by `pathocore_api_db` | Logical dump before migration; persistent volume recovery |
-| `pathocore_api` documents | `pathocore_api_documents` named volume | Volume backup |
-| `pathocore_api` static | `pathocore_api_static` named volume | Replaceable through collectstatic |
-| `pathocore_api` logs | Host bind configured by `HOST_LOG_PATH` in `pathocore_api_production_settings.txt` | Retain/rotate per institutional log policy |
-| `pathocore_api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `pathocore_api_production_settings.txt` | Protected configuration backup |
-| `mepram_omop_api` database | `mepram_omop_api_db_data` named volume, mounted by `mepram_omop_api_db` | Logical dump before migration; persistent volume recovery |
-| `mepram_omop_api` documents | `mepram_omop_api_documents` named volume | Volume backup |
-| `mepram_omop_api` static | `mepram_omop_api_static` named volume | Replaceable through collectstatic |
-| `mepram_omop_api` logs | Host bind configured by `HOST_LOG_PATH` in `mepram_omop_api_production_settings.txt` | Retain/rotate per institutional log policy |
-| `mepram_omop_api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `mepram_omop_api_production_settings.txt` | Protected configuration backup |
+| `pathocore-web` Next.js image | Immutable container image | Rebuild from recorded revision |
+| `pathocore-api` database | `pathocore-api_db_data` named volume, mounted by `pathocore-api-db` | Logical dump before migration; persistent volume recovery |
+| `pathocore-api` documents | `pathocore-api_documents` named volume | Volume backup |
+| `pathocore-api` static | `pathocore-api_static` named volume | Replaceable through collectstatic |
+| `pathocore-api` logs | Host bind configured by `HOST_LOG_PATH` in `pathocore-api_production_settings.txt` | Retain/rotate per institutional log policy |
+| `pathocore-api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `pathocore-api_production_settings.txt` | Protected configuration backup |
+| `mepram-omop-api` database | `mepram-omop-api_db_data` named volume, mounted by `mepram-omop-api-db` | Logical dump before migration; persistent volume recovery |
+| `mepram-omop-api` documents | `mepram-omop-api_documents` named volume | Volume backup |
+| `mepram-omop-api` static | `mepram-omop-api_static` named volume | Replaceable through collectstatic |
+| `mepram-omop-api` logs | Host bind configured by `HOST_LOG_PATH` in `mepram-omop-api_production_settings.txt` | Retain/rotate per institutional log policy |
+| `mepram-omop-api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `mepram-omop-api_production_settings.txt` | Protected configuration backup |
 | Apache logs | `/var/log/local/pathocore-web/apache` host bind | Retain/rotate per institutional log policy |
 | Rendered Apache configuration | `deployment/apache/` in the deployment checkout | Rebuildable; preserve reviewed source configuration |
 | Keycloak database | `keycloak_db_data` MySQL named volume | Database and identity backup |
@@ -137,9 +137,9 @@ copia en las capas de las imagenes.
 
 ```bash
 install -d -m 0700 deployment/settings
-install -m 0600 conf/docker_production_settings.txt deployment/settings/pathocore_web_production_settings.txt
-install -m 0600 ../pathocore-api/conf/docker_production_settings.txt deployment/settings/pathocore_api_production_settings.txt
-install -m 0600 ../mepram-omop-api/conf/docker_production_settings.txt deployment/settings/mepram_omop_api_production_settings.txt
+install -m 0600 conf/docker_production_settings.txt deployment/settings/pathocore-web_production_settings.txt
+install -m 0600 ../pathocore-api/conf/docker_production_settings.txt deployment/settings/pathocore-api_production_settings.txt
+install -m 0600 ../mepram-omop-api/conf/docker_production_settings.txt deployment/settings/mepram-omop-api_production_settings.txt
 install -m 0600 conf/apache/apache_production_settings.txt deployment/settings/apache_production_settings.txt
 install -m 0600 conf/keycloak/keycloak_production_settings.txt deployment/settings/keycloak_production_settings.txt
 ```
@@ -166,16 +166,16 @@ servicios con un namespace de host distinto al despliegue principal.
 ```bash
 PODMAN_USER='<usuario-podman>'
 (
-  source deployment/settings/pathocore_api_production_settings.txt
-  : "${HOST_LOG_PATH:?HOST_LOG_PATH is required for pathocore_api}"
-  : "${DJANGO_SETTINGS_PATH:?DJANGO_SETTINGS_PATH is required for pathocore_api}"
+  source deployment/settings/pathocore-api_production_settings.txt
+  : "${HOST_LOG_PATH:?HOST_LOG_PATH is required for pathocore-api}"
+  : "${DJANGO_SETTINGS_PATH:?DJANGO_SETTINGS_PATH is required for pathocore-api}"
   sudo install -d -o "$PODMAN_USER" -g "$PODMAN_USER" \
     "$HOST_LOG_PATH" "$(dirname "$DJANGO_SETTINGS_PATH")"
 )
 (
-  source deployment/settings/mepram_omop_api_production_settings.txt
-  : "${HOST_LOG_PATH:?HOST_LOG_PATH is required for mepram_omop_api}"
-  : "${DJANGO_SETTINGS_PATH:?DJANGO_SETTINGS_PATH is required for mepram_omop_api}"
+  source deployment/settings/mepram-omop-api_production_settings.txt
+  : "${HOST_LOG_PATH:?HOST_LOG_PATH is required for mepram-omop-api}"
+  : "${DJANGO_SETTINGS_PATH:?DJANGO_SETTINGS_PATH is required for mepram-omop-api}"
   sudo install -d -o "$PODMAN_USER" -g "$PODMAN_USER" \
     "$HOST_LOG_PATH" "$(dirname "$DJANGO_SETTINGS_PATH")"
 )
@@ -200,7 +200,7 @@ instalador. No modificar `/srv/containers/storage/` manualmente.
 
 ```bash
 bash container_install.sh --action fix-permissions --engine podman \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
 ```
 
 ## Backup antes de actualizar
@@ -214,9 +214,9 @@ git rev-parse HEAD > "$BACKUP_DIR/git-revision.txt"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   images > "$BACKUP_DIR/images.txt"
 cp .env.production.file "$BACKUP_DIR/"
-cp deployment/settings/pathocore_web_production_settings.txt "$BACKUP_DIR/"
-cp deployment/settings/pathocore_api_production_settings.txt "$BACKUP_DIR/"
-cp deployment/settings/mepram_omop_api_production_settings.txt "$BACKUP_DIR/"
+cp deployment/settings/pathocore-web_production_settings.txt "$BACKUP_DIR/"
+cp deployment/settings/pathocore-api_production_settings.txt "$BACKUP_DIR/"
+cp deployment/settings/mepram-omop-api_production_settings.txt "$BACKUP_DIR/"
 cp deployment/settings/apache_production_settings.txt "$BACKUP_DIR/"
 cp deployment/settings/keycloak_production_settings.txt "$BACKUP_DIR/"
 chmod -R go-rwx "$BACKUP_DIR"
@@ -226,11 +226,11 @@ Crear dumps logicos consistentes de las dos bases de datos de aplicacion:
 
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T pathocore_api_db sh -c \
+  exec -T pathocore-api_db sh -c \
   'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   > "$BACKUP_DIR/pathocore-api-database.sql"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T mepram_omop_api_db sh -c \
+  exec -T mepram-omop-api_db sh -c \
   'exec mysqldump --single-transaction --routines --triggers -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   > "$BACKUP_DIR/mepram-omop-api-database.sql"
 ```
@@ -275,9 +275,9 @@ checkout conjunto `pathocore-all` y deben apuntar a ficheros SQL revisados:
 ```bash
 bash container_install.sh --action install --engine podman \
   --git_revision <revision-aprobada> \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt \
-  --demo_data_map pathocore_api,../pathocore_api_demo_data.sql \
-  --demo_data_map mepram_omop_api,../mepram-omop-dashboard.sql \
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt \
+  --demo_data_map pathocore-api,../pathocore-api_demo_data.sql \
+  --demo_data_map mepram-omop-api,../mepram-omop-dashboard.sql \
   2>&1 | tee "$(date +%Y%m%d_%H%M%S)_prod_install.log"
 ```
 
@@ -288,7 +288,7 @@ importar los SQL:
 ```bash
 bash container_install.sh --action upgrade --engine podman \
   --git_revision <nueva-revision-aprobada> \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt 2>&1 | tee "$(date +%Y%m%d_%H%M%S)_prod_install.log"
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt 2>&1 | tee "$(date +%Y%m%d_%H%M%S)_prod_install.log"
 ```
 
 Durante `--action upgrade`, `container_install.sh`:
@@ -317,11 +317,11 @@ bash scripts/smoke_test.sh --engine podman
 
 Completar las comprobaciones que corresponden a la topologia seleccionada:
 
-- `pathocore_web`: confirmar su endpoint `/health/` y un flujo representativo de lectura.
-- `pathocore_api`: confirmar su endpoint `/health/` y un flujo representativo de lectura.
-- API de `pathocore_api`: confirmar la ruta documentada con autenticacion valida y el rechazo de credenciales ausentes o invalidas.
-- `mepram_omop_api`: confirmar su endpoint `/health/` y un flujo representativo de lectura.
-- API de `mepram_omop_api`: confirmar la ruta documentada con autenticacion valida y el rechazo de credenciales ausentes o invalidas.
+- `pathocore-web`: confirmar su endpoint `/health/` y un flujo representativo de lectura.
+- `pathocore-api`: confirmar su endpoint `/health/` y un flujo representativo de lectura.
+- API de `pathocore-api`: confirmar la ruta documentada con autenticacion valida y el rechazo de credenciales ausentes o invalidas.
+- `mepram-omop-api`: confirmar su endpoint `/health/` y un flujo representativo de lectura.
+- API de `mepram-omop-api`: confirmar la ruta documentada con autenticacion valida y el rechazo de credenciales ausentes o invalidas.
 - Apache: confirmar la URL publica registrada, DNS/TLS, proxy, cabeceras reenviadas y el endpoint restringido de server-status.
 - Keycloak: confirmar discovery del realm, validacion de tokens OIDC y login/logout; probar acceso administrativo solo cuando el add-on lo habilite.
 
@@ -337,7 +337,7 @@ la revision anterior registrada y repetir las pruebas:
 ```bash
 bash container_install.sh --action upgrade --engine podman \
   --git_revision <revision-anterior> \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
 ```
 
 Si no son compatibles, detener escrituras y restaurar el punto completo:
@@ -348,17 +348,17 @@ podman volume import <volumen-documents> "$BACKUP_DIR/documents.tar"
 podman volume import <volumen-static> "$BACKUP_DIR/static.tar"
 tar -C /srv/containers/bind -xzf "$BACKUP_DIR/bind-mounts.tar.gz"
 install -d -m 0700 deployment/settings
-install -m 0600 "$BACKUP_DIR/pathocore_web_production_settings.txt" deployment/settings/pathocore_web_production_settings.txt
-install -m 0600 "$BACKUP_DIR/pathocore_api_production_settings.txt" deployment/settings/pathocore_api_production_settings.txt
-install -m 0600 "$BACKUP_DIR/mepram_omop_api_production_settings.txt" deployment/settings/mepram_omop_api_production_settings.txt
+install -m 0600 "$BACKUP_DIR/pathocore-web_production_settings.txt" deployment/settings/pathocore-web_production_settings.txt
+install -m 0600 "$BACKUP_DIR/pathocore-api_production_settings.txt" deployment/settings/pathocore-api_production_settings.txt
+install -m 0600 "$BACKUP_DIR/mepram-omop-api_production_settings.txt" deployment/settings/mepram-omop-api_production_settings.txt
 install -m 0600 "$BACKUP_DIR/apache_production_settings.txt" deployment/settings/apache_production_settings.txt
 install -m 0600 "$BACKUP_DIR/keycloak_production_settings.txt" deployment/settings/keycloak_production_settings.txt
 bash container_install.sh --action fix-permissions --engine podman \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
 # Arrancar solo las bases de datos y esperar readiness antes de restaurar.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  up -d pathocore_api_db mepram_omop_api_db keycloak_db
-for service in pathocore_api_db mepram_omop_api_db; do
+  up -d pathocore-api_db mepram-omop-api_db keycloak_db
+for service in pathocore-api_db mepram-omop-api_db; do
   until podman compose --env-file .env.production.file -f docker-compose.prod.yml \
     exec -T "$service" sh -c \
     'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'; do sleep 2; done
@@ -373,11 +373,11 @@ podman compose --env-file .env.production.file -f docker-compose.prod.yml \
   exec -T pathocore-web-keycloak-db sh -c \
   'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$MYSQL_DATABASE\`; CREATE DATABASE \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T pathocore_api_db sh -c \
+  exec -T pathocore-api_db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   < "$BACKUP_DIR/pathocore-api-database.sql"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec -T mepram_omop_api_db sh -c \
+  exec -T mepram-omop-api_db sh -c \
   'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   < "$BACKUP_DIR/mepram-omop-api-database.sql"
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
@@ -413,7 +413,7 @@ Primera fase, incluso con los contenedores detenidos:
 
 ```bash
 bash container_install.sh --action fix-permissions --engine podman \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
 ```
 
 Esta accion no construye imagenes, no migra la base de datos y no borra datos.
@@ -423,7 +423,7 @@ Arrancar y repetirla para reparar tambien los volumenes montados:
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml up -d
 bash container_install.sh --action fix-permissions --engine podman \
-  --install_conf_map pathocore_web,deployment/settings/pathocore_web_production_settings.txt --install_conf_map pathocore_api,deployment/settings/pathocore_api_production_settings.txt --install_conf_map mepram_omop_api,deployment/settings/mepram_omop_api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt
 ```
 
 ## Operaciones utiles
@@ -436,25 +436,25 @@ podman compose --env-file .env.production.file -f docker-compose.prod.yml restar
 podman compose --env-file .env.production.file -f docker-compose.prod.yml down
 ```
 
-### Servicio Django `pathocore_api`
+### Servicio Django `pathocore-api`
 
 ```bash
 # Logs separados del servicio.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  logs --tail 200 pathocore_api
+  logs --tail 200 pathocore-api
 
 # Entrar al contenedor.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec pathocore_api bash
+  exec pathocore-api bash
 
 # Regenerar static sin ejecutar migraciones.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec pathocore_api bash -lc \
+  exec pathocore-api bash -lc \
   'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py collectstatic --noinput'
 
 # Diagnostico previo a una recuperacion de bootstrap.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec pathocore_api bash -lc \
+  exec pathocore-api bash -lc \
   'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py check --deploy && python manage.py showmigrations --plan'
 ```
 
@@ -465,31 +465,31 @@ autoriza un bootstrap manual despues del backup:
 
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec pathocore_api bash -lc \
+  exec pathocore-api bash -lc \
   'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py migrate --noinput && python manage.py collectstatic --noinput'
 ```
 
 Registrar este procedimiento excepcional y ejecutar despues el smoke test.
 
-### Servicio Django `mepram_omop_api`
+### Servicio Django `mepram-omop-api`
 
 ```bash
 # Logs separados del servicio.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  logs --tail 200 mepram_omop_api
+  logs --tail 200 mepram-omop-api
 
 # Entrar al contenedor.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec mepram_omop_api bash
+  exec mepram-omop-api bash
 
 # Regenerar static sin ejecutar migraciones.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec mepram_omop_api bash -lc \
+  exec mepram-omop-api bash -lc \
   'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py collectstatic --noinput'
 
 # Diagnostico previo a una recuperacion de bootstrap.
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec mepram_omop_api bash -lc \
+  exec mepram-omop-api bash -lc \
   'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py check --deploy && python manage.py showmigrations --plan'
 ```
 
@@ -500,7 +500,7 @@ autoriza un bootstrap manual despues del backup:
 
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml \
-  exec mepram_omop_api bash -lc \
+  exec mepram-omop-api bash -lc \
   'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py migrate --noinput && python manage.py collectstatic --noinput'
 ```
 

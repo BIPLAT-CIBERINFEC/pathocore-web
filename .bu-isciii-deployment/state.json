@@ -2,11 +2,11 @@
   "config": {
     "ADDONS": {
       "apache": {
-        "CONFIG_SERVICE": "pathocore_web"
+        "CONFIG_SERVICE": "pathocore-web"
       },
       "keycloak": {
         "ADMIN_ACCESS": true,
-        "CONFIG_SERVICE": "pathocore_api"
+        "CONFIG_SERVICE": "pathocore-api"
       }
     },
     "APP_NAME": "PathoCore Web",
@@ -16,7 +16,7 @@
     "PYTHON_VERSION": "3.12",
     "REPOSITORY_URL": "https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git",
     "SERVICES": {
-      "mepram_omop_api": {
+      "mepram-omop-api": {
         "API": true,
         "BUILD_CONTEXT": "../mepram-omop-api",
         "DOCKERFILE": "Dockerfile",
@@ -26,7 +26,7 @@
         "PROJECT_MODULE": "conf",
         "TEST_INSTALL_CONF": "../mepram-omop-api/conf/docker_test_settings.txt"
       },
-      "pathocore_api": {
+      "pathocore-api": {
         "API": true,
         "BUILD_CONTEXT": "../pathocore-api",
         "DOCKERFILE": "Dockerfile",
@@ -36,7 +36,7 @@
         "PROJECT_MODULE": "conf",
         "TEST_INSTALL_CONF": "../pathocore-api/conf/docker_test_settings.txt"
       },
-      "pathocore_web": {
+      "pathocore-web": {
         "BUILD_CONTEXT": ".",
         "DOCKERFILE": "Dockerfile",
         "IMAGE": "pathocore-web:local",
@@ -51,8 +51,8 @@
     ".dockerignore": "bd9c115511d6b9dae318e4b6a85ddb282e60a46fd89c6cdecccdc20c668eb0e9",
     ".gitignore": "de487336ed72efd6601b985eda1c83754d6ee33b1cb4ce9f8973411caae833ed",
     "Dockerfile": "ddbc3933068a7b1b1a0cfb64bf4a489c9d087f032e3d1148641f9d337bf86072",
-    "LEAME.md": "0da1662c0eb1b617f5b27d732de883c90dfd8161c6e88f04f73e8b6a5b743557",
-    "README.md": "be9b3f9c4ec780b9ba60494095eb8cdd2b0997e93bf823c1f56aa02a0216d4ac",
+    "LEAME.md": "89626fa809e92c26fd72100747fe6647d8eae198d9c7f8a0068efd95e09b6d55",
+    "README.md": "aab5a4dc92bcaa5fa81362f333995ac7803f85d256c0dad6f6c086fb2b403f68",
     "conf/INSTALL_SETTINGS.md": "831586a74cdbad6b00ad7cea1d2f2cd2fab407c9e3f4d963a2b2a854c16536e3",
     "conf/apache/00-logs.conf": "3c2ab4e693e528d2cad37c0c5bb0bc4511803a7f206b339182de192d4e398092",
     "conf/apache/01-reverse-proxy.conf": "236045c25b220bf8963d05cc2543be2a35d00bf0243ddf055b04f895d7d70e18",
@@ -63,11 +63,11 @@
     "conf/docker_test_settings.txt": "bc18faded32706d50a3b6f8151b39e158418761e8595d19754932a27267ba054",
     "conf/keycloak/keycloak_production_settings.txt": "beade98f6b8dcf6f3f9302b9f55425dd554bdd0a841291c3270ee8f116206746",
     "conf/keycloak/keycloak_test_settings.txt": "7756c9efcd9fbde78a2dce0a9cd7cf41818d705a8c746acbbf6b74611769265e",
-    "container_install.sh": "86677eb2e5738e257cc08e10670a673c37d6663bfb5f18422874c21703a3e44c",
-    "docker-compose.prod.yml": "4919cb51c2cd27d87cb329ffa1c3813e10122383bca8ab8097c91ace09192894",
-    "docker-compose.test.yml": "aa9cd0de9430abc05caf1cad2f3b22d94b2e278db29abfbcf9768674991c2ac0",
+    "container_install.sh": "c3c9ee73269b575e219e7cea78451f921c5f37fb8f34f0f777fd9b74a6a77427",
+    "docker-compose.prod.yml": "cfb3e67cf549d450fb8e4a5fad5419b7f4034105bc7c11594447743618100791",
+    "docker-compose.test.yml": "e58b2512a4312c6d1081d295af587f1facc214f6bf9b39d8c0ddb02d7f78286b",
     "scripts/container_start.sh": "7f85e924a9b28f22a307a7a1dc36e1ee7ee93a827de3b27d99047646fbbcfa08",
-    "scripts/smoke_test.sh": "1313ace579c5214c686e9c359ab0761db8d6ce6ffcbca5d02fdd830b82d9b3da",
+    "scripts/smoke_test.sh": "650b464aec5326d4701db5f9d58674cec77efa4212cf747bffd58867a6baefb2",
     "src/pages/health.tsx": "a06dd776176715c23d5af1d2e2d3f4b86f36a8d0a449890de0b93ddcb9e0df24"
   },
   "source": "BU-ISCIII deployment standards",
