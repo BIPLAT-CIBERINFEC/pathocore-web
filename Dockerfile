@@ -1,50 +1,39 @@
-FROM node:22-bookworm-slim AS dev
+# syntax=docker/dockerfile:1.4
+FROM docker.io/library/node:22-bookworm-slim AS deps
 
 WORKDIR /app
-
-EXPOSE 3000
-
-CMD ["sh", "-lc", "if [ ! -d node_modules ]; then npm install --no-audit --no-fund --prefer-offline; fi; npm run dev -- --host 0.0.0.0 --port 3000"]
-
-
-FROM node:22-bookworm-slim AS deps
-
-WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci --no-audit --no-fund --prefer-offline --fetch-retries=3 --fetch-timeout=60000
 
-
 FROM deps AS build
 
-ARG VITE_API_BASE_URL=/api/v1
-ARG VITE_KEYCLOAK_URL=
-ARG VITE_KEYCLOAK_REALM=ciberisciii_datahub
-ARG VITE_KEYCLOAK_CLIENT_ID=pathocore-web
-ARG VITE_USE_CASE_DATA_MODE=simulated
-ARG VITE_USE_CASE_ALERTS_CONTACT_EMAIL=
+ARG GIT_REVISION=current
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_KEYCLOAK_URL
+ARG NEXT_PUBLIC_KEYCLOAK_REALM
+ARG NEXT_PUBLIC_KEYCLOAK_CLIENT_ID
+ARG AUTH_SECRET=build-only-placeholder
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
+    NEXT_PUBLIC_KEYCLOAK_URL=${NEXT_PUBLIC_KEYCLOAK_URL} \
+    NEXT_PUBLIC_KEYCLOAK_REALM=${NEXT_PUBLIC_KEYCLOAK_REALM} \
+    NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID} \
+    AUTH_SECRET=${AUTH_SECRET}
 
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}
-ENV VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}
-ENV VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}
-ENV VITE_USE_CASE_DATA_MODE=${VITE_USE_CASE_DATA_MODE}
-ENV VITE_USE_CASE_ALERTS_CONTACT_EMAIL=${VITE_USE_CASE_ALERTS_CONTACT_EMAIL}
+COPY . ./
+RUN npm run build && printf '%s\n' "${GIT_REVISION}" > .next/.deployed_revision
 
-COPY . .
-RUN npm run build
-
-
-FROM node:22-bookworm-slim AS prod
+FROM docker.io/library/node:22-bookworm-slim AS prod
 
 WORKDIR /app
+ENV NODE_ENV=production APP_PORT=3000 HOSTNAME=0.0.0.0
+COPY --from=build --chown=node:node /app/package*.json ./
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/.next ./.next
+COPY --from=build --chown=node:node /app/public ./public
+COPY scripts/container_start.sh /usr/local/bin/container_start.sh
 
-RUN npm install --global serve@14
-
-COPY --from=build /app/dist ./dist
-
-USER node
-
+USER node:node
 EXPOSE 3000
-
-CMD ["serve", "-s", "dist", "-l", "3000"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:' + process.env.APP_PORT + '/health/',r=>process.exit(r.statusCode>=200&&r.statusCode<400?0:1)).on('error',()=>process.exit(1))"
+CMD ["/usr/local/bin/container_start.sh"]

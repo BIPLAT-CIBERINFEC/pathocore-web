@@ -1,0 +1,75 @@
+{
+  "config": {
+    "ADDONS": {
+      "apache": {
+        "CONFIG_SERVICE": "pathocore_web"
+      },
+      "keycloak": {
+        "ADMIN_ACCESS": true,
+        "CONFIG_SERVICE": "pathocore_api"
+      }
+    },
+    "APP_NAME": "PathoCore Web",
+    "APP_SLUG": "pathocore-web",
+    "DEFAULT_BRANCH": "dev",
+    "DESCRIPTION": "Next.js frontend and deployment orchestrator for the PathoCore and MePRAM OMOP APIs.",
+    "PYTHON_VERSION": "3.12",
+    "REPOSITORY_URL": "https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git",
+    "SERVICES": {
+      "mepram_omop_api": {
+        "API": true,
+        "BUILD_CONTEXT": "../mepram-omop-api",
+        "DOCKERFILE": "Dockerfile",
+        "IMAGE": "mepram-omop-api:local",
+        "INSTALL_CONF": "../mepram-omop-api/conf/docker_production_settings.txt",
+        "PROFILE": "django",
+        "PROJECT_MODULE": "conf",
+        "TEST_INSTALL_CONF": "../mepram-omop-api/conf/docker_test_settings.txt"
+      },
+      "pathocore_api": {
+        "API": true,
+        "BUILD_CONTEXT": "../pathocore-api",
+        "DOCKERFILE": "Dockerfile",
+        "IMAGE": "pathocore-api:local",
+        "INSTALL_CONF": "../pathocore-api/conf/docker_production_settings.txt",
+        "PROFILE": "django",
+        "PROJECT_MODULE": "conf",
+        "TEST_INSTALL_CONF": "../pathocore-api/conf/docker_test_settings.txt"
+      },
+      "pathocore_web": {
+        "BUILD_CONTEXT": ".",
+        "DOCKERFILE": "Dockerfile",
+        "IMAGE": "pathocore-web:local",
+        "INSTALL_CONF": "conf/docker_production_settings.txt",
+        "PROFILE": "nextjs",
+        "TEST_INSTALL_CONF": "conf/docker_test_settings.txt"
+      }
+    },
+    "TIMEZONE": "Europe/Madrid"
+  },
+  "files": {
+    ".dockerignore": "bd9c115511d6b9dae318e4b6a85ddb282e60a46fd89c6cdecccdc20c668eb0e9",
+    ".gitignore": "de487336ed72efd6601b985eda1c83754d6ee33b1cb4ce9f8973411caae833ed",
+    "Dockerfile": "e864817194eef832fd3755bc7f70d06bfe92eb49fa750bf30466d5a9d92af02d",
+    "LEAME.md": "da9a12360c550465c771c0501d888ed48f0b119b04ae4077a848d5a5b301b5a4",
+    "README.md": "0133cb3ab421981812639613f81fb9be695c6f40df1b14ea1ac2698ac8588e0c",
+    "conf/INSTALL_SETTINGS.md": "d4df518eaa77a8b9cc73c3eae51a1f7339ba20eb37b0f1027bd229d8514d521b",
+    "conf/apache/00-logs.conf": "3c2ab4e693e528d2cad37c0c5bb0bc4511803a7f206b339182de192d4e398092",
+    "conf/apache/01-reverse-proxy.conf": "236045c25b220bf8963d05cc2543be2a35d00bf0243ddf055b04f895d7d70e18",
+    "conf/apache/02-server-status.conf": "c3b5d26f9b551083faf0d85b188bfa9c577ff0bd3b805f0ec104fe4f7d5101cb",
+    "conf/apache/apache_production_settings.txt": "e21c163bcdeafbddd4aaac3a59de47ced139d132b840a9144e7d3b0dd8f3eedd",
+    "conf/apache/apache_test_settings.txt": "3e77f5b2bc70a9db1ca37f4fbf0d82ee1cef352804e21c01090c87bead16e214",
+    "conf/docker_production_settings.txt": "7989a6b68374b5cb709a64cd6b2d07b963ec5363f622ba7f5860b96b804cf0ee",
+    "conf/docker_test_settings.txt": "5df36a71940e3874b2f57bdd1c8fa77eea22abd8ce5688ed58eb669839fea682",
+    "conf/keycloak/keycloak_production_settings.txt": "e9309205940457381d17a4d061f28fadb55ff68e0c5c1945bbc68ab9ced867d1",
+    "conf/keycloak/keycloak_test_settings.txt": "7756c9efcd9fbde78a2dce0a9cd7cf41818d705a8c746acbbf6b74611769265e",
+    "container_install.sh": "ce8ee787d00eb64d66fb7c26b30c4c232b1812b3f5de32d74cf34cba6ae62727",
+    "docker-compose.prod.yml": "09e8d3b971b725193069562130ff0f22b22c8bf2b8ada5fdc1856301d623d3dd",
+    "docker-compose.test.yml": "563b514fd193b5099e83be83ef998e29d488fa1c41c30d76212d7831140892f1",
+    "scripts/container_start.sh": "7f85e924a9b28f22a307a7a1dc36e1ee7ee93a827de3b27d99047646fbbcfa08",
+    "scripts/smoke_test.sh": "1313ace579c5214c686e9c359ab0761db8d6ce6ffcbca5d02fdd830b82d9b3da",
+    "src/pages/health.tsx": "a06dd776176715c23d5af1d2e2d3f4b86f36a8d0a449890de0b93ddcb9e0df24"
+  },
+  "source": "BU-ISCIII deployment standards",
+  "standard_version": "0.1.0"
+}
