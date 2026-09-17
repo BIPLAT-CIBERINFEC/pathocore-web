@@ -42,6 +42,10 @@
     },
     "keycloak": {
       "CONFIG_SERVICE": "pathocore-api",
+      "OIDC_SERVICES": [
+        "pathocore-api",
+        "mepram-omop-api"
+      ],
       "ADMIN_ACCESS": true
     }
   }

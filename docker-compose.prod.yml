@@ -150,6 +150,13 @@ services:
       API_CORS_ALLOWED_ORIGINS: ${MEPRAM_OMOP_API_API_CORS_ALLOWED_ORIGINS:-}
       API_THROTTLE_RATE: ${MEPRAM_OMOP_API_API_THROTTLE_RATE:-500/hour}
       API_DOCS_REQUIRE_STAFF: ${MEPRAM_OMOP_API_API_DOCS_REQUIRE_STAFF:-true}
+      OIDC_AUTH_REQUIRED: ${MEPRAM_OMOP_API_OIDC_AUTH_REQUIRED:?MEPRAM_OMOP_API_OIDC_AUTH_REQUIRED is required}
+      OIDC_ISSUER: ${MEPRAM_OMOP_API_OIDC_ISSUER:?MEPRAM_OMOP_API_OIDC_ISSUER is required}
+      OIDC_JWKS_URL: ${MEPRAM_OMOP_API_OIDC_JWKS_URL:?MEPRAM_OMOP_API_OIDC_JWKS_URL is required}
+      OIDC_AUDIENCE: ${MEPRAM_OMOP_API_OIDC_AUDIENCE:?MEPRAM_OMOP_API_OIDC_AUDIENCE is required}
+      OIDC_CLIENT_ID: ${MEPRAM_OMOP_API_OIDC_CLIENT_ID:?MEPRAM_OMOP_API_OIDC_CLIENT_ID is required}
+      OIDC_JWKS_CACHE_TTL_SECONDS: ${MEPRAM_OMOP_API_OIDC_JWKS_CACHE_TTL_SECONDS:-300}
+      OIDC_JWKS_TIMEOUT_SECONDS: ${MEPRAM_OMOP_API_OIDC_JWKS_TIMEOUT_SECONDS:-5}
     volumes:
       - mepram-omop-api_documents:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/documents:z
       - ${MEPRAM_OMOP_API_HOST_LOG_PATH:?MEPRAM_OMOP_API_HOST_LOG_PATH is required}:${MEPRAM_OMOP_API_INSTALL_PATH:?MEPRAM_OMOP_API_INSTALL_PATH is required}/logs:Z
@@ -315,7 +322,10 @@ services:
       # OPTIONAL provider/theme mounts for multi-app deployments, when needed:
       # - ${KEYCLOAK_PROVIDER_PATH}:/opt/keycloak/providers:ro,z
       # - ${KEYCLOAK_THEME_PATH}:/opt/keycloak/themes/custom:ro,z
-    networks: [deployment_net]
+    networks:
+      deployment_net:
+        aliases:
+          - keycloak
   # END BU-ISCIII ADDON: keycloak
 
 networks:
