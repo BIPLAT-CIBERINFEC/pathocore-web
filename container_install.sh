@@ -10,21 +10,103 @@ source "$script_dir/deployment/lib/container/django.sh"
 APP_VERSION="0.1.0"
 APPLICATION_NAME="PathoCore Web"
 
+# Applications with disposable fixtures or demo files customize this callback
+# and set application_supports_test_data=true. Keep application-specific
+# fixture names, users/groups, downloads, and data-service layout here.
+# BEGIN BU-ISCIII APPLICATION: deployment-hooks
+application_supports_test_data=true
+load_test_deployment_data() {
+    local service_name="${1:-$demo_data_service}" data_path="${2:-$demo_data}"
+    local container_id install_path container_data status=0
+
+    # The orchestrator has no implicit fixture set. Test installs without an
+    # explicit map continue without importing application data.
+    [ -n "$data_path" ] || { echo "No mapped demo data requested"; return 0; }
+    container_id="$(current_service_container "$service_name")"
+    [ -n "$container_id" ] || die "Unable to resolve $service_name container"
+    install_path="$(service_install_path "$service_name")"
+    container_data="/tmp/$(basename "$data_path")"
+    engine_exec cp "$data_path" "$container_id:$container_data"
+
+    case "$service_name" in
+        pathocore-api)
+            engine_exec exec -w "$install_path" "$container_id" \
+                "$install_path/virtualenv/bin/python" manage.py \
+                import_sql_seed "$container_data" || status=$?
+            ;;
+        mepram-omop-api)
+            engine_exec exec -w "$install_path" "$container_id" \
+                "$install_path/virtualenv/bin/python" manage.py \
+                import_dashboard_sql "$container_data" --truncate || status=$?
+            ;;
+        *) status=1; echo "Demo-data loading is unsupported for $service_name" >&2 ;;
+    esac
+    engine_exec exec "$container_id" rm -f "$container_data" || true
+    [ "$status" -eq 0 ] || die "$service_name demo-data import failed"
+}
+
+# Add application-only host bind paths that profiles/add-ons cannot describe.
+set_application_host_bind_permissions() {
+    :
+}
+
+# Arguments: service name and running container ID. Add application-only
+# writable paths; profile/add-on permissions have already been applied.
+set_application_running_mount_permissions() {
+    :
+}
+# END BU-ISCIII APPLICATION: deployment-hooks
+
+action="install"; mode="production"; engine="docker"; git_revision="current"
+install_conf=""; compose_file=""; compose_env_file=""
+install_conf_map_entries=(); migration_script_before=(); migration_script_after=()
+demo_data=""; demo_data_service=""; demo_data_map_entries=()
+skip_demo_data=""; skip_test_data=""; skip_test_data_services=()
+load_tables=false; skip_tables=false
+
+usage() {
+    cat <<'EOF'
+Install, upgrade, or repair the application deployment.
+
+Options:
+  --action install|upgrade|fix-permissions
+  --test
+  --engine docker|podman
+  --git_revision <branch|tag|commit|current>
+  --install_conf <path>              First application service only.
+  --install_conf_map <component,path>  Repeat for application and add-on overrides.
+  --compose_file <path>
+  --script_before <name[,args]>
+  --script_after <name[,args]>
+  --script <name[,args]>
+  --tables                          Load initial tables; opt-in on upgrades.
+  --skip_tables                     Skip initial tables on a fresh install.
+  --demo_data <path>                 Single-service compatibility option.
+  --demo_data_map <service,path>     Repeat for service-specific data imports.
+  --skip_demo_data
+  --skip_test_data
+  --skip_test_data_service <service>  Repeat to skip one service's test fixtures.
+  --help
+  --version
+EOF
+}
+die() { echo "ERROR: $*" >&2; exit 1; }
+
 # ============================================================================
-# GENERATED SERVICE/ADD-ON CUSTOMIZATION
-# Regenerate these callbacks from the descriptor; keep application-neutral
-# lifecycle mechanics below unchanged.
+# GENERATED SERVICE/ADD-ON IMPLEMENTATION
+# Everything below usage() is managed by the descriptor, profiles, add-ons, or
+# common lifecycle. Put application behavior only in the block above.
 # ============================================================================
-install_services=(mepram-omop-api pathocore-api pathocore-web)
+install_services=(pathocore-web mepram-omop-api pathocore-api)
 addon_build_services=()
-permission_services=(mepram-omop-api pathocore-api pathocore-web pathocore-api-db mepram-omop-api-db pathocore-web-apache pathocore-web-keycloak-db pathocore-web-keycloak)
-configured_services=(mepram-omop-api pathocore-api pathocore-web apache keycloak)
+permission_services=(pathocore-web mepram-omop-api pathocore-api mepram-omop-api-db pathocore-api-db pathocore-web-apache pathocore-web-keycloak-db pathocore-web-keycloak)
+configured_services=(pathocore-web mepram-omop-api pathocore-api apache keycloak)
 
 default_service_install_conf() {
     case "$1" in
+        pathocore-web) [ "$mode" = test ] && echo conf/docker_test_settings.txt || echo conf/docker_production_settings.txt ;;
         mepram-omop-api) [ "$mode" = test ] && echo ../mepram-omop-api/conf/docker_test_settings.txt || echo ../mepram-omop-api/conf/docker_production_settings.txt ;;
         pathocore-api) [ "$mode" = test ] && echo ../pathocore-api/conf/docker_test_settings.txt || echo ../pathocore-api/conf/docker_production_settings.txt ;;
-        pathocore-web) [ "$mode" = test ] && echo conf/docker_test_settings.txt || echo conf/docker_production_settings.txt ;;
         apache) [ "$mode" = test ] && echo conf/apache/apache_test_settings.txt || echo conf/apache/apache_production_settings.txt ;;
         keycloak) [ "$mode" = test ] && echo conf/keycloak/keycloak_test_settings.txt || echo conf/keycloak/keycloak_production_settings.txt ;;
         *) return 1 ;;
@@ -32,9 +114,9 @@ default_service_install_conf() {
 }
 service_build_context_dir() {
     case "$1" in
+        pathocore-web) echo . ;;
         mepram-omop-api) echo ../mepram-omop-api ;;
         pathocore-api) echo ../pathocore-api ;;
-        pathocore-web) echo . ;;
         *) return 1 ;;
     esac
 }
@@ -64,33 +146,33 @@ service_install_path() {
 }
 service_readiness_path() {
     case "$1" in
+        pathocore-web) echo /app/.next/BUILD_ID ;;
         mepram-omop-api) echo "$(service_install_path "$1")/manage.py" ;;
         pathocore-api) echo "$(service_install_path "$1")/manage.py" ;;
-        pathocore-web) echo /app/.next/BUILD_ID ;;
         *) return 1 ;;
     esac
 }
 service_image_name() {
     case "$1" in
+        pathocore-web) echo pathocore-web:local ;;
         mepram-omop-api) echo mepram-omop-api:local ;;
         pathocore-api) echo pathocore-api:local ;;
-        pathocore-web) echo pathocore-web:local ;;
         *) return 1 ;;
     esac
 }
 service_profile() {
     case "$1" in
+        pathocore-web) echo nextjs ;;
         mepram-omop-api) echo django ;;
         pathocore-api) echo django ;;
-        pathocore-web) echo nextjs ;;
         *) return 1 ;;
     esac
 }
 service_dockerfile() {
     case "$1" in
+        pathocore-web) echo Dockerfile ;;
         mepram-omop-api) echo Dockerfile ;;
         pathocore-api) echo Dockerfile ;;
-        pathocore-web) echo Dockerfile ;;
         *) return 1 ;;
     esac
 }
@@ -110,17 +192,17 @@ service_gid() {
 
 prepare_compose_environment() {
     local -a settings_sources=(
+        "PATHOCORE_WEB|${install_conf_host_by_service[pathocore-web]}"
         "MEPRAM_OMOP_API|${install_conf_host_by_service[mepram-omop-api]}"
         "PATHOCORE_API|${install_conf_host_by_service[pathocore-api]}"
-        "PATHOCORE_WEB|${install_conf_host_by_service[pathocore-web]}"
         "|${install_conf_host_by_service[apache]}"
         "|${install_conf_host_by_service[keycloak]}"
     )
     local -a deployment_values=(
         "GIT_REVISION|$git_revision"
+        "PATHOCORE_WEB_IMAGE|pathocore-web:local"
         "MEPRAM_OMOP_API_IMAGE|mepram-omop-api:local"
         "PATHOCORE_API_IMAGE|pathocore-api:local"
-        "PATHOCORE_WEB_IMAGE|pathocore-web:local"
     )
     compose_env_file="$script_dir/.env.${mode}.file"
     write_compose_environment_file "$compose_env_file" settings_sources deployment_values
@@ -266,6 +348,7 @@ prepare_host_bind_source_permissions() {
         keycloak_host_bind_permission_spec+=("$realm_file|1000:0|0640")
     done
     apply_host_permission_spec "${keycloak_host_bind_permission_spec[@]}"
+    set_application_host_bind_permissions
 }
 
 # Keep a separate running-mount specification in every service/add-on case.
@@ -273,6 +356,7 @@ prepare_running_container_mount_permissions() {
     local service_name="$1" container_id="$2"
     local install_path uid gid
     case "$service_name" in
+        pathocore-web) return 0 ;; # immutable Next.js runtime
         mepram-omop-api)
             install_path="$(service_install_path "$service_name")"
             uid="$(service_uid "$service_name")"; gid="$(service_gid "$service_name")"
@@ -283,6 +367,14 @@ prepare_running_container_mount_permissions() {
             )
             apply_container_directory_permission_spec "$container_id" "${mepram_omop_api_running_mount_permission_spec[@]}"
             prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
+            ;;
+        mepram-omop-api-db)
+            # The persistent MySQL volume must remain owned by the UID/GID used
+            # by the database image, including after restoring or moving data.
+            local -a mepram_omop_api_db_running_mount_permission_spec=(
+                "/var/lib/mysql|999:999|u+rwX,g+rwX,o-rwx"
+            )
+            apply_container_directory_permission_spec "$container_id" "${mepram_omop_api_db_running_mount_permission_spec[@]}"
             ;;
         pathocore-api)
             install_path="$(service_install_path "$service_name")"
@@ -295,7 +387,14 @@ prepare_running_container_mount_permissions() {
             apply_container_directory_permission_spec "$container_id" "${pathocore_api_running_mount_permission_spec[@]}"
             prepare_django_container_settings_permissions "$container_id" "$install_path/conf/settings.py" "$uid" "$gid"
             ;;
-        pathocore-web) return 0 ;; # immutable Next.js runtime
+        pathocore-api-db)
+            # The persistent MySQL volume must remain owned by the UID/GID used
+            # by the database image, including after restoring or moving data.
+            local -a pathocore_api_db_running_mount_permission_spec=(
+                "/var/lib/mysql|999:999|u+rwX,g+rwX,o-rwx"
+            )
+            apply_container_directory_permission_spec "$container_id" "${pathocore_api_db_running_mount_permission_spec[@]}"
+            ;;
         pathocore-web-apache)
             # Apache currently needs no ownership repair inside its running
             # container. Keep an explicit add-on policy ready for future mounts.
@@ -308,16 +407,17 @@ prepare_running_container_mount_permissions() {
             local -a keycloak_running_mount_permission_spec=()
             apply_container_directory_permission_spec "$container_id" "${keycloak_running_mount_permission_spec[@]}"
             ;;
-        pathocore-api-db|mepram-omop-api-db|pathocore-web-keycloak-db)
-            # Persistent MySQL volumes must remain owned by the UID/GID used by
-            # the database image, including after restoring or moving data.
-            local -a mysql_running_mount_permission_spec=(
+        pathocore-web-keycloak-db)
+            # The persistent MySQL volume must remain owned by the UID/GID used
+            # by the database image, including after restoring or moving data.
+            local -a keycloak_db_running_mount_permission_spec=(
                 "/var/lib/mysql|999:999|u+rwX,g+rwX,o-rwx"
             )
-            apply_container_directory_permission_spec "$container_id" "${mysql_running_mount_permission_spec[@]}"
+            apply_container_directory_permission_spec "$container_id" "${keycloak_db_running_mount_permission_spec[@]}"
             ;;
-        *) return 0 ;;
+        *) : ;;
     esac
+    set_application_running_mount_permissions "$service_name" "$container_id"
 }
 
 bootstrap_service() {
@@ -325,6 +425,7 @@ bootstrap_service() {
     local repo_path runtime_conf uid gid status
     local -a args
     case "$service_name" in
+        pathocore-web) return 0 ;; # no runtime bootstrap
         mepram-omop-api)
             repo_path="$(service_repo_path "$service_name")"
             # Fixed temporary in-container path; this is not operator configuration.
@@ -357,7 +458,6 @@ bootstrap_service() {
             [ "$mode" = test ] || remove_container_runtime_config "$container_id" "$runtime_conf" || true
             return "$status"
             ;;
-        pathocore-web) return 0 ;; # no runtime bootstrap
         *) return 0 ;;
     esac
 }
@@ -365,34 +465,6 @@ bootstrap_service() {
 build_production_service() {
     local service_name="$1" context="$2" dockerfile="$3"
     case "$service_name" in
-        mepram-omop-api)
-            engine_build --no-cache --file "$context/$dockerfile" \
-                --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
-                --build-arg GIT_REVISION="$git_revision" \
-                --build-arg INSTALL_CONF="$(service_container_install_conf "$service_name")" \
-                --build-arg USE_INSTALL_CONF_SECRET=true \
-                --build-arg RENDER_DJANGO_SETTINGS=false \
-                --build-arg APP_REPO_PATH="$(service_repo_path "$service_name")" \
-                --build-arg APP_INSTALL_PATH="$(service_install_path "$service_name")" \
-                --build-arg APP_PORT="$(service_environment_value "$service_name" APP_PORT)" \
-                --build-arg APP_UID="$(service_uid "$service_name")" \
-                --build-arg APP_GID="$(service_gid "$service_name")" \
-                --tag "$(service_image_name "$service_name")" "$context"
-            ;;
-        pathocore-api)
-            engine_build --no-cache --file "$context/$dockerfile" \
-                --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
-                --build-arg GIT_REVISION="$git_revision" \
-                --build-arg INSTALL_CONF="$(service_container_install_conf "$service_name")" \
-                --build-arg USE_INSTALL_CONF_SECRET=true \
-                --build-arg RENDER_DJANGO_SETTINGS=false \
-                --build-arg APP_REPO_PATH="$(service_repo_path "$service_name")" \
-                --build-arg APP_INSTALL_PATH="$(service_install_path "$service_name")" \
-                --build-arg APP_PORT="$(service_environment_value "$service_name" APP_PORT)" \
-                --build-arg APP_UID="$(service_uid "$service_name")" \
-                --build-arg APP_GID="$(service_gid "$service_name")" \
-                --tag "$(service_image_name "$service_name")" "$context"
-            ;;
         pathocore-web)
             engine_build --no-cache --file "$context/$dockerfile" \
                 --build-arg GIT_REVISION="$git_revision" \
@@ -405,79 +477,37 @@ build_production_service() {
                 --build-arg NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL="$(service_environment_value "$service_name" NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL '')" \
                 --tag "$(service_image_name "$service_name")" "$context"
             ;;
+        mepram-omop-api)
+            engine_build --no-cache --file "$context/$dockerfile" \
+                --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
+                --build-arg GIT_REVISION="$git_revision" \
+                --build-arg INSTALL_CONF="$(service_container_install_conf "$service_name")" \
+                --build-arg USE_INSTALL_CONF_SECRET=true \
+                --build-arg RENDER_DJANGO_SETTINGS=false \
+                --build-arg APP_REPO_PATH="$(service_repo_path "$service_name")" \
+                --build-arg APP_INSTALL_PATH="$(service_install_path "$service_name")" \
+                --build-arg APP_PORT="$(service_environment_value "$service_name" APP_PORT)" \
+                --build-arg APP_UID="$(service_uid "$service_name")" \
+                --build-arg APP_GID="$(service_gid "$service_name")" \
+                --tag "$(service_image_name "$service_name")" "$context"
+            ;;
+        pathocore-api)
+            engine_build --no-cache --file "$context/$dockerfile" \
+                --secret "id=install_conf,src=${install_conf_host_by_service[$service_name]}" \
+                --build-arg GIT_REVISION="$git_revision" \
+                --build-arg INSTALL_CONF="$(service_container_install_conf "$service_name")" \
+                --build-arg USE_INSTALL_CONF_SECRET=true \
+                --build-arg RENDER_DJANGO_SETTINGS=false \
+                --build-arg APP_REPO_PATH="$(service_repo_path "$service_name")" \
+                --build-arg APP_INSTALL_PATH="$(service_install_path "$service_name")" \
+                --build-arg APP_PORT="$(service_environment_value "$service_name" APP_PORT)" \
+                --build-arg APP_UID="$(service_uid "$service_name")" \
+                --build-arg APP_GID="$(service_gid "$service_name")" \
+                --tag "$(service_image_name "$service_name")" "$context"
+            ;;
         *) die "Unsupported production build service: $service_name" ;;
     esac
 }
-
-# Applications with disposable fixtures or demo files customize this callback
-# in their generated wrapper and set application_supports_test_data=true. Keep
-# application-specific fixture names, users/groups, downloads, and data-service
-# layout here so the complete data-loading workflow remains readable in one file.
-application_supports_test_data=true
-load_test_deployment_data() {
-    local service_name="${1:-$demo_data_service}" data_path="${2:-$demo_data}"
-    local container_id install_path container_data status=0
-
-    # The orchestrator has no implicit fixture set. Test installs without an
-    # explicit map continue without importing application data.
-    [ -n "$data_path" ] || { echo "No mapped demo data requested"; return 0; }
-    container_id="$(current_service_container "$service_name")"
-    [ -n "$container_id" ] || die "Unable to resolve $service_name container"
-    install_path="$(service_install_path "$service_name")"
-    container_data="/tmp/$(basename "$data_path")"
-    engine_exec cp "$data_path" "$container_id:$container_data"
-
-    case "$service_name" in
-        pathocore-api)
-            engine_exec exec -w "$install_path" "$container_id" \
-                "$install_path/virtualenv/bin/python" manage.py \
-                import_sql_seed "$container_data" || status=$?
-            ;;
-        mepram-omop-api)
-            engine_exec exec -w "$install_path" "$container_id" \
-                "$install_path/virtualenv/bin/python" manage.py \
-                import_dashboard_sql "$container_data" --truncate || status=$?
-            ;;
-        *) status=1; echo "Demo-data loading is unsupported for $service_name" >&2 ;;
-    esac
-    engine_exec exec "$container_id" rm -f "$container_data" || true
-    [ "$status" -eq 0 ] || die "$service_name demo-data import failed"
-}
-
-action="install"; mode="production"; engine="docker"; git_revision="current"
-install_conf=""; compose_file=""; compose_env_file=""
-install_conf_map_entries=(); migration_script_before=(); migration_script_after=()
-demo_data=""; demo_data_service=""; demo_data_map_entries=()
-skip_demo_data=""; skip_test_data=""; skip_test_data_services=()
-load_tables=false; skip_tables=false
-
-usage() {
-    cat <<'EOF'
-Install, upgrade, or repair the application deployment.
-
-Options:
-  --action install|upgrade|fix-permissions
-  --test
-  --engine docker|podman
-  --git_revision <branch|tag|commit|current>
-  --install_conf <path>              First application service only.
-  --install_conf_map <component,path>  Repeat for application and add-on overrides.
-  --compose_file <path>
-  --script_before <name[,args]>
-  --script_after <name[,args]>
-  --script <name[,args]>
-  --tables                          Load initial tables; opt-in on upgrades.
-  --skip_tables                     Skip initial tables on a fresh install.
-  --demo_data <path>                 Single-service compatibility option.
-  --demo_data_map <service,path>     Repeat for service-specific data imports.
-  --skip_demo_data
-  --skip_test_data
-  --skip_test_data_service <service>  Repeat to skip one service's test fixtures.
-  --help
-  --version
-EOF
-}
-die() { echo "ERROR: $*" >&2; exit 1; }
 
 # 1. Parse the canonical outer-installer interface.
 while (($#)); do

@@ -9,7 +9,7 @@ repo_root="$(cd "$script_dir/.." && pwd)"
 # shellcheck disable=SC1091
 source "$repo_root/deployment/lib/container/common.sh"
 
-install_services=(mepram-omop-api pathocore-api pathocore-web)
+install_services=(pathocore-web mepram-omop-api pathocore-api)
 engine="docker"; mode="production"; compose_file=""; env_file=""
 while (($#)); do
     case "$1" in
@@ -35,6 +35,11 @@ fi
 compose_run() { compose_with_env_exec -f "$compose_file" "$@"; }
 fail() { echo "FAIL: $*" >&2; exit 1; }
 compose_run config >/dev/null
+    container_id="$(resolve_service_container pathocore-web)"
+    [ -n "$container_id" ] || fail "Service pathocore-web has no container"
+    ensure_service_running pathocore-web "$container_id" >/dev/null
+    engine_exec exec "$container_id" test -f /app/.next/BUILD_ID
+    echo "PASS: pathocore-web Next.js build exists"
     container_id="$(resolve_service_container mepram-omop-api)"
     [ -n "$container_id" ] || fail "Service mepram-omop-api has no container"
     ensure_service_running mepram-omop-api "$container_id" >/dev/null
@@ -45,11 +50,6 @@ compose_run config >/dev/null
     ensure_service_running pathocore-api "$container_id" >/dev/null
     engine_exec exec "$container_id" bash -lc 'cd "$INSTALL_PATH" && source virtualenv/bin/activate && python manage.py check && ! python manage.py showmigrations --plan | grep -F '"'"'[ ]'"'"''
     echo "PASS: pathocore-api Django checks and migrations"
-    container_id="$(resolve_service_container pathocore-web)"
-    [ -n "$container_id" ] || fail "Service pathocore-web has no container"
-    ensure_service_running pathocore-web "$container_id" >/dev/null
-    engine_exec exec "$container_id" test -f /app/.next/BUILD_ID
-    echo "PASS: pathocore-web Next.js build exists"
 check_url() {
     local service="$1" url="$2"
     curl --fail --silent --show-error --location --max-time 20 --output /dev/null "$url" \

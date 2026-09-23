@@ -45,3 +45,20 @@ hosts, routes, and aliases. During installation they are rendered with the
 protected deployment environment into `deployment/apache/`; only those final
 files are bind-mounted. `APACHE_LOG_PATH` is the writable persistent host log
 source.
+
+### Keycloak
+
+`KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_DB_ROOT_PASSWORD`, and
+`KEYCLOAK_ADMIN_PASSWORD` are production secrets. `KEYCLOAK_PUBLIC_URL` must
+match the public hostname routed through the reverse proxy.
+
+`KEYCLOAK_ADMIN_API_*` configures an optional application-side client for the
+Keycloak Admin REST API. It is independent from server bootstrap credentials;
+client-secret or username/password authentication is selected by the consuming
+application. Leave the base URL and realm empty when the application does not
+perform realm or user administration.
+
+`KEYCLOAK_REALM_SOURCE_PATH` contains repository-owned reproducible realm JSON.
+The installer copies it to the deployment-owned `KEYCLOAK_IMPORT_PATH`, which
+is the read-only Keycloak bind source. Realm JSON does not replace a backup of
+the persistent Keycloak database, which is authoritative after initialization.

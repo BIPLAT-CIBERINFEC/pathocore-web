@@ -23,7 +23,8 @@
       "INSTALL_CONF": "../pathocore-api/conf/docker_production_settings.txt",
       "TEST_INSTALL_CONF": "../pathocore-api/conf/docker_test_settings.txt",
       "PROJECT_MODULE": "conf",
-      "API": true
+      "API": true,
+      "DATABASE": "compose"
     },
     "mepram-omop-api": {
       "PROFILE": "django",
@@ -33,7 +34,8 @@
       "INSTALL_CONF": "../mepram-omop-api/conf/docker_production_settings.txt",
       "TEST_INSTALL_CONF": "../mepram-omop-api/conf/docker_test_settings.txt",
       "PROJECT_MODULE": "conf",
-      "API": true
+      "API": true,
+      "DATABASE": "compose"
     }
   },
   "ADDONS": {
