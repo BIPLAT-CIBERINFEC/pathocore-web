@@ -1,5 +1,5 @@
 {
-  "realm": "ciberisciii_datahub",
+  "realm": "${KEYCLOAK_REALM}",
   "enabled": true,
   "groups": [
     {
@@ -166,136 +166,7 @@
       ]
     }
   ],
-  "users": [
-    {
-      "username": "mepram_admin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "MEPRAM",
-      "lastName": "Admin",
-      "email": "mepram.admin@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "mepram_admin_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/mepram/admin",
-        "/use-cases/relecov/view"
-      ]
-    },
-    {
-      "username": "mepram_viewer",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "MEPRAM",
-      "lastName": "Viewer",
-      "email": "mepram.viewer@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "mepram_viewer_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/mepram/view"
-      ]
-    },
-    {
-      "username": "relecov_viewer",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "RELECOV",
-      "lastName": "Viewer",
-      "email": "relecov.viewer@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "relecov_viewer_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/relecov/view"
-      ]
-    },
-    {
-      "username": "relecov_admin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "RELECOV",
-      "lastName": "Admin",
-      "email": "relecov.admin@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "relecov_admin_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/relecov/admin"
-      ]
-    },
-    {
-      "username": "redlabra_viewer",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "RedLabRa",
-      "lastName": "Viewer",
-      "email": "redlabra.viewer@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "redlabra_viewer_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/redlabra/view"
-      ]
-    },
-    {
-      "username": "multi_viewer",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Multi",
-      "lastName": "Viewer",
-      "email": "multi.viewer@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "multi_viewer_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/mepram/view",
-        "/use-cases/relecov/view"
-      ]
-    },
-    {
-      "username": "models_admin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Models",
-      "lastName": "Admin",
-      "email": "models.admin@example.org",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "models_admin_pass",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/use-cases/ai-models/admin"
-      ]
-    }
-  ],
+  "users": [],
   "clients": [
     {
       "clientId": "pathocore-web",
@@ -318,20 +189,10 @@
       ],
       "optionalClientScopes": [],
       "redirectUris": [
-        "http://127.0.0.1:3000/auth/callback",
-        "http://localhost:3000/auth/callback",
-        "http://127.0.0.1:3001/auth/callback",
-        "http://localhost:3001/auth/callback",
-        "http://127.0.0.1:5173/auth/callback",
-        "http://localhost:5173/auth/callback"
+        "${PATHOCORE_WEB_AUTH_URL}/auth/callback"
       ],
       "webOrigins": [
-        "http://127.0.0.1:3000",
-        "http://localhost:3000",
-        "http://127.0.0.1:3001",
-        "http://localhost:3001",
-        "http://127.0.0.1:5173",
-        "http://localhost:5173"
+        "${PATHOCORE_WEB_AUTH_URL}"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
@@ -396,22 +257,24 @@
     }
   ],
   "smtpServer": {
-    "host": "mailpit",
-    "port": "1025",
-    "from": "no-reply@pathocore.local",
-    "fromDisplayName": "PathoCore",
-    "replyTo": "support@pathocore.local",
-    "replyToDisplayName": "PathoCore Support",
-    "auth": "false",
-    "ssl": "false",
-    "starttls": "false",
-    "envelopeFrom": "no-reply@pathocore.local",
-    "allowUtf8": "true",
-    "connectionTimeout": "10000",
-    "timeout": "10000",
-    "writeTimeout": "10000"
+    "host": "${KEYCLOAK_SMTP_HOST}",
+    "port": "${KEYCLOAK_SMTP_PORT}",
+    "from": "${KEYCLOAK_SMTP_FROM}",
+    "fromDisplayName": "${KEYCLOAK_SMTP_FROM_DISPLAY_NAME}",
+    "replyTo": "${KEYCLOAK_SMTP_REPLY_TO}",
+    "replyToDisplayName": "${KEYCLOAK_SMTP_REPLY_TO_DISPLAY_NAME}",
+    "envelopeFrom": "${KEYCLOAK_SMTP_ENVELOPE_FROM}",
+    "auth": "${KEYCLOAK_SMTP_AUTH}",
+    "ssl": "${KEYCLOAK_SMTP_SSL}",
+    "starttls": "${KEYCLOAK_SMTP_STARTTLS}",
+    "allowUtf8": "${KEYCLOAK_SMTP_ALLOW_UTF8}",
+    "connectionTimeout": "${KEYCLOAK_SMTP_CONNECTION_TIMEOUT}",
+    "timeout": "${KEYCLOAK_SMTP_TIMEOUT}",
+    "writeTimeout": "${KEYCLOAK_SMTP_WRITE_TIMEOUT}",
+    "user": "${KEYCLOAK_SMTP_USER}",
+    "password": "${KEYCLOAK_SMTP_PASSWORD}"
   },
-  "emailTheme": "pathocore",
+  "emailTheme": "${KEYCLOAK_EMAIL_THEME}",
   "registrationAllowed": false,
   "resetPasswordAllowed": true,
   "loginWithEmailAllowed": true,
