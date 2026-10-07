@@ -1,0 +1,61 @@
+# Production configuration for this Next.js service.
+# Copy to a protected ignored file, chmod 0600, and replace every CHANGE_ME.
+# NEXT_PUBLIC_* values are embedded in the browser bundle during image build;
+# all other values are server/container settings and must not be exposed.
+
+### Unprivileged Node.js runtime
+# Source path used while assembling the image. Example: /app
+REPO_PATH='/app'
+# Final application path inside the image. Example: /app
+INSTALL_PATH='/app'
+# Numeric UID/GID for the unprivileged Node process and writable Next.js cache.
+# Example: 1000. Use IDs compatible with the deployment host policy.
+APP_UID='1000'
+APP_GID='1000'
+# Internal port used by `next start`, health checks, and Apache. Example: 3000
+APP_PORT='3000'
+
+### Public browser build configuration (never put secrets in NEXT_PUBLIC_* values)
+# Browser-visible PathoCore API base URL. A same-origin path avoids CORS when
+# Next.js proxies API requests.
+NEXT_PUBLIC_API_BASE_URL='/api/pathocore/v1'
+# Browser-visible MePRAM OMOP API base URL. The standard Next.js profile calls
+# this the second API; the application exposes it as NEXT_PUBLIC_MEPRAM_API_BASE_URL.
+NEXT_PUBLIC_SECOND_API_BASE_URL='/api/omop/v1'
+# Public Keycloak origin reachable by users' browsers, without a realm path.
+# Example: https://auth.example.org
+NEXT_PUBLIC_KEYCLOAK_URL='CHANGE_ME_PUBLIC_KEYCLOAK_URL'
+# Keycloak realm and public client defined by the bundled realm template.
+NEXT_PUBLIC_KEYCLOAK_REALM='ciberisciii_datahub'
+NEXT_PUBLIC_KEYCLOAK_CLIENT_ID='pathocore-web'
+# Selects the application data source behavior. Supported application value
+# example: live. Do not use a test/demo mode in production.
+NEXT_PUBLIC_USE_CASE_DATA_MODE='live'
+# Optional public contact displayed for use-case alerts. Example:
+# support@example.org; leave empty to hide it.
+NEXT_PUBLIC_USE_CASE_ALERTS_CONTACT_EMAIL=''
+
+### Server-only runtime configuration
+# Compose-network URL used by Next.js server-side routes for PathoCore API.
+# Use the Compose service name and that service's APP_PORT; container_install.sh
+# rejects other hosts or ports.
+PATHOCORE_API_PROXY_TARGET='http://pathocore-api:8000'
+# Compose-network URL used by Next.js server-side routes for MePRAM OMOP API.
+# Use the Compose service name and that service's APP_PORT; container_install.sh
+# rejects other hosts or ports.
+MEPRAM_OMOP_API_PROXY_TARGET='http://mepram-omop-api:8001'
+# Secret used to encrypt/sign authentication state. Generate independently for
+# every deployment, for example with: openssl rand -base64 32
+AUTH_SECRET='CHANGE_ME'
+# Canonical public application URL used by Auth.js callbacks, including scheme
+# and no trailing slash. Example: https://app.example.org
+AUTH_URL='CHANGE_ME_PUBLIC_APPLICATION_URL'
+# Allow Auth.js to trust the reverse proxy's forwarded host headers. Keep true
+# only behind the reviewed Apache/proxy configuration. Example: true
+AUTH_TRUST_HOST='true'
+# Compatibility canonical URL for NextAuth integrations. Normally identical to
+# AUTH_URL. Example: https://app.example.org
+NEXTAUTH_URL='CHANGE_ME_PUBLIC_APPLICATION_URL'
+
+### Selected infrastructure add-ons
+# Infrastructure add-ons use files below conf/<addon>/.
