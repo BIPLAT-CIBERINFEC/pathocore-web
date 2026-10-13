@@ -11,6 +11,7 @@ import {
   Lock,
   LogIn,
   User,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +19,9 @@ import { MepramDataPage } from "@/components/UseCases/Mepram/MepramDataPage";
 import { MepramExplorer } from "@/components/UseCases/Mepram/MepramExplorer";
 import { MepramAlertsBoard } from "@/components/UseCases/Mepram/MepramAlertsBoard";
 import { MepramAdminBoard } from "@/components/UseCases/Mepram/MepramAdminBoard";
+
 import Link from "next/link";
+import ReportsView from "@/components/UseCases/Mepram/ReportsView";
 
 const decodeToken = (token: string) => {
   try {
@@ -66,33 +69,50 @@ export default function MepramUseCasePage() {
     );
   };
 
-  const navigationCards = [
+  const navigationGroups = [
     {
-      id: "data",
-      title: "Use case data",
-      eyebrow: "Metrics",
-      description:
-        "Quick overview of the use case status with basic metrics, aggregated results, and dashboards.",
-      icon: <Radar className="h-6 w-6 text-slate-700" />,
+      title: "Genomic Data",
+      cards: [
+        {
+          id: "data",
+          title: "Use case data",
+          eyebrow: "Metrics",
+          description:
+            "Quick overview of the use case status with basic metrics, aggregated results, and dashboards.",
+          icon: <Radar className="h-6 w-6 text-slate-700" />,
+        },
+        {
+          id: "explorer",
+          title: "Isolate explorer",
+          eyebrow: "Search",
+          description:
+            "Operational search for isolates with filters and territorial distribution maps.",
+          icon: <Activity className="h-6 w-6 text-slate-700" />,
+        },
+        {
+          id: "alerts",
+          title: "Genomic surveillance alerts",
+          eyebrow: "Protected",
+          description:
+            "Surveillance alert layer. Requires authorization to access this sensitive information.",
+          icon: <Siren className="h-6 w-6 text-slate-700" />,
+        },
+      ],
     },
     {
-      id: "explorer",
-      title: "Isolate explorer",
-      eyebrow: "Search",
-      description:
-        "Operational search for isolates with filters and territorial distribution maps.",
-      icon: <Activity className="h-6 w-6 text-slate-700" />,
-    },
-    {
-      id: "alerts",
-      title: "Genomic surveillance alerts",
-      eyebrow: "Protected",
-      description:
-        "Surveillance alert layer. Requires authorization to access this sensitive information.",
-      icon: <Siren className="h-6 w-6 text-slate-700" />,
+      title: "Clinical Data",
+      cards: [
+        {
+          id: "reports",
+          title: "Sepsis Dataset report",
+          eyebrow: "Reports",
+          description:
+            "Access and analyze detailed clinical reports and associated patient surveillance data.",
+          icon: <FileText className="h-6 w-6 text-slate-700" />,
+        },
+      ],
     },
   ];
-
 
   if (!isMounted) {
     return (
@@ -166,6 +186,14 @@ export default function MepramUseCasePage() {
     );
   }
 
+  const sectionLabels: Record<string, string> = {
+    data: "Use Case Data",
+    explorer: "Isolate Explorer",
+    alerts: "Alerts",
+    reports: "Clinical Reports",
+    admin: "Admin Panel",
+  };
+
   return (
     <MepramBrowserLayout
       title="PathoCore - Mepram Use Case"
@@ -174,17 +202,8 @@ export default function MepramUseCasePage() {
         [
           { label: "Use Cases" },
           { label: "Mepram", onClick: () => setActiveSection("home") },
-          activeSection !== "home"
-            ? {
-                label:
-                  activeSection === "data"
-                    ? "Use Case Data"
-                    : activeSection === "explorer"
-                    ? "Isolate Explorer"
-                    : activeSection === "admin"
-                    ? "Admin Panel"
-                    : "Alerts",
-              }
+          activeSection !== "home" && sectionLabels[activeSection as string]
+            ? { label: sectionLabels[activeSection as string] }
             : null,
         ].filter(Boolean) as any
       }
@@ -202,46 +221,55 @@ export default function MepramUseCasePage() {
       )}
 
       {activeSection === "home" ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {navigationCards.map((card) => (
-            <Surface
-              key={card.id}
-              className="group flex h-full cursor-pointer flex-col justify-between rounded-[24px] border border-slate-100 bg-white p-0 shadow-[0_12px_34px_rgba(45,42,125,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-[#4f46e5]/30 hover:shadow-[0_20px_44px_rgba(79,70,229,0.08)]"
-            >
-              <div
-                className="flex h-full w-full flex-col p-6 text-left select-none"
-                onClick={() => setActiveSection(card.id)}
-              >
-                <div className="mb-4">
-                  <div className="inline-flex rounded-2xl bg-indigo-50/60 p-3.5 text-[#4f46e5] transition-all duration-300 group-hover:bg-[#4f46e5] group-hover:text-white">
-                    {card.icon}
-                  </div>
-                  <span className="ml-3 inline-flex items-center gap-1.5 rounded-full bg-[#f1efff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2d2a7d] transition-colors">
-                    {card.eyebrow}
-                  </span>
-                </div>
+        <div className="space-y-10">
+          {navigationGroups.map((group) => (
+            <div key={group.title} className="space-y-4">
+              <h2 className="text-lg font-semibold tracking-tight text-slate-800 border-b border-slate-200/60 pb-2">
+                {group.title}
+              </h2>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {group.cards.map((card) => (
+                  <Surface
+                    key={card.id}
+                    className="group flex h-full cursor-pointer flex-col justify-between rounded-[24px] border border-slate-100 bg-white p-0 shadow-[0_12px_34px_rgba(45,42,125,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-[#4f46e5]/30 hover:shadow-[0_20px_44px_rgba(79,70,229,0.08)]"
+                  >
+                    <div
+                      className="flex h-full w-full flex-col p-6 text-left select-none"
+                      onClick={() => setActiveSection(card.id)}
+                    >
+                      <div className="mb-4">
+                        <div className="inline-flex rounded-2xl bg-indigo-50/60 p-3.5 text-[#4f46e5] transition-all duration-300 group-hover:bg-[#4f46e5] group-hover:text-white">
+                          {card.icon}
+                        </div>
+                        <span className="ml-3 inline-flex items-center gap-1.5 rounded-full bg-[#f1efff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2d2a7d] transition-colors">
+                          {card.eyebrow}
+                        </span>
+                      </div>
 
-                <h3 className="mt-3 mb-3 font-serif text-xl font-bold tracking-tight text-slate-900 transition-colors group-hover:text-[#4f46e5]">
-                  {card.title}
-                </h3>
-                <p className="mb-6 flex-grow text-xs leading-relaxed text-slate-500 line-clamp-2">
-                  {card.description}
-                </p>
+                      <h3 className="mt-3 mb-3 font-serif text-xl font-bold tracking-tight text-slate-900 transition-colors group-hover:text-[#4f46e5]">
+                        {card.title}
+                      </h3>
+                      <p className="mb-6 flex-grow text-xs leading-relaxed text-slate-500 line-clamp-2">
+                        {card.description}
+                      </p>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveSection(card.id);
-                  }}
-                  className="mt-6 flex items-center gap-1 border-t border-slate-50 pt-4 text-xs font-bold text-slate-400 transition-all group-hover:text-[#4f46e5]"
-                >
-                  Open section{" "}
-                  <span className="transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
-                </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveSection(card.id);
+                        }}
+                        className="mt-6 flex items-center gap-1 border-t border-slate-50 pt-4 text-xs font-bold text-slate-400 transition-all group-hover:text-[#4f46e5]"
+                      >
+                        Open section{" "}
+                        <span className="transition-transform group-hover:translate-x-1">
+                          →
+                        </span>
+                      </button>
+                    </div>
+                  </Surface>
+                ))}
               </div>
-            </Surface>
+            </div>
           ))}
         </div>
       ) : (
@@ -256,6 +284,7 @@ export default function MepramUseCasePage() {
           {activeSection === "data" && <MepramDataPage />}
           {activeSection === "explorer" && <MepramExplorer />}
           {activeSection === "alerts" && <MepramAlertsBoard />}
+          {activeSection === "reports" && <ReportsView />}
           {activeSection === "admin" && isAdmin && <MepramAdminBoard />}
         </div>
       )}
