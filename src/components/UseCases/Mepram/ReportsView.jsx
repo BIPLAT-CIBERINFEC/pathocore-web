@@ -11,6 +11,9 @@ import {
   CartesianGrid,
 } from "recharts";
 
+const reportsApiBaseUrl =
+  process.env.NEXT_PUBLIC_MEPRAM_API_BASE_URL || "/api/omop/v1";
+
 export default function ReportsView() {
   const [reportsData, setReportsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +25,7 @@ export default function ReportsView() {
     const fetchReports = async () => {
       try {
         const response = await fetch(
-          "https://mepram-des-api-omop.ciberisciii.es/v1/cohort/report"
+          `${reportsApiBaseUrl}/cohort/report`
         );
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status}`);
