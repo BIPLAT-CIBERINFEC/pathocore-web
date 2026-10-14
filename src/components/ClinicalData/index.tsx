@@ -10,6 +10,7 @@ import {
   Stethoscope,
   Users,
   ChevronLeft,
+  FileText,
 } from "lucide-react";
 
 import { Surface } from "@/components/mepram/MepramPrimitives";
@@ -17,6 +18,10 @@ import { Surface } from "@/components/mepram/MepramPrimitives";
 import CohortOverview from "./CohortOverview";
 import DomainDetailView from "./DomainDetailView";
 import MeasurementsExplorer from "./MeasurementsExplorer";
+
+
+
+
 
 const CLINICAL_SECTIONS = [
   {
@@ -65,6 +70,7 @@ const CLINICAL_SECTIONS = [
     description:
       "Clinical facts, qualitative assessments, and general metadata history.",
   },
+  
 ];
 
 export default function ClinicalDataIndex() {
@@ -168,7 +174,7 @@ export default function ClinicalDataIndex() {
                 activeSection={activeSection}
                 setActiveSection={setActiveSection}
               />
-            ) : (
+            )  : (
               <DomainDetailView domainId={activeSection} />
             )}
           </div>
