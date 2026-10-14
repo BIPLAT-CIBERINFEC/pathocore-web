@@ -1,0 +1,95 @@
+{
+  "config": {
+    "ADDONS": {
+      "apache": {
+        "CONFIG_SERVICE": "pathocore-web"
+      },
+      "keycloak": {
+        "ADMIN_ACCESS": true,
+        "CONFIG_SERVICE": "pathocore-api",
+        "MOUNTS": [
+          "./keycloak/themes/pathocore:/opt/keycloak/themes/pathocore:ro,z"
+        ],
+        "OIDC_SERVICES": [
+          "pathocore-api",
+          "mepram-omop-api"
+        ]
+      },
+      "mailpit": {
+        "CONFIG_SERVICE": "pathocore-web",
+        "MODES": [
+          "test"
+        ]
+      }
+    },
+    "APP_NAME": "PathoCore Web",
+    "APP_SLUG": "pathocore-web",
+    "DEFAULT_BRANCH": "dev",
+    "DESCRIPTION": "Next.js frontend and deployment orchestrator for the PathoCore and MePRAM OMOP APIs.",
+    "PYTHON_VERSION": "3.12",
+    "REPOSITORY_URL": "https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git",
+    "SERVICES": {
+      "mepram-omop-api": {
+        "API": true,
+        "BUILD_CONTEXT": "../mepram-omop-api",
+        "DATABASE": "compose",
+        "DOCKERFILE": "Dockerfile",
+        "IMAGE": "mepram-omop-api:local",
+        "INSTALL_CONF": "../mepram-omop-api/conf/docker_production_settings.txt",
+        "PROFILE": "django",
+        "PROJECT_MODULE": "conf",
+        "TEST_INSTALL_CONF": "../mepram-omop-api/conf/docker_test_settings.txt"
+      },
+      "pathocore-api": {
+        "API": true,
+        "BUILD_CONTEXT": "../pathocore-api",
+        "DATABASE": "compose",
+        "DOCKERFILE": "Dockerfile",
+        "IMAGE": "pathocore-api:local",
+        "INSTALL_CONF": "../pathocore-api/conf/docker_production_settings.txt",
+        "PROFILE": "django",
+        "PROJECT_MODULE": "conf",
+        "TEST_INSTALL_CONF": "../pathocore-api/conf/docker_test_settings.txt"
+      },
+      "pathocore-web": {
+        "BUILD_CONTEXT": ".",
+        "DOCKERFILE": "Dockerfile",
+        "IMAGE": "pathocore-web:local",
+        "INSTALL_CONF": "conf/docker_production_settings.txt",
+        "PROFILE": "nextjs",
+        "TEST_INSTALL_CONF": "conf/docker_test_settings.txt"
+      }
+    },
+    "TIMEZONE": "Europe/Madrid"
+  },
+  "files": {
+    ".dockerignore": "fe30ca2a87248d561ac8bc0e12d9b7ee234ce9567d2eba408c4ec36a5d47c881",
+    ".github/DJANGO_MIGRATIONS.md": "812f598c85b7f6766773819b42ba1dda4015388d34ce6f021e37d98f1238ada5",
+    ".gitignore": "4687bfabf60bd21a7319463aefd76e67fd28b6093277df63b86f18e9e897a83b",
+    "Dockerfile": "56b7c66efb13b7aeb7b0165f706839a180d5478c50682964db32d18432865733",
+    "LEAME.md": "0d41c0b76b7f4e898e88365fc4c045eb5484cfa071b7d60db439ed58ac5504cd",
+    "README.md": "2436ab4a80a9cd52c6acdc4fd6ffe21bb263dc300d2703f68380285e01ab51ab",
+    "conf/INSTALL_SETTINGS.md": "07fede50663c9815dec268528b5de3f0dfb2e5d8ba4b7ed9750de8cb7604ee03",
+    "conf/apache/00-logs.conf": "3c2ab4e693e528d2cad37c0c5bb0bc4511803a7f206b339182de192d4e398092",
+    "conf/apache/01-reverse-proxy.conf": "f7f449398453c02681905b508791220d6174b4fb3df58d2cb7ca4d11ead4ccb0",
+    "conf/apache/02-server-status.conf": "c3b5d26f9b551083faf0d85b188bfa9c577ff0bd3b805f0ec104fe4f7d5101cb",
+    "conf/apache/apache_production_settings.txt": "ba1d32e1c6d4ea83944d768c1e6db74f6d397a27ccabb9d4cf93004081b69002",
+    "conf/apache/apache_test_settings.txt": "3e77f5b2bc70a9db1ca37f4fbf0d82ee1cef352804e21c01090c87bead16e214",
+    "conf/docker_production_settings.txt": "fe6c57266bb1126a08a34ff8f1974ae819321a0fefa8c3a2d15b86958be5018f",
+    "conf/docker_test_settings.txt": "bd7205d940e86e7875e318252c82504cb904f37d8075907d4baf47ece0cf7b1d",
+    "conf/keycloak/keycloak_production_settings.txt": "5cc895898c2c153bbb42b75ba631e6517be77fdec837c94effb59c2f070e9ea8",
+    "conf/keycloak/keycloak_test_settings.txt": "8af6a8275741e6900069a6368c2d0684fa2034da24e2c4d126619e0142217837",
+    "conf/keycloak/realm-production.json": "26b3709507bdafc0cd78937caa36ce9e81025f397a5a0715c7282439a4abd125",
+    "conf/keycloak/realm-test.json": "26b3709507bdafc0cd78937caa36ce9e81025f397a5a0715c7282439a4abd125",
+    "conf/mailpit/mailpit_production_settings.txt": "720b4ebcd3ee3765b7121bbdc8b5961dad0fb340b42d99513672b67f209db92d",
+    "conf/mailpit/mailpit_test_settings.txt": "1da7b2dbf67d9a8296133c45ed4cafec0371446485f6c7900781e6814efb527d",
+    "container_install.sh": "de35b1305403c2761086bbaf1e39da91dfd2fc33e12e0fa3d4cba09c57b4266c",
+    "docker-compose.prod.yml": "94e9efb111012612b284bfefefb7a541b6ed6b6b9084f4155590807ab83af5e7",
+    "docker-compose.test.yml": "3ebc67a4e9bc4956ec327bbc17300363338d7d7be66b5fcc2be85b0f4baedf59",
+    "scripts/container_start.sh": "7f85e924a9b28f22a307a7a1dc36e1ee7ee93a827de3b27d99047646fbbcfa08",
+    "scripts/smoke_test.sh": "af36e3c1dee1f3614ffae2bba7224fe084832bff3ba1e08f0c800235e25894ac",
+    "src/pages/health.tsx": "a06dd776176715c23d5af1d2e2d3f4b86f36a8d0a449890de0b93ddcb9e0df24"
+  },
+  "source": "BU-ISCIII deployment standards",
+  "standard_version": "0.1.0"
+}

@@ -1,55 +1,42 @@
-# Keycloak realm config for PathoCore
+# Keycloak Realm and Theme
 
-This directory contains the reproducible Keycloak realm config used by
-PathoCore. The current default profile is local/test.
+The PathoCore platform manages Keycloak as a deployment add-on. The
+repository-owned realm templates are:
 
-## Source of truth
+- `conf/keycloak/realm-test.json` for disposable local/test deployments.
+- `conf/keycloak/realm-production.json` for production deployments.
 
-The realm import file is generated from:
+They define the `ciberisciii_datahub` group model, the frontend/API clients,
+the shared `pathocore-common` client scope, and the bundled email theme. They
+are templates, not running Keycloak state.
 
-- [config/realm-config.test.json](./config/realm-config.test.json)
-- [config/realm-config.prod.example.json](./config/realm-config.prod.example.json)
-- [scripts/render_realm.py](./scripts/render_realm.py)
+## Rendering lifecycle
 
-Do not configure this realm manually in the Keycloak UI. Do not edit files
-under `tmp-import/` manually. Regenerate the local/test import JSON with:
+`container_install.sh` reads the protected settings selected for the Keycloak
+add-on, renders the selected JSON template into `KEYCLOAK_IMPORT_PATH`, and
+mounts that directory read-only in Keycloak. Rendering substitutes the realm
+name, frontend callback URL and SMTP settings without writing production values
+back into the repository.
 
-```bash
-python scripts/render_realm.py
+For a production deployment, edit only the protected file below
+`deployment/settings/`:
+
+```text
+deployment/settings/keycloak_production_settings.txt
 ```
 
-This is equivalent to:
+For local/test, `conf/keycloak/keycloak_test_settings.txt` selects Mailpit and
+the disposable realm import path.
 
-```bash
-python scripts/render_realm.py --profile test
-```
+Keycloak imports a realm only when its database is empty. Changing a template
+or its settings does not alter an existing realm. Recreate the disposable test
+Keycloak volume to validate a fresh import. In production, manage existing
+realm changes explicitly and back up the Keycloak database before modifying it.
 
-For production, `container_install.sh` renders the realm import automatically
-from `config/realm-config.prod.example.json` and the production environment
-file. If a deployment needs custom users, clients or groups, copy and edit the
-example. Keep the real production file out of git because it may contain
-deployment-specific URLs or future secrets:
+## Authorization model
 
-```bash
-cp config/realm-config.prod.example.json config/realm-config.prod.json
-```
-
-Production redirect URIs and web origins must be exact HTTPS URLs. Do not use
-localhost or wildcards in production.
-
-## Auth strategy
-
-The realm is configured around standard claims plus Keycloak group membership:
-
-- `iss`: realm issuer
-- `aud`: API audience
-- `sub`: user id
-- `preferred_username`
-- `email`
-- `groups`: full group paths
-
-No custom hardcoded `projects` claim is emitted. APIs derive authorization from
-the canonical group grammar:
+The realm emits standard identity claims and complete Keycloak group paths. The
+APIs use the following groups for authorization:
 
 ```text
 /use-cases/<use-case>/view
@@ -57,235 +44,20 @@ the canonical group grammar:
 /superusers
 ```
 
-This is the current PathoCore pattern:
+The `pathocore-web` client performs browser login. `pathocore-api` and
+`mepram-api` are API audiences. The `pathocore-common` client scope adds
+identity claims, group membership and the PathoCore API audience to frontend
+tokens.
 
-- `pathocore-web` performs login and receives user access tokens
-- `pathocore-api` is only an API audience and does not perform login
-- `pathocore-common` is a default scope on `pathocore-web`
-- `pathocore-common` adds identity claims, full group paths, and `aud=pathocore-api`
+## Email theme
 
-Semantics:
-
-- `/use-cases/<uc>/admin` grants use-case-wide administration
-- `/use-cases/<uc>/view` grants use-case-wide read access
-- `/superusers` grants full access across APIs that honor this realm group
-
-## Realm contents
-
-- Realm: `ciberisciii_datahub`
-- Group root: `use-cases`
-- Use-cases:
-  - `mepram`
-  - `relecov`
-  - `redlabra`
-  - `ai-models`
-- Clients:
-  - `pathocore-web`
-  - `pathocore-api`
-  - `ai-model-api`
-- Shared client scope:
-  - `pathocore-common`
-- Required mappers in `pathocore-common`:
-  - `audience-pathocore-api`
-  - `preferred_username`
-  - `given_name`
-  - `family_name`
-  - `name`
-  - `sub`
-  - `groups`
-- Client configuration:
-  - `pathocore-web`: public, standard flow enabled, direct grants enabled
-  - `pathocore-api`: bearer-only API client, login flows disabled
-
-## Email Actions
-
-The test realm includes SMTP settings rendered by
-`keycloak/scripts/render_realm.py`. The local Docker Compose test stack uses
-Mailpit as an SMTP catcher:
+The application-owned theme is mounted through `ADDONS.keycloak.MOUNTS`:
 
 ```text
-SMTP host: mailpit
-SMTP port: 1025
-Inbox UI: http://127.0.0.1:8025
-Sender: no-reply@pathocore.local
+keycloak/themes/pathocore -> /opt/keycloak/themes/pathocore
 ```
 
-When `pathocore-api` approves an access request, it calls Keycloak
-`execute-actions-email` with `UPDATE_PASSWORD` and `VERIFY_EMAIL`. In the test
-stack, the user email is captured in Mailpit instead of being sent externally.
-Those account setup emails use the bundled `pathocore` email theme mounted from
-`keycloak/themes/pathocore`.
-
-The realm config sets admin-generated action links to 24 hours and
-user-generated action links, such as standalone email verification links, to 2
-hours.
-Password reset is enabled, so the login page exposes Keycloak's
-`Forgot password?` flow.
-
-The API must have action emails enabled:
-
-```env
-KEYCLOAK_ADMIN_SEND_ACTION_EMAILS=true
-```
-
-For production, configure the SMTP block in
-`keycloak/config/realm-config.prod.json` before rendering the realm import. The
-SMTP endpoint must be reachable from the Keycloak container. It can be a relay
-on the VM host, a relay container managed outside this repository, or an
-institutional SMTP service:
-
-```text
-SMTP host: host.docker.internal, external-relay-service, or smtp.example.org
-SMTP port: EMAIL_PORT, default 25
-SSL/StartTLS/Auth: according to the selected SMTP endpoint
-```
-
-When Keycloak connects to an intermediate local relay, SSL, StartTLS and
-authentication are normally disabled because the relay handles the institutional
-SMTP policy upstream. Use real `from`, `reply_to`, and `envelope_from`
-addresses. Keep the production config file out of git if it contains secrets or
-deployment-specific addresses.
-
-Keycloak only imports the realm on fresh startup. If the realm already exists,
-changing the import JSON is not enough. Recreate the Keycloak data volume for a
-clean test import or update SMTP from the Keycloak admin console:
-
-```bash
-python keycloak/scripts/render_realm.py --profile test
-docker compose --env-file .env -f docker-compose.test.yml down -v
-docker compose --env-file .env -f docker-compose.test.yml up -d
-```
-
-For an already running local realm, configure SMTP from the admin console under
-Realm settings > Email, or use a fresh import as shown above.
-If only the email theme changed, keep the existing data volume and update the
-realm with:
-
-```bash
-docker compose --env-file .env -f docker-compose.test.yml up -d --force-recreate --no-deps keycloak
-docker exec pathocore-keycloak-1 /opt/keycloak/bin/kcadm.sh config credentials \
-  --server http://127.0.0.1:8080 --realm master --user admin --password admin
-docker exec pathocore-keycloak-1 /opt/keycloak/bin/kcadm.sh update \
-  realms/ciberisciii_datahub \
-  -s emailTheme=pathocore \
-  -s actionTokenGeneratedByAdminLifespan=86400 \
-  -s actionTokenGeneratedByUserLifespan=7200 \
-  -s resetPasswordAllowed=true
-```
-
-The bootstrap admin created from `KC_BOOTSTRAP_ADMIN_USERNAME` and
-`KC_BOOTSTRAP_ADMIN_PASSWORD` belongs to the Keycloak `master` realm. Its email,
-first name and last name are not populated by the realm import; set them from
-the admin console if the built-in Keycloak test email action needs a recipient.
-
-## Example users
-
-- `mepram_admin` / `mepram_admin_pass`
-  - `/use-cases/mepram/admin`
-  - `/use-cases/relecov/view`
-- `mepram_viewer` / `mepram_viewer_pass`
-  - `/use-cases/mepram/view`
-- `relecov_viewer` / `relecov_viewer_pass`
-  - `/use-cases/relecov/view`
-- `relecov_admin` / `relecov_admin_pass`
-  - `/use-cases/relecov/admin`
-- `redlabra_viewer` / `redlabra_viewer_pass`
-  - `/use-cases/redlabra/view`
-- `multi_viewer` / `multi_viewer_pass`
-  - `/use-cases/mepram/view`
-  - `/use-cases/relecov/view`
-- `models_admin` / `models_admin_pass`
-  - `/use-cases/ai-models/admin`
-
-To create a superuser in this dev realm, assign the user to `/superusers`.
-
-## Use From The Orchestrator
-
-Keycloak is started by the top-level compose files in the `pathocore-web`
-repository. From the repository root:
-
-```bash
-python keycloak/scripts/render_realm.py --profile test
-docker compose --env-file .env -f docker-compose.test.yml up -d
-docker compose --env-file .env -f docker-compose.test.yml logs -f keycloak
-```
-
-Keycloak imports `tmp-import/ciberisciii_datahub-realm.json` automatically on
-fresh startup through `--import-realm`. The import file is mounted by the
-top-level compose file.
-
-If you changed the config and need a clean re-import, remove the Keycloak data
-volume:
-
-```bash
-python keycloak/scripts/render_realm.py --profile test
-docker compose --env-file .env -f docker-compose.test.yml down -v
-docker compose --env-file .env -f docker-compose.test.yml up -d
-```
-
-Keycloak will be available at:
-
-```text
-http://127.0.0.1:8080
-```
-
-Admin console:
-
-```text
-http://127.0.0.1:8080/admin
-```
-
-Bootstrap admin credentials:
-
-```text
-admin / admin
-```
-
-## Token examples
-
-Development token through the frontend client:
-
-```bash
-curl -sS -X POST \
-  "http://127.0.0.1:8080/realms/ciberisciii_datahub/protocol/openid-connect/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=pathocore-web" \
-  -d "grant_type=password" \
-  -d "username=mepram_admin" \
-  -d "password=mepram_admin_pass" | jq
-```
-
-The resulting access token should include `sub`, `preferred_username`,
-`groups`, and `aud` containing `pathocore-api`.
-
-## Token settings for PathoCore API
-
-Issuer:
-
-```text
-http://127.0.0.1:8080/realms/ciberisciii_datahub
-```
-
-Audience:
-
-```text
-pathocore-api
-```
-
-JWKS URL from the host:
-
-```text
-http://127.0.0.1:8080/realms/ciberisciii_datahub/protocol/openid-connect/certs
-```
-
-JWKS URL from the PathoCore Docker app container:
-
-```text
-http://host.docker.internal:8080/realms/ciberisciii_datahub/protocol/openid-connect/certs
-```
-
-Stop the full test stack from the repository root with:
-
-```bash
-docker compose --env-file .env -f docker-compose.test.yml down
-```
+The realm selects it using `KEYCLOAK_EMAIL_THEME`. SMTP values are configured
+through the `KEYCLOAK_SMTP_*` settings. In tests, Mailpit exposes its inbox on
+the configured loopback port. Production must use the SMTP endpoint provided by
+the deployment environment.

@@ -1,0 +1,52 @@
+# Keycloak add-on
+# Used only when ADDONS.keycloak selects this application as CONFIG_SERVICE.
+# These values are disposable and must never be reused in production.
+
+# Disposable Keycloak database/schema name. Example: keycloak
+KEYCLOAK_DB_NAME='keycloak'
+# Disposable least-privilege database user. Example: keycloak
+KEYCLOAK_DB_USER='keycloak'
+# Disposable database-user password. Example: keycloak_password
+KEYCLOAK_DB_PASSWORD='keycloak_password'
+# Disposable database initialization root password. Example: root
+KEYCLOAK_DB_ROOT_PASSWORD='root'
+# Host loopback port exposing the test database for diagnostics. Example: 6607
+KEYCLOAK_DB_PORT_HOST='6607'
+
+# Exact browser-facing URL for the disposable Keycloak service.
+# Example: http://keycloak.localhost:8083
+KEYCLOAK_PUBLIC_URL='http://keycloak.localhost:8083'
+# Host loopback port exposing Keycloak. Example: 8481
+KEYCLOAK_PORT='8481'
+# Disposable server-bootstrap administrator username. Example: admin
+KEYCLOAK_ADMIN='admin'
+# Disposable server-bootstrap administrator password. Example: admin
+KEYCLOAK_ADMIN_PASSWORD='admin'
+
+# Repository source is rendered into a disposable test bind directory.
+KEYCLOAK_REALM_TEMPLATE_PATH='./conf/keycloak/realm-test.json'
+# Disposable realm name. It matches the clients and groups committed in
+# conf/keycloak/realm-test.json.
+KEYCLOAK_REALM='ciberisciii_datahub'
+# Disposable read-only realm-import staging directory.
+# Example: /tmp/example-app/data/keycloak/realm-import
+KEYCLOAK_IMPORT_PATH='/tmp/pathocore-web/data/keycloak/realm-import'
+
+# Disposable SMTP values. Applications may point these at a local mail catcher.
+KEYCLOAK_SMTP_HOST='mailpit'
+KEYCLOAK_SMTP_PORT='1025'
+KEYCLOAK_SMTP_FROM='no-reply@pathocore.local'
+KEYCLOAK_SMTP_FROM_DISPLAY_NAME='PathoCore'
+KEYCLOAK_SMTP_REPLY_TO='support@pathocore.local'
+KEYCLOAK_SMTP_REPLY_TO_DISPLAY_NAME='PathoCore Support'
+KEYCLOAK_SMTP_ENVELOPE_FROM='no-reply@pathocore.local'
+KEYCLOAK_SMTP_AUTH='false'
+KEYCLOAK_SMTP_SSL='false'
+KEYCLOAK_SMTP_STARTTLS='false'
+KEYCLOAK_SMTP_ALLOW_UTF8='true'
+KEYCLOAK_SMTP_CONNECTION_TIMEOUT='10000'
+KEYCLOAK_SMTP_TIMEOUT='10000'
+KEYCLOAK_SMTP_WRITE_TIMEOUT='10000'
+KEYCLOAK_SMTP_USER=''
+KEYCLOAK_SMTP_PASSWORD=''
+KEYCLOAK_EMAIL_THEME='pathocore'
