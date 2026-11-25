@@ -1,0 +1,33 @@
+name: build
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  docker_build:
+    # Build the production image the same way the installer does, without
+    # deployment settings: NEXT_PUBLIC_* values are left empty on purpose.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build --tag pathocore-web:ci .
+
+  lint:
+    # Informational until the existing ESLint findings on dev are fixed.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
