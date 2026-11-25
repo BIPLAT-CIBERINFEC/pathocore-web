@@ -57,7 +57,7 @@ Services:
 
 Selected add-ons:
 
-- Apache source configuration lives under `conf/apache/`; customize its virtual hosts and routes there. The installer renders final bind sources under `deployment/apache/`.
+- Apache source configuration lives under `conf/apache/`; customize its virtual hosts and routes there. The installer renders final bind sources under `APACHE_CONF_PATH` (or `deployment/apache/` when empty).
 - Keycloak provides centralized identity with a health-checked MySQL service, realm import, and persistent database state.
 - Mailpit captures test-stack SMTP messages without sending external email.
 
@@ -198,7 +198,7 @@ nor this generated environment file is copied into image layers.
 | `pathocore-api` logs | Host bind configured by `HOST_LOG_PATH` in `pathocore-api_production_settings.txt` | Retain/rotate per institutional log policy |
 | `pathocore-api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `pathocore-api_production_settings.txt` | Protected configuration backup |
 | Apache logs | `/var/log/local/pathocore-web/apache` host bind | Retain/rotate per institutional log policy |
-| Rendered Apache configuration | `deployment/apache/` in the deployment checkout | Rebuildable; preserve reviewed source configuration |
+| Rendered Apache configuration | `APACHE_CONF_PATH` (or `deployment/apache/` when empty) | Rebuildable; preserve reviewed source configuration |
 | Keycloak database | `keycloak_db_data` MySQL named volume | Database and identity backup |
 | Keycloak staged realm | `/srv/containers/bind/pathocore-web/keycloak/realm-import/` read-only host bind | Back up with deployment configuration; reproducible bootstrap input, not authoritative identity state |
 
@@ -237,6 +237,12 @@ podman compose --env-file .env.production.file -f docker-compose.prod.yml restar
 ```
 
 ### Upgrade docker deployment
+
+Django upgrades automatically preserve `SECRET_KEY` from the existing host
+settings file at `DJANGO_SETTINGS_PATH`. No manual key configuration is needed.
+If that file does not exist, the installer generates a new key. When restoring
+or moving the deployment to a different settings path, restore the old settings
+file there before installation if the original signing key must be preserved.
 
 After taking a consistent backup and reading the version-specific upgrade
 notes:

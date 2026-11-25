@@ -1,6 +1,7 @@
 {
   "APP_NAME": "PathoCore Web",
   "APP_SLUG": "pathocore-web",
+  "APP_VERSION": "1.1.0",
   "DESCRIPTION": "Next.js frontend and deployment orchestrator for the PathoCore and MePRAM OMOP APIs.",
   "REPOSITORY_URL": "https://github.com/BIPLAT-CIBERINFEC/pathocore-web.git",
   "DEFAULT_BRANCH": "dev",
