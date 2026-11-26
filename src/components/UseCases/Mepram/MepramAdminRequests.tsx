@@ -341,7 +341,7 @@ export function MepramAdminRequests() {
                       >
                         <div className="flex flex-col items-center justify-center space-y-3">
                           <Users className="h-8 w-8 text-slate-300" />
-                          <p>No hay solicitudes en estado '{activeTab}'.</p>
+                          <p>No hay solicitudes en estado &lsquo;{activeTab}&rsquo;.</p>
                         </div>
                       </td>
                     </tr>
