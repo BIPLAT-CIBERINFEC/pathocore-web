@@ -1,0 +1,116 @@
+name: ciber-deploy-dev
+
+# Continuous deployment to the development host.
+# - Runs only after a push to dev or by hand. Never on pull requests, so
+#   code from forks never reaches the self-hosted runner.
+# - The deploy job uses the "dev" Environment: required reviewer, dev branch
+#   only, and every host-specific value comes from Environment secrets.
+# - The runner works on the checkouts that already live on the host; it does
+#   not clone the repository into its workspace.
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      api_ref:
+        description: PathoCore API branch to deploy with the web
+        default: develop
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ciber-deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  ci_gate:
+    # GitHub-hosted: waits until the build workflow of this commit is green.
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Wait for the build workflow of this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 70); do
+            conclusion="$(gh api "repos/$REPO/actions/workflows/build.yml/runs?head_sha=$SHA&per_page=1" \
+              --jq '.workflow_runs[0] | if . == null then "missing" elif .status != "completed" then "pending" else .conclusion end')"
+            echo "build workflow: $conclusion"
+            case "$conclusion" in
+              success) exit 0 ;;
+              missing|pending) sleep 30 ;;
+              *) echo "::error::build workflow did not succeed for $SHA"; exit 1 ;;
+            esac
+          done
+          echo "::error::timed out waiting for the build workflow"; exit 1
+
+  deploy:
+    needs: ci_gate
+    runs-on: [self-hosted, pathocore-dev]
+    environment: dev
+    timeout-minutes: 60
+    env:
+      # Environment secrets: masked in logs, never stored in the repository.
+      DEPLOY_ROOT: ${{ secrets.DEPLOY_ROOT }}
+      DEPLOY_HEALTH_URLS: ${{ secrets.DEPLOY_HEALTH_URLS }}
+      DEPLOY_MODE: ${{ vars.DEPLOY_MODE || 'test' }}
+      DEPLOY_ENGINE: ${{ vars.DEPLOY_ENGINE || 'docker' }}
+      WEB_SHA: ${{ github.sha }}
+      API_REF: ${{ inputs.api_ref || 'develop' }}
+      OWNER: ${{ github.repository_owner }}
+    steps:
+      - name: Check the host checkouts
+        run: |
+          set -euo pipefail
+          [ -n "$DEPLOY_ROOT" ] && [ -n "$DEPLOY_HEALTH_URLS" ] || { echo "::error::Environment secrets are missing"; exit 1; }
+          for repo in pathocore-web pathocore-api; do
+            dir="$DEPLOY_ROOT/$repo"
+            git -C "$dir" rev-parse --git-dir >/dev/null
+            [ -z "$(git -C "$dir" status --porcelain --untracked-files=no)" ] \
+              || { echo "::error::$repo has tracked local changes on the host"; exit 1; }
+          done
+          echo "PREV_WEB=$(git -C "$DEPLOY_ROOT/pathocore-web" rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "PREV_API=$(git -C "$DEPLOY_ROOT/pathocore-api" rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Fetch the target commits
+        run: |
+          set -euo pipefail
+          git -C "$DEPLOY_ROOT/pathocore-web" fetch --quiet "https://github.com/$OWNER/pathocore-web.git" "$WEB_SHA"
+          git -C "$DEPLOY_ROOT/pathocore-api" fetch --quiet "https://github.com/$OWNER/pathocore-api.git" "refs/heads/$API_REF"
+          echo "API_SHA=$(git -C "$DEPLOY_ROOT/pathocore-api" rev-parse FETCH_HEAD)" >> "$GITHUB_ENV"
+
+      - name: Upgrade
+        run: |
+          set -euo pipefail
+          git -C "$DEPLOY_ROOT/pathocore-api" checkout --quiet --detach "$API_SHA"
+          git -C "$DEPLOY_ROOT/pathocore-web" checkout --quiet --detach "$WEB_SHA"
+          mode_flag=(); [ "$DEPLOY_MODE" = test ] && mode_flag=(--test)
+          cd "$DEPLOY_ROOT/pathocore-web"
+          bash container_install.sh "${mode_flag[@]}" --action upgrade \
+            --engine "$DEPLOY_ENGINE" --git_revision current
+
+      - name: Health checks
+        run: |
+          set -euo pipefail
+          for url in $DEPLOY_HEALTH_URLS; do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url" || echo 000)"
+            echo "health check -> $code"
+            [ "$code" -ge 200 ] && [ "$code" -lt 400 ]
+          done
+
+      - name: Roll back to the previous commits
+        if: failure() && env.PREV_WEB != ''
+        run: |
+          set -euo pipefail
+          git -C "$DEPLOY_ROOT/pathocore-api" checkout --quiet --detach "$PREV_API"
+          git -C "$DEPLOY_ROOT/pathocore-web" checkout --quiet --detach "$PREV_WEB"
+          mode_flag=(); [ "$DEPLOY_MODE" = test ] && mode_flag=(--test)
+          cd "$DEPLOY_ROOT/pathocore-web"
+          bash container_install.sh "${mode_flag[@]}" --action upgrade \
+            --engine "$DEPLOY_ENGINE" --git_revision current
+          echo "::warning::Deployment failed and was rolled back to web ${PREV_WEB:0:7}, api ${PREV_API:0:7}"
