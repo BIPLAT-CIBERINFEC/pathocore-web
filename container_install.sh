@@ -7,7 +7,7 @@ source "$script_dir/deployment/lib/container/common.sh"
 # shellcheck disable=SC1091
 source "$script_dir/deployment/lib/container/django.sh"
 
-APP_VERSION="1.1.0"
+APP_VERSION="1.2.0"
 APPLICATION_NAME="PathoCore Web"
 CONTAINER_INSTALL_VERSION="0.1.0"
 
