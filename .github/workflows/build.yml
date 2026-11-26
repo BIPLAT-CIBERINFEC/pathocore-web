@@ -20,9 +20,7 @@ jobs:
         run: docker build --tag pathocore-web:ci .
 
   lint:
-    # Informational until the existing ESLint findings on dev are fixed.
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
