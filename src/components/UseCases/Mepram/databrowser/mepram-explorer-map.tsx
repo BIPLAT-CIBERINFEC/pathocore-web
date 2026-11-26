@@ -608,7 +608,7 @@ export function MepramExplorerMap({
                     className="rounded-[18px] border border-slate-100 bg-white px-4 py-3 text-xs leading-relaxed text-slate-500 italic"
                     key={note}
                   >
-                    "{note}"
+                    &ldquo;{note}&rdquo;
                   </div>
                 ))}
               </div>

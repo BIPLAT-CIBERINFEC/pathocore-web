@@ -217,7 +217,7 @@ function SchemaClassificationExplorer({
                   </div>
                 ) : (
                   <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">
-                    No schema properties match "{query}".
+                    No schema properties match &ldquo;{query}&rdquo;.
                   </div>
                 )}
               </div>
