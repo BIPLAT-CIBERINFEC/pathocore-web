@@ -91,7 +91,7 @@ Persistencia declarada por el despliegue:
 | `pathocore-api` logs | Host bind configured by `HOST_LOG_PATH` in `pathocore-api_production_settings.txt` | Retain/rotate per institutional log policy |
 | `pathocore-api` rendered settings | Host bind configured by `DJANGO_SETTINGS_PATH` in `pathocore-api_production_settings.txt` | Protected configuration backup |
 | Apache logs | `/var/log/local/pathocore-web/apache` host bind | Retain/rotate per institutional log policy |
-| Rendered Apache configuration | `deployment/apache/` in the deployment checkout | Rebuildable; preserve reviewed source configuration |
+| Rendered Apache configuration | `APACHE_CONF_PATH` (or `deployment/apache/` when empty) | Rebuildable; preserve reviewed source configuration |
 | Keycloak database | `keycloak_db_data` MySQL named volume | Database and identity backup |
 | Keycloak staged realm | `/srv/containers/bind/pathocore-web/keycloak/realm-import/` read-only host bind | Back up with deployment configuration; reproducible bootstrap input, not authoritative identity state |
 
@@ -156,6 +156,13 @@ Valores que requieren decision del responsable de la aplicacion:
 Editar unicamente las copias bajo `deployment/settings/`, completar todas esas
 decisiones y resolver cada `CHANGE_ME` antes de continuar. Los comandos de
 instalacion y actualizacion usan estas rutas protegidas.
+
+Las actualizaciones Django conservan automaticamente `SECRET_KEY` del fichero
+de settings existente en el host, indicado por `DJANGO_SETTINGS_PATH`. No hace
+falta configurar la clave manualmente. Si el fichero no existe, el instalador
+genera una clave nueva. Al restaurar o mover el despliegue a otra ruta de
+settings, restaurar alli el fichero antiguo antes de instalar si se necesita
+conservar la clave de firma original.
 
 ## Preparar directorios persistentes del host
 
@@ -301,10 +308,19 @@ cualquier fallo de build, readiness, bootstrap, migracion o smoke test.
 
 ## Comprobaciones posteriores
 
+Con los contenedores levantados despues de una instalacion o actualizacion,
+repetir la reparacion para aplicar propietarios y modos dentro de todos los
+volumenes montados:
+
+```bash
+bash container_install.sh --action fix-permissions --engine podman \
+  --install_conf_map pathocore-web,deployment/settings/pathocore-web_production_settings.txt --install_conf_map mepram-omop-api,deployment/settings/mepram-omop-api_production_settings.txt --install_conf_map pathocore-api,deployment/settings/pathocore-api_production_settings.txt --install_conf_map apache,deployment/settings/apache_production_settings.txt --install_conf_map keycloak,deployment/settings/keycloak_production_settings.txt --install_conf_map mailpit,deployment/settings/mailpit_production_settings.txt
+```
+
 ```bash
 podman compose --env-file .env.production.file -f docker-compose.prod.yml ps
 podman compose --env-file .env.production.file -f docker-compose.prod.yml logs --tail 200
-bash scripts/smoke_test.sh --engine podman
+bash scripts/smoke_test.sh --engine podman --env_file .env.production.file
 ```
 
 Completar las comprobaciones que corresponden a la topologia seleccionada:

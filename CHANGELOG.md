@@ -3,20 +3,18 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.1.0dev pathocore-web - "Olive Realgar Camel" 2026/07/23
+## v1.2.0dev pathocore-web
 
 ### `Changed`
 
+- [#39](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/39) Sync the orchestrator with BU-ISCIII deployment standards 9856527 and record the standard revision in the scaffold state.
 - [#37](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/37) Migrate the web orchestrator to the BU-ISCIII deployment standard, including shared Keycloak configuration, Apache and Mailpit test services.
-- [#14](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/14) Align the test stack with PathoCore API `/api/v1` routing and simplified use-case groups.
 - [#24](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/24) Simplify deployment environment variables
 - [#33](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/33) Move SMTP relay ownership out of the web orchestrator and pass email backend settings to PathoCore API.
 
 ### `Added`
 
 - [#40](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/40) Add a CI workflow that builds the Docker image and reports ESLint results.
-- [#12](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/12) Use MePRAM OMOP API bootstrap for superuser creation
-- [#13](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/13) Add production orchestrator support for PathoCore API, MePRAM OMOP API, Keycloak and web services.
 - [#23](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/23) Require review notes for rejected and revoked access requests
 - [#27](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/27) Expose OMOP proxy origin settings
 - [#30](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/30) Pass PathoCore API CSRF trusted origins from the orchestrator
@@ -28,6 +26,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#41](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/41) Fix ESLint errors: escape quotes in JSX text and report `react-hooks/set-state-in-effect` as a warning until the affected effects are refactored.
 - [#25](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/25) Fixed issues with podman-compose ps -q
 - [#29](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/29) Render Apache reverse proxy configuration before production startup
+
+### `Dependencies`
+
+### `Deprecated`
+
+## v1.1.0 pathocore-web - "Olive Realgar Camel" 2026/07/23
+
+### `Changed`
+
+- [#14](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/14) Align the test stack with PathoCore API `/api/v1` routing and simplified use-case groups.
+
+### `Added`
+
+- [#12](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/12) Use MePRAM OMOP API bootstrap for superuser creation
+- [#13](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/13) Add production orchestrator support for PathoCore API, MePRAM OMOP API, Keycloak and web services.
+
+### `Fixed`
 
 ### `Dependencies`
 
