@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
+- [#43](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/43) Add pull-based continuous deployment for the development host: `scripts/deploy_dev.sh` with CI gate and rollback, and a systemd timer.
 - [#40](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/40) Add a CI workflow that builds the Docker image and reports ESLint results.
 - [#12](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/12) Use MePRAM OMOP API bootstrap for superuser creation
 - [#13](https://github.com/BIPLAT-CIBERINFEC/pathocore-web/pull/13) Add production orchestrator support for PathoCore API, MePRAM OMOP API, Keycloak and web services.

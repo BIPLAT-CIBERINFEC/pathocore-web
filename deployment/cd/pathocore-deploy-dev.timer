@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for PathoCore updates to deploy on the development host
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=10min
+RandomizedDelaySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

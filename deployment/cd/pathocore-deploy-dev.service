@@ -1,0 +1,15 @@
+[Unit]
+Description=PathoCore pull-based deployment (development host)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Unprivileged deployment account that owns /opt/container_apps and can use
+# the container engine. Do not run this unit as root.
+User=bioinfoadm
+Group=bioinfoadm
+Environment=DEPLOY_ENV_FILE=/etc/pathocore-deploy-dev.env
+ExecStart=/opt/container_apps/pathocore-web/scripts/deploy_dev.sh
+TimeoutStartSec=45min
+Nice=5
