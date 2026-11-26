@@ -68,6 +68,18 @@ jobs:
         run: |
           set -euo pipefail
           [ -n "$DEPLOY_ROOT" ] && [ -n "$DEPLOY_HEALTH_URLS" ] || { echo "::error::Environment secrets are missing"; exit 1; }
+          # Accept URLs separated by spaces, commas or new lines; drop stray
+          # quotes and Markdown link syntax. Validate before deploying anything.
+          urls="$(printf '%s' "$DEPLOY_HEALTH_URLS" | sed 's/](/ /g' | tr ',;\r\n\t' '     ' | tr -d "\"'<>[]()")"
+          count=0; checked=""
+          for url in $urls; do
+            [[ "$url" =~ ^https?://[^[:space:]]+$ ]] || { echo "::error::DEPLOY_HEALTH_URLS entry $((count + 1)) is not an http(s) URL"; exit 1; }
+            echo "::add-mask::$url"
+            checked="$checked $url"; count=$((count + 1))
+          done
+          [ "$count" -gt 0 ] || { echo "::error::DEPLOY_HEALTH_URLS contains no URL"; exit 1; }
+          echo "HEALTH_URLS=${checked# }" >> "$GITHUB_ENV"
+          echo "$count health check URL(s) configured"
           for repo in pathocore-web pathocore-api; do
             dir="$DEPLOY_ROOT/$repo"
             git -C "$dir" rev-parse --git-dir >/dev/null
@@ -97,10 +109,13 @@ jobs:
       - name: Health checks
         run: |
           set -euo pipefail
-          for url in $DEPLOY_HEALTH_URLS; do
-            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url" || echo 000)"
-            echo "health check -> $code"
-            [ "$code" -ge 200 ] && [ "$code" -lt 400 ]
+          index=0
+          for url in $HEALTH_URLS; do
+            index=$((index + 1))
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url" || true)"
+            code="${code:-000}"
+            echo "health check $index -> HTTP $code"
+            [ "$code" -ge 200 ] && [ "$code" -lt 400 ] || { echo "::error::health check $index failed (HTTP $code)"; exit 1; }
           done
 
       - name: Roll back to the previous commits
